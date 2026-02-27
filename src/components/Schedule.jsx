@@ -1,0 +1,468 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { getCalendarsWithCache } from '../utils/ical';
+import { formatRelativeDate } from '../utils/time';
+
+// Options configuration
+const LENGTH_OPTIONS = ['本甲', '短甲', '中长', '长甲', '延长', '待定'];
+const STYLE_OPTIONS = ['纯色', '跳色', '法式', '猫眼', '渐变', '设计', '待定'];
+const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
+
+export default function Schedule() {
+  const [schedule, setSchedule] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [visibleDays, setVisibleDays] = useState({});
+  const [showBackToday, setShowBackToday] = useState(false);
+  
+  // Selection state
+  const [selectedSlot, setSelectedSlot] = useState(null); // { day, slot, slotIdx, uniqueKey }
+  const [shakingSlotId, setShakingSlotId] = useState(null);
+  
+  // Use separate state to keep content visible during exit animation
+  const [displaySlot, setDisplaySlot] = useState(null);
+  useEffect(() => {
+    if (selectedSlot) setDisplaySlot(selectedSlot);
+  }, [selectedSlot]);
+  
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState({
+    length: '',
+    style: [], // Changed to array for multiselect
+    remove: ''
+  });
+  const [bookingText, setBookingText] = useState('');
+  const [toast, setToast] = useState(null); // { message, type }
+
+  const dayRefs = useRef({});
+
+  const fetchData = async (isAuto = false) => {
+    if (!isAuto) {
+      setLoading(true);
+      setError(false);
+    }
+    try {
+      const res = await getCalendarsWithCache();
+      setSchedule(res.schedule);
+      setLoading(false);
+      setError(false);
+      
+      // Init observer after render
+      setTimeout(initObserver, 100);
+    } catch (e) {
+      console.error(e);
+      setLoading(false);
+      setError(true);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const timer = setInterval(() => fetchData(true), 3 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Update booking text when form or slot changes
+  useEffect(() => {
+    if (!selectedSlot) return;
+    
+    const d = selectedSlot.day.date;
+    const dateStr = `${d.getMonth() + 1}月${d.getDate()}日`;
+    const timeStr = `${selectedSlot.slot.label}(${selectedSlot.slot.start}-${selectedSlot.slot.end})`;
+    
+    // Join styles if it's an array
+    const styleStr = Array.isArray(form.style) 
+      ? (form.style.length > 0 ? form.style.join('/') : '待定')
+      : (form.style || '待定');
+
+    const text = `你好罗师傅，我想预约：
+日期：${dateStr} ${timeStr}
+长度：${form.length || '待定'}
+款式：${styleStr}
+卸甲：${form.remove || '待定'}
+备注：`;
+
+    setBookingText(text);
+  }, [form, selectedSlot]);
+
+  const initObserver = () => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const key = entry.target.dataset.key;
+          setVisibleDays(prev => ({ ...prev, [key]: true }));
+        }
+      });
+    }, { threshold: 0.1 });
+
+    Object.values(dayRefs.current).forEach(el => {
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  };
+
+  const handleScroll = () => {
+    if (window.scrollY > 300) {
+      setShowBackToday(true);
+    } else {
+      setShowBackToday(false);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToToday = () => {
+    if (schedule.length > 0) {
+      const todayKey = schedule[0].key;
+      const el = document.getElementById(`day-${todayKey}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+        setShowBackToday(false);
+      }
+    }
+  };
+
+  const onSlotTap = (day, slot, slotIdx) => {
+    const uniqueKey = `${day.key}-${slotIdx}`;
+    
+    if (slot.status !== 'free') {
+      setShakingSlotId(uniqueKey);
+      setTimeout(() => setShakingSlotId(null), 500);
+      return;
+    }
+
+    // Toggle selection if clicking the same slot
+    if (selectedSlot && selectedSlot.uniqueKey === uniqueKey) {
+      setSelectedSlot(null);
+      return;
+    }
+
+    setSelectedSlot({
+      day,
+      slot,
+      slotIdx,
+      uniqueKey
+    });
+  };
+
+  const handleBookClick = (e) => {
+    e.stopPropagation(); // Prevent deselecting when clicking the button
+    if (!selectedSlot) return;
+    openModal();
+  };
+
+  // Click background to deselect
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      // If clicking inside a slot or the bottom bar or modal, do nothing
+      if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container')) {
+        return;
+      }
+      setSelectedSlot(null);
+    };
+    
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
+
+  const openModal = () => {
+    setShowModal(true);
+    // Reset form, style defaults to empty array
+    setForm({ length: '', style: [], remove: '' });
+  };
+
+  const hideModal = () => {
+    setShowModal(false);
+  };
+
+  const updateForm = (field, value) => {
+    setForm(prev => {
+      // Special handling for style multiselect
+      if (field === 'style') {
+        const currentStyles = Array.isArray(prev.style) ? prev.style : [];
+        
+        // If '待定' is selected, clear others and just select '待定'
+        if (value === '待定') {
+          // If already selected, deselect it (empty)
+          if (currentStyles.includes('待定')) {
+             return { ...prev, style: [] };
+          }
+          return { ...prev, style: ['待定'] };
+        }
+        
+        // If selecting something else, remove '待定' first if present
+        let newStyles = currentStyles.filter(s => s !== '待定');
+        
+        if (newStyles.includes(value)) {
+          // Deselect
+          newStyles = newStyles.filter(s => s !== value);
+        } else {
+          // Select
+          newStyles = [...newStyles, value];
+        }
+        return { ...prev, style: newStyles };
+      }
+      
+      // Normal single select for others
+      return { ...prev, [field]: value };
+    });
+  };
+
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(bookingText);
+      showToast('已复制');
+    } catch (err) {
+      showToast('复制失败，请手动复制');
+    }
+  };
+
+  const showToast = (msg) => {
+    setToast({ message: msg });
+    setTimeout(() => setToast(null), 2000);
+  };
+  
+  // Calculate relative date for header
+  const getRelativeDateStr = () => {
+    if (!selectedSlot || !selectedSlot.day) return '';
+    const rel = formatRelativeDate(selectedSlot.day.date);
+    // If it returns '今天', '明天', '后天' keep as is
+    // If it returns 'X天后', keep as is
+    return `（${rel}）`;
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col pb-32 text-[#f9faf0] bg-[#1f1406]">
+      <div className="pt-8 pb-4">
+        <img src="/assets/topimg.png" className="w-full block" alt="Header" />
+      </div>
+
+      <div className="px-5 flex-1">
+        {loading && (
+          <div className="h-80 flex flex-col items-center justify-center">
+            <div className="w-8 h-8 border-2 border-white/10 border-t-[#f97316] rounded-full animate-spin mb-4"></div>
+            <span className="text-white/70 text-sm">加载中...</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="h-80 flex flex-col items-center justify-center">
+            <span className="text-white/70 text-sm mb-8">获取日程失败</span>
+            <button 
+              onClick={() => fetchData()}
+              className="px-8 py-2 bg-[#f97316] text-white rounded-full text-xs"
+            >
+              重新加载
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="pb-10">
+            {schedule.map((item, index) => (
+              <div 
+                key={item.key}
+                id={`day-${item.key}`}
+                data-key={item.key}
+                ref={el => dayRefs.current[item.key] = el}
+                className={`my-3 py-2 transition-all duration-500 transform ${visibleDays[item.key] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
+              >
+                <div className="flex justify-between items-center mb-4">
+                  <div className="flex items-baseline gap-3">
+                    <span className="text-lg font-semibold">{item.label}</span>
+                    <span className="text-white/70">周{item.weekday}</span>
+                    {index === 0 && (
+                      <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-[#975322] text-white/80">
+                        今天
+                      </span>
+                    )}
+                  </div>
+                  {item.holidayName && (
+                    <div className="text-[#ca7940] font-medium text-right">{item.holidayName}</div>
+                  )}
+                </div>
+
+                <div className="flex justify-between gap-3">
+                  {item.slots.map((slot, slotIdx) => {
+                    const uniqueKey = `${item.key}-${slotIdx}`;
+                    const isBusy = slot.status !== 'free';
+                    const isActive = selectedSlot && selectedSlot.uniqueKey === uniqueKey;
+                    const isShaking = shakingSlotId === uniqueKey;
+                    
+                    return (
+                      <div
+                        key={slot.key}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSlotTap(item, slot, slotIdx);
+                        }}
+                        className={`
+                          slot-item flex-1 p-2 h-20 rounded-xl border flex flex-col items-start justify-center
+                          transition-all duration-300 transform cursor-pointer
+                          ${isBusy 
+                            ? 'bg-white/5 border-white/20 opacity-50 cursor-not-allowed' 
+                            : 'bg-[#142615] border-[#226925] hover:bg-[#244f27]'
+                          }
+                          ${isActive ? '!bg-[#f97316] !border-[#f97316] !opacity-100 shadow-lg animate-float' : ''}
+                          ${isShaking ? 'shake-feedback' : ''}
+                        `}>
+                        <span className={`text-base font-bold block mb-0.5 ${isActive ? 'text-white' : 'text-[#f9faf0]'}`}>
+                          {slot.label}
+                        </span>
+                        <span className={`text-[10px] whitespace-nowrap block ${isBusy ? 'text-white/50' : 'text-white/90'} ${isActive ? 'text-white' : ''}`}>
+                          {slot.start}～{slot.end}
+                        </span>
+                        <span className={`text-[10px] block mt-0.5 ${isBusy ? 'text-white/50' : 'text-white/90'} ${isActive ? 'text-white' : ''}`}>
+                          {isBusy ? '不可预约' : '可预约'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            <div className="h-10"></div>
+            <div className="text-center text-xs text-white/50 py-10 flex items-center justify-center">
+              给罗师傅放一天假吧！ありがとう！
+            </div>
+          </div>
+        )}
+      </div>
+
+      {showBackToday && !selectedSlot && (
+        <button 
+          onClick={scrollToToday}
+          className="fixed right-5 bottom-10 px-4 py-2 text-xs bg-[#111827] text-white rounded-full shadow-lg z-40"
+        >
+          返回今天
+        </button>
+      )}
+
+      {/* Bottom Booking Bar */}
+      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 bg-[#1f1406] border-t border-white/10 z-50 flex items-center justify-between safe-area-bottom max-w-[414px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
+        {displaySlot && (
+          <>
+            <div className="flex flex-col">
+              <span className="text-sm text-white/70">
+                {displaySlot.day.label} 周{displaySlot.day.weekday}
+              </span>
+              <span className="text-lg font-bold text-white">
+                {displaySlot.slot.label} {displaySlot.slot.start}～{displaySlot.slot.end}
+              </span>
+            </div>
+            <button
+              onClick={handleBookClick}
+              className="px-8 py-3 bg-[#f97316] text-white font-bold rounded-full shadow-lg transform transition-transform active:scale-95"
+            >
+              预约
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Modal Mask */}
+      {showModal && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-[90]"
+          onClick={hideModal}
+        ></div>
+      )}
+
+      {/* Modal Content */}
+      <div 
+        className={`modal-container fixed inset-x-0 bottom-0 bg-[#1f1406] border-t border-white/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] text-[#f9faf0] max-w-[414px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
+      >
+        <div className="p-4 flex items-center justify-between border-b border-white/10">
+          <div className="text-base font-medium flex flex-col">
+             <span>{selectedSlot?.day.label} 周{selectedSlot?.day.weekday} <span className="text-[#f97316] text-sm ml-1">{getRelativeDateStr()}</span></span>
+             <span className="text-xs text-white/50">{selectedSlot?.slot.label} {selectedSlot?.slot.start}～{selectedSlot?.slot.end}</span>
+          </div>
+          <button onClick={hideModal} className="text-white/50 text-xl px-2">×</button>
+        </div>
+
+        <div className="flex-1 p-6 overflow-y-auto">
+            {/* Length */}
+            <div className="mb-6">
+              <label className="block text-sm mb-2 text-white/70">长度</label>
+              <div className="grid grid-cols-3 gap-3">
+                {LENGTH_OPTIONS.map(opt => (
+                  <div 
+                    key={opt}
+                    onClick={() => updateForm('length', opt)}
+                    className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.length === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'border-white/20 text-white/70 bg-white/5'}`}
+                  >
+                    {opt}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Style (Multiselect) */}
+            <div className="mb-6">
+              <label className="block text-sm mb-2 text-white/70">款式（可多选）</label>
+              <div className="grid grid-cols-4 gap-2">
+                {STYLE_OPTIONS.map(opt => {
+                  const isSelected = Array.isArray(form.style) && form.style.includes(opt);
+                  return (
+                    <div 
+                      key={opt}
+                      onClick={() => updateForm('style', opt)}
+                      className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${isSelected ? 'bg-[#f97316] border-[#f97316] text-white' : 'border-white/20 text-white/70 bg-white/5'}`}
+                    >
+                      {opt}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Remove */}
+            <div className="mb-6">
+              <label className="block text-sm mb-2 text-white/70">卸甲</label>
+              <div className="flex gap-3">
+                {REMOVE_OPTIONS.map(opt => (
+                  <div 
+                    key={opt}
+                    onClick={() => updateForm('remove', opt)}
+                    className={`flex-1 text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.remove === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'border-white/20 text-white/70 bg-white/5'}`}
+                  >
+                    {opt}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Booking Text */}
+            <div className="mb-6">
+              <label className="block text-sm mb-2 text-white/70">预约文案</label>
+              <textarea 
+                value={bookingText}
+                onChange={(e) => setBookingText(e.target.value)}
+                className="w-full h-32 px-4 py-3 rounded-lg border border-white/20 bg-white/5 text-white text-sm focus:outline-none focus:border-[#f97316]"
+              />
+            </div>
+        </div>
+
+        <div className="p-4 pb-8 border-t border-white/10 safe-area-bottom">
+          <button 
+            onClick={copyToClipboard}
+            className="w-full h-10 rounded-full text-sm font-bold bg-[#f97316] text-white shadow-lg active:scale-95 transition-transform"
+          >
+            复制
+          </button>
+        </div>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-lg text-sm z-[200] fade-in">
+          {toast.message}
+        </div>
+      )}
+    </div>
+  );
+}
