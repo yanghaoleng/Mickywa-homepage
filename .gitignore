@@ -47,3 +47,7 @@ build/
 Thumbs.db
 .DS_Store
 .DS_Store
+
+# Agent files
+.agent/
+.minimax/
