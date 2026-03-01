@@ -11,6 +11,7 @@ export default function Schedule() {
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [isMock, setIsMock] = useState(false);
   const [visibleDays, setVisibleDays] = useState({});
   const [showBackToday, setShowBackToday] = useState(false);
   
@@ -44,6 +45,7 @@ export default function Schedule() {
     try {
       const res = await getCalendarsWithCache();
       setSchedule(res.schedule);
+      setIsMock(!!res.isMock);
       setLoading(false);
       setError(false);
       
@@ -237,8 +239,8 @@ export default function Schedule() {
 
   return (
     <div className="min-h-screen flex flex-col pb-32 text-[#f9faf0] bg-[#1f1406]">
-      <div className="pt-8 pb-4">
-        <img src="/assets/topimg.png" className="w-full block" alt="Header" />
+      <div className="pt-8 pb-4 bg-[#1f1406]">
+        <img src="/assets/topimg.png" className="w-full block" style={{ backgroundColor: '#1f1406' }} alt="Header" />
       </div>
 
       <div className="px-5 flex-1">
@@ -246,6 +248,14 @@ export default function Schedule() {
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-white/10 border-t-[#f97316] rounded-full animate-spin mb-4"></div>
             <span className="text-white/70 text-sm">加载中...</span>
+          </div>
+        )}
+
+        {isMock && !loading && (
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex items-center gap-2">
+            <span className="text-red-400 text-xs flex-1">
+              ⚠️ 获取真实日程失败，当前显示为演示数据。请检查网络或后端代理配置。
+            </span>
           </div>
         )}
 

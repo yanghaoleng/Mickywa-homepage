@@ -228,7 +228,35 @@ function buildHolidayMap(holidayEvents) {
   return map;
 }
 
-async function fetchICS(url) {
+async function fetchICS(url, type) {
+  let targetUrl = url;
+  
+  // Vercel Serverless API 优先 (生产环境/部署后)
+  // 如果当前是 Vercel 部署环境，直接请求 /api/calendar
+  // 简单判断：如果域名不是 localhost，或者显式配置了 VERCEL_URL?
+  // 更好的方式：默认先尝试 /api/calendar，如果 404 再尝试其他？
+  // 或者直接看是否是相对路径。Vercel Function 部署后会在同源下。
+  
+  // 策略：总是优先尝试 /api/calendar?type=...
+  // 因为 Vercel Function 解决了 CORS 和 缓存问题。
+  
+  if (type) {
+    return fetch(`/api/calendar?type=${type}`)
+      .then(res => {
+        if (!res.ok) throw new Error('API fetch failed');
+        return res.text();
+      })
+      .catch(err => {
+        console.warn('Vercel API fetch failed, falling back to direct/proxy fetch:', err);
+        // Fallback logic below
+        return fallbackFetch(url);
+      });
+  }
+
+  return fallbackFetch(url);
+}
+
+async function fallbackFetch(url) {
   let targetUrl = url;
   
   // 本地开发代理逻辑：如果没有配置 VITE_PROXY_URL，则尝试走本地 Vite 代理
@@ -319,16 +347,17 @@ export async function getCalendarsWithCache() {
   }
 
   try {
+    // Pass 'work' and 'holiday' types to enable Vercel API routing
     const [workText, holidayText] = await Promise.all([
-      fetchICS(WORK_CAL_URL),
-      fetchICS(HOLIDAY_CAL_URL)
+      fetchICS(WORK_CAL_URL, 'work'),
+      fetchICS(HOLIDAY_CAL_URL, 'holiday')
     ]);
 
     const workEvents = parseICS(workText);
     const holidayEvents = parseICS(holidayText);
     const schedule = buildScheduleData(workEvents, holidayEvents, 2);
 
-    const data = { workEvents, holidayEvents, schedule };
+    const data = { workEvents, holidayEvents, schedule, isMock: false };
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
     } catch (e) {
@@ -337,7 +366,10 @@ export async function getCalendarsWithCache() {
     return data;
   } catch (e) {
     console.error('Fetch fail:', e);
-    return getMockSchedule();
+    const mockData = getMockSchedule();
+    // Mark as mock so UI can show a warning
+    mockData.isMock = true;
+    return mockData;
   }
 }
 
