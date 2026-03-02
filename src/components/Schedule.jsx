@@ -239,7 +239,7 @@ export default function Schedule({ theme }) {
 
   return (
     <div className="min-h-screen flex flex-col pb-32 dark:text-[#f9faf0] text-[#1f1406] dark:bg-[#1f1406] bg-[#fbf8cc] transition-colors duration-300">
-      <div className="pt-1 pb-4 dark:bg-[#1f1406] bg-[#fbf8cc] transition-colors duration-300">
+      <div className="pt-0 pb-4 dark:bg-[#1f1406] bg-[#fbf8cc] transition-colors duration-300">
         <img src="/assets/topimg.png" className="w-full block" alt="Header" />
       </div>
 
@@ -317,7 +317,7 @@ export default function Schedule({ theme }) {
                             ? 'dark:bg-white/5 bg-[#e6e2b8] dark:border-white/20 border-[#d1cdab] opacity-50 cursor-not-allowed' 
                             : 'dark:bg-[#142615] bg-white dark:border-[#226925] hover:dark:bg-[#244f27] hover:bg-white shadow-[0_2px_0_rgba(0,0,0,0.08)]'
                           }
-                          ${isActive ? '!bg-[#f97316] !border-[#f97316] !opacity-100 shadow-lg animate-float' : ''}
+                          ${isActive ? '!bg-[#f97316] !border-[#fb923c] !opacity-100 shadow-lg animate-float' : ''}
                           ${isShaking ? 'shake-feedback' : ''}
                         `}>
                         <span className={`text-base font-bold block mb-0.5 ${isActive ? 'text-white' : (isBusy ? 'dark:text-[#f9faf0] text-[#1f1406]/60' : 'dark:text-[#f9faf0] text-[#1f1406]')}`}>
