@@ -384,7 +384,7 @@ export default function Schedule({ theme }) {
 
       {/* Modal Content */}
       <div 
-        className={`modal-container fixed inset-x-0 bottom-0 dark:bg-[#1f1406] bg-[#fbf8cc] border-t dark:border-white/10 border-black/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] dark:text-[#f9faf0] text-[#1f1406] max-w-[414px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`modal-container fixed inset-x-0 bottom-0 dark:bg-[#1f1406] bg-white border-t dark:border-white/10 border-black/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] dark:text-[#f9faf0] text-[#1f1406] max-w-[414px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
       >
         <div className="p-4 flex items-center justify-between border-b dark:border-white/10 border-black/10">
           <div className="text-base font-medium flex flex-col">
