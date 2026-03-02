@@ -238,8 +238,8 @@ export default function Schedule({ theme }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col pb-32 dark:text-[#f9faf0] text-[#1f1406] dark:bg-[#1f1406] bg-[#fdfbf7] transition-colors duration-300">
-      <div className="pt-1 pb-4 dark:bg-[#1f1406] bg-[#fdfbf7] transition-colors duration-300">
+    <div className="min-h-screen flex flex-col pb-32 dark:text-[#f9faf0] text-[#1f1406] dark:bg-[#1f1406] bg-[#fbf8cc] transition-colors duration-300">
+      <div className="pt-1 pb-4 dark:bg-[#1f1406] bg-[#fbf8cc] transition-colors duration-300">
         <img src="/assets/topimg.png" className="w-full block" alt="Header" />
       </div>
 
@@ -314,19 +314,19 @@ export default function Schedule({ theme }) {
                           slot-item flex-1 p-2 h-20 rounded-xl border flex flex-col items-start justify-center
                           transition-all duration-300 transform cursor-pointer
                           ${isBusy 
-                            ? 'dark:bg-white/5 bg-black/5 dark:border-white/20 border-black/10 opacity-50 cursor-not-allowed' 
-                            : 'dark:bg-[#142615] bg-[#e8f5e9] dark:border-[#226925] border-[#c8e6c9] hover:dark:bg-[#244f27] hover:bg-[#dceddd]'
+                            ? 'dark:bg-white/5 bg-[#e6e2b8] dark:border-white/20 border-[#d1cdab] opacity-50 cursor-not-allowed' 
+                            : 'dark:bg-[#142615] bg-white dark:border-[#226925] hover:dark:bg-[#244f27] hover:bg-white shadow-[0_2px_0_rgba(0,0,0,0.08)]'
                           }
                           ${isActive ? '!bg-[#f97316] !border-[#f97316] !opacity-100 shadow-lg animate-float' : ''}
                           ${isShaking ? 'shake-feedback' : ''}
                         `}>
-                        <span className={`text-base font-bold block mb-0.5 ${isActive ? 'text-white' : 'dark:text-[#f9faf0] text-[#1f1406]'}`}>
+                        <span className={`text-base font-bold block mb-0.5 ${isActive ? 'text-white' : (isBusy ? 'dark:text-[#f9faf0] text-[#1f1406]/60' : 'dark:text-[#f9faf0] text-[#1f1406]')}`}>
                           {slot.label}
                         </span>
-                        <span className={`text-[10px] whitespace-nowrap block ${isBusy ? 'dark:text-white/50 text-black/50' : 'dark:text-white/90 text-black/90'} ${isActive ? '!text-white' : ''}`}>
+                        <span className={`text-[10px] whitespace-nowrap block ${isBusy ? 'dark:text-white/50 text-[#1f1406]/50' : 'dark:text-white/90 text-[#1f1406]/80'} ${isActive ? '!text-white' : ''}`}>
                           {slot.start}～{slot.end}
                         </span>
-                        <span className={`text-[10px] block mt-0.5 ${isBusy ? 'dark:text-white/50 text-black/50' : 'dark:text-white/90 text-black/90'} ${isActive ? '!text-white' : ''}`}>
+                        <span className={`text-[10px] block mt-0.5 ${isBusy ? 'dark:text-white/50 text-[#1f1406]/50' : 'dark:text-white/90 text-[#1f1406]/90'} ${isActive ? '!text-white' : ''}`}>
                           {isBusy ? '不可预约' : '可预约'}
                         </span>
                       </div>
@@ -353,7 +353,7 @@ export default function Schedule({ theme }) {
       )}
 
       {/* Bottom Booking Bar */}
-      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 dark:bg-[#1f1406] bg-[#fdfbf7] border-t dark:border-white/10 border-black/10 z-50 flex items-center justify-between safe-area-bottom max-w-[414px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
+      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 dark:bg-[#1f1406] bg-[#fbf8cc] border-t dark:border-white/10 border-black/10 z-50 flex items-center justify-between safe-area-bottom max-w-[414px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
         {displaySlot && (
           <>
             <div className="flex flex-col">
@@ -384,7 +384,7 @@ export default function Schedule({ theme }) {
 
       {/* Modal Content */}
       <div 
-        className={`modal-container fixed inset-x-0 bottom-0 dark:bg-[#1f1406] bg-[#fdfbf7] border-t dark:border-white/10 border-black/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] dark:text-[#f9faf0] text-[#1f1406] max-w-[414px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`modal-container fixed inset-x-0 bottom-0 dark:bg-[#1f1406] bg-[#fbf8cc] border-t dark:border-white/10 border-black/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] dark:text-[#f9faf0] text-[#1f1406] max-w-[414px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
       >
         <div className="p-4 flex items-center justify-between border-b dark:border-white/10 border-black/10">
           <div className="text-base font-medium flex flex-col">
@@ -403,7 +403,7 @@ export default function Schedule({ theme }) {
                   <div 
                     key={opt}
                     onClick={() => updateForm('length', opt)}
-                    className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.length === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/5'}`}
+                    className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.length === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/10'}`}
                   >
                     {opt}
                   </div>
@@ -421,7 +421,7 @@ export default function Schedule({ theme }) {
                     <div 
                       key={opt}
                       onClick={() => updateForm('style', opt)}
-                      className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${isSelected ? 'bg-[#f97316] border-[#f97316] text-white' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/5'}`}
+                      className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${isSelected ? 'bg-[#f97316] border-[#f97316] text-white' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/10'}`}
                     >
                       {opt}
                     </div>
@@ -438,7 +438,7 @@ export default function Schedule({ theme }) {
                   <div 
                     key={opt}
                     onClick={() => updateForm('remove', opt)}
-                    className={`flex-1 text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.remove === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/5'}`}
+                    className={`flex-1 text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.remove === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/10'}`}
                   >
                     {opt}
                   </div>
@@ -452,7 +452,7 @@ export default function Schedule({ theme }) {
               <textarea 
                 value={bookingText}
                 onChange={(e) => setBookingText(e.target.value)}
-                className="w-full h-32 px-4 py-3 rounded-lg border dark:border-white/20 border-black/10 dark:bg-white/5 bg-black/5 dark:text-white text-black text-sm focus:outline-none focus:border-[#f97316]"
+                className="w-full h-32 px-4 py-3 rounded-lg border dark:border-white/20 border-black/10 dark:bg-white/5 bg-black/10 dark:text-white text-black text-sm focus:outline-none focus:border-[#f97316]"
               />
             </div>
         </div>
