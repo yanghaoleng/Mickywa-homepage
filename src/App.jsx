@@ -1,11 +1,14 @@
 import React from 'react'
 import Schedule from './components/Schedule'
+import useTheme from './hooks/useTheme'
 
 function App() {
+  const { theme } = useTheme()
+
   return (
-    <div className="bg-[#1f1406] min-h-screen flex justify-center">
-      <div className="w-full max-w-[414px] min-w-[375px] bg-[#1f1406] shadow-2xl overflow-hidden relative">
-        <Schedule />
+    <div className="dark:bg-[#1f1406] bg-[#fdfbf7] min-h-screen flex justify-center transition-colors duration-300">
+      <div className="w-full max-w-[414px] min-w-[375px] dark:bg-[#1f1406] bg-[#fdfbf7] shadow-2xl overflow-hidden relative transition-colors duration-300">
+        <Schedule theme={theme} />
       </div>
     </div>
   )

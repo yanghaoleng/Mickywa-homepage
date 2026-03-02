@@ -7,7 +7,7 @@ const LENGTH_OPTIONS = ['本甲', '短甲', '中长', '长甲', '延长', '待�
 const STYLE_OPTIONS = ['纯色', '跳色', '法式', '猫眼', '渐变', '设计', '待定'];
 const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
 
-export default function Schedule() {
+export default function Schedule({ theme }) {
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -161,7 +161,7 @@ export default function Schedule() {
   useEffect(() => {
     const handleGlobalClick = (e) => {
       // If clicking inside a slot or the bottom bar or modal, do nothing
-      if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container')) {
+      if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container') || e.target.closest('.theme-toggle')) {
         return;
       }
       setSelectedSlot(null);
@@ -238,16 +238,16 @@ export default function Schedule() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col pb-32 text-[#f9faf0] bg-[#1f1406]">
-      <div className="pt-8 pb-4 bg-[#1f1406]">
-        <img src="/assets/topimg.png" className="w-full block" style={{ backgroundColor: '#1f1406' }} alt="Header" />
+    <div className="min-h-screen flex flex-col pb-32 dark:text-[#f9faf0] text-[#1f1406] dark:bg-[#1f1406] bg-[#fdfbf7] transition-colors duration-300">
+      <div className="pt-1 pb-4 dark:bg-[#1f1406] bg-[#fdfbf7] transition-colors duration-300">
+        <img src="/assets/topimg.png" className="w-full block" alt="Header" />
       </div>
 
       <div className="px-5 flex-1">
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
-            <div className="w-8 h-8 border-2 border-white/10 border-t-[#f97316] rounded-full animate-spin mb-4"></div>
-            <span className="text-white/70 text-sm">加载中...</span>
+            <div className="w-8 h-8 border-2 border-current border-t-[#f97316] rounded-full animate-spin mb-4"></div>
+            <span className="dark:text-white/70 text-black/70 text-sm">加载中...</span>
           </div>
         )}
 
@@ -261,7 +261,7 @@ export default function Schedule() {
 
         {error && (
           <div className="h-80 flex flex-col items-center justify-center">
-            <span className="text-white/70 text-sm mb-8">获取日程失败</span>
+            <span className="dark:text-white/70 text-black/70 text-sm mb-8">获取日程失败</span>
             <button 
               onClick={() => fetchData()}
               className="px-8 py-2 bg-[#f97316] text-white rounded-full text-xs"
@@ -284,7 +284,7 @@ export default function Schedule() {
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-baseline gap-3">
                     <span className="text-lg font-semibold">{item.label}</span>
-                    <span className="text-white/70">周{item.weekday}</span>
+                    <span className="dark:text-white/70 text-black/70">周{item.weekday}</span>
                     {index === 0 && (
                       <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-[#975322] text-white/80">
                         今天
@@ -314,19 +314,19 @@ export default function Schedule() {
                           slot-item flex-1 p-2 h-20 rounded-xl border flex flex-col items-start justify-center
                           transition-all duration-300 transform cursor-pointer
                           ${isBusy 
-                            ? 'bg-white/5 border-white/20 opacity-50 cursor-not-allowed' 
-                            : 'bg-[#142615] border-[#226925] hover:bg-[#244f27]'
+                            ? 'dark:bg-white/5 bg-black/5 dark:border-white/20 border-black/10 opacity-50 cursor-not-allowed' 
+                            : 'dark:bg-[#142615] bg-[#e8f5e9] dark:border-[#226925] border-[#c8e6c9] hover:dark:bg-[#244f27] hover:bg-[#dceddd]'
                           }
                           ${isActive ? '!bg-[#f97316] !border-[#f97316] !opacity-100 shadow-lg animate-float' : ''}
                           ${isShaking ? 'shake-feedback' : ''}
                         `}>
-                        <span className={`text-base font-bold block mb-0.5 ${isActive ? 'text-white' : 'text-[#f9faf0]'}`}>
+                        <span className={`text-base font-bold block mb-0.5 ${isActive ? 'text-white' : 'dark:text-[#f9faf0] text-[#1f1406]'}`}>
                           {slot.label}
                         </span>
-                        <span className={`text-[10px] whitespace-nowrap block ${isBusy ? 'text-white/50' : 'text-white/90'} ${isActive ? 'text-white' : ''}`}>
+                        <span className={`text-[10px] whitespace-nowrap block ${isBusy ? 'dark:text-white/50 text-black/50' : 'dark:text-white/90 text-black/90'} ${isActive ? '!text-white' : ''}`}>
                           {slot.start}～{slot.end}
                         </span>
-                        <span className={`text-[10px] block mt-0.5 ${isBusy ? 'text-white/50' : 'text-white/90'} ${isActive ? 'text-white' : ''}`}>
+                        <span className={`text-[10px] block mt-0.5 ${isBusy ? 'dark:text-white/50 text-black/50' : 'dark:text-white/90 text-black/90'} ${isActive ? '!text-white' : ''}`}>
                           {isBusy ? '不可预约' : '可预约'}
                         </span>
                       </div>
@@ -336,7 +336,7 @@ export default function Schedule() {
               </div>
             ))}
             <div className="h-10"></div>
-            <div className="text-center text-xs text-white/50 py-10 flex items-center justify-center">
+            <div className="text-center text-xs dark:text-white/50 text-black/50 py-10 flex items-center justify-center">
               给罗师傅放一天假吧！ありがとう！
             </div>
           </div>
@@ -353,14 +353,14 @@ export default function Schedule() {
       )}
 
       {/* Bottom Booking Bar */}
-      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 bg-[#1f1406] border-t border-white/10 z-50 flex items-center justify-between safe-area-bottom max-w-[414px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
+      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 dark:bg-[#1f1406] bg-[#fdfbf7] border-t dark:border-white/10 border-black/10 z-50 flex items-center justify-between safe-area-bottom max-w-[414px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
         {displaySlot && (
           <>
             <div className="flex flex-col">
-              <span className="text-sm text-white/70">
+              <span className="text-sm dark:text-white/70 text-black/70">
                 {displaySlot.day.label} 周{displaySlot.day.weekday}
               </span>
-              <span className="text-lg font-bold text-white">
+              <span className="text-lg font-bold dark:text-white text-black">
                 {displaySlot.slot.label} {displaySlot.slot.start}～{displaySlot.slot.end}
               </span>
             </div>
@@ -384,26 +384,26 @@ export default function Schedule() {
 
       {/* Modal Content */}
       <div 
-        className={`modal-container fixed inset-x-0 bottom-0 bg-[#1f1406] border-t border-white/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] text-[#f9faf0] max-w-[414px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`modal-container fixed inset-x-0 bottom-0 dark:bg-[#1f1406] bg-[#fdfbf7] border-t dark:border-white/10 border-black/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] dark:text-[#f9faf0] text-[#1f1406] max-w-[414px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
       >
-        <div className="p-4 flex items-center justify-between border-b border-white/10">
+        <div className="p-4 flex items-center justify-between border-b dark:border-white/10 border-black/10">
           <div className="text-base font-medium flex flex-col">
              <span>{selectedSlot?.day.label} 周{selectedSlot?.day.weekday} <span className="text-[#f97316] text-sm ml-1">{getRelativeDateStr()}</span></span>
-             <span className="text-xs text-white/50">{selectedSlot?.slot.label} {selectedSlot?.slot.start}～{selectedSlot?.slot.end}</span>
+             <span className="text-xs dark:text-white/50 text-black/50">{selectedSlot?.slot.label} {selectedSlot?.slot.start}～{selectedSlot?.slot.end}</span>
           </div>
-          <button onClick={hideModal} className="text-white/50 text-xl px-2">×</button>
+          <button onClick={hideModal} className="dark:text-white/50 text-black/50 text-xl px-2">×</button>
         </div>
 
         <div className="flex-1 p-6 overflow-y-auto">
             {/* Length */}
             <div className="mb-6">
-              <label className="block text-sm mb-2 text-white/70">长度</label>
+              <label className="block text-sm mb-2 dark:text-white/70 text-black/70">长度</label>
               <div className="grid grid-cols-3 gap-3">
                 {LENGTH_OPTIONS.map(opt => (
                   <div 
                     key={opt}
                     onClick={() => updateForm('length', opt)}
-                    className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.length === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'border-white/20 text-white/70 bg-white/5'}`}
+                    className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.length === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/5'}`}
                   >
                     {opt}
                   </div>
@@ -413,7 +413,7 @@ export default function Schedule() {
 
             {/* Style (Multiselect) */}
             <div className="mb-6">
-              <label className="block text-sm mb-2 text-white/70">款式（可多选）</label>
+              <label className="block text-sm mb-2 dark:text-white/70 text-black/70">款式（可多选）</label>
               <div className="grid grid-cols-4 gap-2">
                 {STYLE_OPTIONS.map(opt => {
                   const isSelected = Array.isArray(form.style) && form.style.includes(opt);
@@ -421,7 +421,7 @@ export default function Schedule() {
                     <div 
                       key={opt}
                       onClick={() => updateForm('style', opt)}
-                      className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${isSelected ? 'bg-[#f97316] border-[#f97316] text-white' : 'border-white/20 text-white/70 bg-white/5'}`}
+                      className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${isSelected ? 'bg-[#f97316] border-[#f97316] text-white' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/5'}`}
                     >
                       {opt}
                     </div>
@@ -432,13 +432,13 @@ export default function Schedule() {
 
             {/* Remove */}
             <div className="mb-6">
-              <label className="block text-sm mb-2 text-white/70">卸甲</label>
+              <label className="block text-sm mb-2 dark:text-white/70 text-black/70">卸甲</label>
               <div className="flex gap-3">
                 {REMOVE_OPTIONS.map(opt => (
                   <div 
                     key={opt}
                     onClick={() => updateForm('remove', opt)}
-                    className={`flex-1 text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.remove === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'border-white/20 text-white/70 bg-white/5'}`}
+                    className={`flex-1 text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.remove === opt ? 'bg-[#f97316] border-[#f97316] text-white' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/5'}`}
                   >
                     {opt}
                   </div>
@@ -448,16 +448,16 @@ export default function Schedule() {
 
             {/* Booking Text */}
             <div className="mb-6">
-              <label className="block text-sm mb-2 text-white/70">预约文案</label>
+              <label className="block text-sm mb-2 dark:text-white/70 text-black/70">预约文案</label>
               <textarea 
                 value={bookingText}
                 onChange={(e) => setBookingText(e.target.value)}
-                className="w-full h-32 px-4 py-3 rounded-lg border border-white/20 bg-white/5 text-white text-sm focus:outline-none focus:border-[#f97316]"
+                className="w-full h-32 px-4 py-3 rounded-lg border dark:border-white/20 border-black/10 dark:bg-white/5 bg-black/5 dark:text-white text-black text-sm focus:outline-none focus:border-[#f97316]"
               />
             </div>
         </div>
 
-        <div className="p-4 pb-8 border-t border-white/10 safe-area-bottom">
+        <div className="p-4 pb-8 border-t dark:border-white/10 border-black/10 safe-area-bottom">
           <button 
             onClick={copyToClipboard}
             className="w-full h-10 rounded-full text-sm font-bold bg-[#f97316] text-white shadow-lg active:scale-95 transition-transform"
