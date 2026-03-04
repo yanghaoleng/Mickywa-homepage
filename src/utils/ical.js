@@ -292,6 +292,140 @@ function getSlotAvailability(day, slot, events) {
     isTight: (bestRange.end - bestRange.start) < (2 * 3600000) // 如果小于2小时，标记为紧张（可选）
   };
 }
+// 检查冲突
+function isSlotBusy(day, slot, events) {
+  const [sh, sm] = slot.start.split(':').map(Number);
+  const [eh, em] = slot.end.split(':').map(Number);
+
+  // 构造 Slot 的真实 UTC 时间戳
+  // Slot Start (Shanghai) = UTC(y, m-1, d, sh, sm) - 8h
+  const slotStart = Date.UTC(day.y, day.m - 1, day.d, sh, sm, 0) - SHANGHAI_OFFSET_MS;
+  const slotEnd = Date.UTC(day.y, day.m - 1, day.d, eh, em, 0) - SHANGHAI_OFFSET_MS;
+
+  // 检查是否过期 (Past check)
+  // 获取当前时间 (UTC) + Shanghai Offset
+  const now = Date.now();
+  // 注意：slotStart 已经是 UTC 时间戳，但代表的是 Shanghai 的某个时刻
+  // Date.now() 是 UTC 时间戳
+  // 比较时，slotEnd (UTC) 和 now (UTC) 直接比较即可
+  // 但我们之前构造 slotStart 时减去了 SHANGHAI_OFFSET_MS
+  // Date.UTC(...) 返回的是该日期在 UTC 下的时间戳。
+  // 我们要表达的是“上海时间的 Y-M-D H:m:s”，它对应的真实 UTC 时间戳是 Date.UTC(...) - 8h
+  // 所以 slotEnd 是真实 UTC 时间戳。
+  // 只要 slotEnd < now，说明该时段已结束
+  if (slotEnd < now) {
+    return true; // 已过期，视为 busy
+  }
+
+  return events.some(e => {
+    // 冲突逻辑：(EventStart < SlotEnd) && (EventEnd > SlotStart)
+    return e.start < slotEnd && e.end > slotStart;
+  });
+}
+
+// 牛马模式 (Niuma Mode) - 灵活时间判定备份
+// 包含前后1小时扩展、碎片时间利用、动态时间范围计算
+// eslint-disable-next-line no-unused-vars
+function getSlotAvailabilityNiuma(day, slot, events) {
+  const [sh, sm] = slot.start.split(':').map(Number);
+  const [eh, em] = slot.end.split(':').map(Number);
+
+  // ... (保留之前的逻辑)
+  let extSh = sh - 1;
+  let extSm = sm;
+  if (extSh < 0) extSh = 0; 
+
+  let extEh = eh + 1;
+  let extEm = em;
+  if (extEh > 24) extEh = 24; 
+
+  const rangeStart = Date.UTC(day.y, day.m - 1, day.d, extSh, extSm, 0) - SHANGHAI_OFFSET_MS;
+  const rangeEnd = Date.UTC(day.y, day.m - 1, day.d, extEh, extEm, 0) - SHANGHAI_OFFSET_MS;
+
+  // 检查过期：如果整个扩展范围都过去了，肯定不行
+  // 但这里应该检查具体的 freeRange 是否过期。
+  // 为简单起见，如果 rangeEnd < now，直接 busy
+  if (rangeEnd < Date.now()) return { status: 'busy', displayTime: null };
+
+  const busyRanges = events
+    .filter(e => e.start < rangeEnd && e.end > rangeStart)
+    .map(e => ({
+      start: Math.max(e.start, rangeStart),
+      end: Math.min(e.end, rangeEnd)
+    }))
+    .sort((a, b) => a.start - b.start);
+
+  const mergedBusy = [];
+  if (busyRanges.length > 0) {
+    let curr = busyRanges[0];
+    for (let i = 1; i < busyRanges.length; i++) {
+      const next = busyRanges[i];
+      if (next.start < curr.end) {
+        curr.end = Math.max(curr.end, next.end);
+      } else {
+        mergedBusy.push(curr);
+        curr = next;
+      }
+    }
+    mergedBusy.push(curr);
+  }
+
+  const freeRanges = [];
+  let pointer = rangeStart;
+
+  mergedBusy.forEach(busy => {
+    if (busy.start > pointer) {
+      freeRanges.push({ start: pointer, end: busy.start });
+    }
+    pointer = Math.max(pointer, busy.end);
+  });
+
+  if (pointer < rangeEnd) {
+    freeRanges.push({ start: pointer, end: rangeEnd });
+  }
+
+  // 过滤掉过去的时间
+  const now = Date.now();
+  const futureFreeRanges = freeRanges.map(r => ({
+    start: Math.max(r.start, now),
+    end: r.end
+  })).filter(r => r.end > r.start);
+
+  const validFreeRanges = futureFreeRanges.filter(r => (r.end - r.start) >= 3600000);
+
+  const getHour = (ts) => {
+    const d = new Date(ts + SHANGHAI_OFFSET_MS);
+    return d.getUTCHours() + d.getUTCMinutes() / 60;
+  };
+
+  const finalRanges = validFreeRanges.filter(r => {
+    const startH = getHour(r.start);
+    if (slot.key === 'morning') return startH < 12.5;
+    if (slot.key === 'noon') return startH >= 12.5 && startH < 15.0;
+    if (slot.key === 'afternoon') return startH >= 15.0 && startH < 18.0;
+    if (slot.key === 'evening') return startH >= 18.0;
+    return false;
+  });
+
+  if (finalRanges.length === 0) {
+    return { status: 'busy', displayTime: null };
+  }
+
+  const bestRange = finalRanges[0];
+  
+  const fmt = (ts) => {
+    const d = new Date(ts + SHANGHAI_OFFSET_MS);
+    const h = d.getUTCHours().toString().padStart(2, '0');
+    const m = d.getUTCMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
+  };
+
+  return {
+    status: 'free',
+    displayTime: `${fmt(bestRange.start)}~${fmt(bestRange.end)}`,
+    isTight: (bestRange.end - bestRange.start) < (2 * 3600000)
+  };
+}
 
 // 构建数据
 export function buildScheduleData(workEvents, holidayEvents, months = 2) {
@@ -304,15 +438,20 @@ export function buildScheduleData(workEvents, holidayEvents, months = 2) {
     const weekday = '日一二三四五六'.charAt(day.weekdayIdx);
     
     const slots = TIME_SLOTS.map(slot => {
-      const avail = getSlotAvailability(day, slot, workEvents);
+      // 切换逻辑：使用严格模式
+      const busy = isSlotBusy(day, slot, workEvents);
+      // 如果需要切回牛马模式，解开下面注释并注释掉上面一行
+      // const avail = getSlotAvailabilityNiuma(day, slot, workEvents);
+
       return {
         key: slot.key,
         label: slot.label,
-        start: slot.start, // 原始标准开始时间
-        end: slot.end,     // 原始标准结束时间
-        displayTime: avail.displayTime || `${slot.start}～${slot.end}`, // 实际可用时间或默认
-        status: avail.status,
-        isTight: avail.isTight // 是否时间紧张
+        start: slot.start,
+        end: slot.end,
+        // 严格模式下，displayTime 就是原始时间
+        displayTime: `${slot.start}～${slot.end}`, 
+        status: busy ? 'busy' : 'free',
+        isTight: false // 严格模式没有 tight 概念
       };
     });
 
