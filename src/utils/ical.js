@@ -160,20 +160,137 @@ export const TIME_SLOTS = [
   { key: 'evening', label: '晚上', start: '18:00', end: '22:00' }
 ];
 
-// 检查冲突
-function isSlotBusy(day, slot, events) {
+// 检查冲突并返回可用时间段
+function getSlotAvailability(day, slot, events) {
   const [sh, sm] = slot.start.split(':').map(Number);
   const [eh, em] = slot.end.split(':').map(Number);
 
-  // 构造 Slot 的真实 UTC 时间戳
-  // Slot Start (Shanghai) = UTC(y, m-1, d, sh, sm) - 8h
-  const slotStart = Date.UTC(day.y, day.m - 1, day.d, sh, sm, 0) - SHANGHAI_OFFSET_MS;
-  const slotEnd = Date.UTC(day.y, day.m - 1, day.d, eh, em, 0) - SHANGHAI_OFFSET_MS;
+  // 1. 定义扩展后的检测范围 (前后各扩展1小时)
+  // 上午 10:00-12:00 -> 09:00-13:00
+  // 中午 13:00-15:00 -> 12:00-16:00
+  // 下午 15:00-18:00 -> 14:00-19:00
+  // 晚上 18:00-22:00 -> 17:00-23:00
+  
+  // 扩展后的开始时间
+  let extSh = sh - 1;
+  let extSm = sm;
+  if (extSh < 0) extSh = 0; // 不跨天到昨天
 
-  return events.some(e => {
-    // 冲突逻辑：(EventStart < SlotEnd) && (EventEnd > SlotStart)
-    return e.start < slotEnd && e.end > slotStart;
+  // 扩展后的结束时间
+  let extEh = eh + 1;
+  let extEm = em;
+  if (extEh > 24) extEh = 24; // 不跨天到明天
+
+  // 构造 UTC 时间戳
+  const rangeStart = Date.UTC(day.y, day.m - 1, day.d, extSh, extSm, 0) - SHANGHAI_OFFSET_MS;
+  const rangeEnd = Date.UTC(day.y, day.m - 1, day.d, extEh, extEm, 0) - SHANGHAI_OFFSET_MS;
+
+  // 2. 找出该范围内所有的忙碌时间段，并进行合并
+  const busyRanges = events
+    .filter(e => e.start < rangeEnd && e.end > rangeStart)
+    .map(e => ({
+      start: Math.max(e.start, rangeStart),
+      end: Math.min(e.end, rangeEnd)
+    }))
+    .sort((a, b) => a.start - b.start);
+
+  // 合并重叠的忙碌时间
+  const mergedBusy = [];
+  if (busyRanges.length > 0) {
+    let curr = busyRanges[0];
+    for (let i = 1; i < busyRanges.length; i++) {
+      const next = busyRanges[i];
+      if (next.start < curr.end) {
+        curr.end = Math.max(curr.end, next.end);
+      } else {
+        mergedBusy.push(curr);
+        curr = next;
+      }
+    }
+    mergedBusy.push(curr);
+  }
+
+  // 3. 计算空闲时间段
+  const freeRanges = [];
+  let pointer = rangeStart;
+
+  mergedBusy.forEach(busy => {
+    if (busy.start > pointer) {
+      freeRanges.push({ start: pointer, end: busy.start });
+    }
+    pointer = Math.max(pointer, busy.end);
   });
+
+  if (pointer < rangeEnd) {
+    freeRanges.push({ start: pointer, end: rangeEnd });
+  }
+
+  // 4. 筛选出 > 1小时 (3600000ms) 的空闲段
+  const validFreeRanges = freeRanges.filter(r => (r.end - r.start) >= 3600000);
+
+  // 5. 冲突解决 (方案B)：优先归属给原本的时段
+  // 规则：如果找到的空闲时间主要位于原始时段内，则归属；否则看它是否主要位于扩展区域
+  // 简化策略：只要空闲段与原始时段有交集，或者完全包含原始时段，或者被原始时段包含，都算。
+  // 但为了避免重复显示，我们需要更严格的归属：
+  // 实际上，前端显示是分卡片的。如果一个空闲段 12:00-13:00，既在上午(09-13)也在中午(12-16)。
+  // 上午原始 10-12，扩展后包含 12-13。
+  // 中午原始 13-15，扩展后包含 12-13。
+  // 方案B要求：优先归属给原本的时段。
+  // 12:00-13:00 不在上午原始(10-12)，也不在中午原始(13-15)。它是“夹缝”。
+  // 我们定义“归属权”：
+  // - 如果空闲段与原始时段有重叠 -> 归属当前时段（最优先）
+  // - 如果空闲段完全在原始时段之外：
+  //   - 比较它距离原始时段的距离？或者简单点：
+  //   - 上午负责：09:00 - 12:30
+  //   - 中午负责：12:30 - 15:00
+  //   - 下午负责：15:00 - 18:00
+  //   - 晚上负责：18:00 - 23:00
+  // 这样硬性划分可能最简单且无重叠。
+  
+  // 重新定义“负责范围”用于归属判定 (Hardcoded for Scheme B)
+  // Morning: < 12:30 (start time)
+  // Noon: 12:30 <= start < 15:00
+  // Afternoon: 15:00 <= start < 18:00
+  // Evening: >= 18:00
+  
+  // 转换时间戳回小时数 (Shanghai)
+  const getHour = (ts) => {
+    const d = new Date(ts + SHANGHAI_OFFSET_MS);
+    return d.getUTCHours() + d.getUTCMinutes() / 60;
+  };
+
+  const finalRanges = validFreeRanges.filter(r => {
+    const startH = getHour(r.start);
+    // const endH = getHour(r.end);
+    
+    if (slot.key === 'morning') return startH < 12.5;
+    if (slot.key === 'noon') return startH >= 12.5 && startH < 15.0;
+    if (slot.key === 'afternoon') return startH >= 15.0 && startH < 18.0;
+    if (slot.key === 'evening') return startH >= 18.0;
+    return false;
+  });
+
+  if (finalRanges.length === 0) {
+    return { status: 'busy', displayTime: null };
+  }
+
+  // 如果有多个空闲段，取最长的一个？或者合并显示？
+  // 简单起见，取第一个（通常也是最早的）
+  const bestRange = finalRanges[0];
+  
+  // 格式化显示时间
+  const fmt = (ts) => {
+    const d = new Date(ts + SHANGHAI_OFFSET_MS);
+    const h = d.getUTCHours().toString().padStart(2, '0');
+    const m = d.getUTCMinutes().toString().padStart(2, '0');
+    return `${h}:${m}`;
+  };
+
+  return {
+    status: 'free',
+    displayTime: `${fmt(bestRange.start)}~${fmt(bestRange.end)}`,
+    isTight: (bestRange.end - bestRange.start) < (2 * 3600000) // 如果小于2小时，标记为紧张（可选）
+  };
 }
 
 // 构建数据
@@ -187,13 +304,15 @@ export function buildScheduleData(workEvents, holidayEvents, months = 2) {
     const weekday = '日一二三四五六'.charAt(day.weekdayIdx);
     
     const slots = TIME_SLOTS.map(slot => {
-      const busy = isSlotBusy(day, slot, workEvents);
+      const avail = getSlotAvailability(day, slot, workEvents);
       return {
         key: slot.key,
         label: slot.label,
-        start: slot.start,
-        end: slot.end,
-        status: busy ? 'busy' : 'free'
+        start: slot.start, // 原始标准开始时间
+        end: slot.end,     // 原始标准结束时间
+        displayTime: avail.displayTime || `${slot.start}～${slot.end}`, // 实际可用时间或默认
+        status: avail.status,
+        isTight: avail.isTight // 是否时间紧张
       };
     });
 

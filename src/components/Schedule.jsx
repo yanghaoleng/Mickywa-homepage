@@ -70,7 +70,7 @@ export default function Schedule({ theme }) {
     
     const d = selectedSlot.day.date;
     const dateStr = `${d.getMonth() + 1}月${d.getDate()}日`;
-    const timeStr = `${selectedSlot.slot.label}(${selectedSlot.slot.start}-${selectedSlot.slot.end})`;
+    const timeStr = `${selectedSlot.slot.label}(${selectedSlot.slot.displayTime || `${selectedSlot.slot.start}-${selectedSlot.slot.end}`})`;
     
     // Join styles if it's an array
     const styleStr = Array.isArray(form.style) 
@@ -324,7 +324,7 @@ export default function Schedule({ theme }) {
                           {slot.label}
                         </span>
                         <span className={`text-[10px] whitespace-nowrap block ${isBusy ? 'dark:text-white/50 text-[#1f1406]/50' : 'dark:text-white/90 text-[#1f1406]/80'} ${isActive ? '!text-white' : ''}`}>
-                          {slot.start}～{slot.end}
+                          {slot.displayTime || `${slot.start}～${slot.end}`}
                         </span>
                         <span className={`text-[10px] block mt-0.5 ${isBusy ? 'dark:text-white/50 text-[#1f1406]/50' : 'dark:text-white/90 text-[#1f1406]/90'} ${isActive ? '!text-white' : ''}`}>
                           {isBusy ? '不可预约' : '可预约'}
@@ -361,7 +361,7 @@ export default function Schedule({ theme }) {
                 {displaySlot.day.label} 周{displaySlot.day.weekday}
               </span>
               <span className="text-lg font-bold dark:text-white text-black">
-                {displaySlot.slot.label} {displaySlot.slot.start}～{displaySlot.slot.end}
+                {displaySlot.slot.label} {displaySlot.slot.displayTime || `${displaySlot.slot.start}～${displaySlot.slot.end}`}
               </span>
             </div>
             <button
@@ -389,7 +389,12 @@ export default function Schedule({ theme }) {
         <div className="p-4 flex items-center justify-between border-b dark:border-white/10 border-black/10">
           <div className="text-base font-medium flex flex-col">
              <span>{selectedSlot?.day.label} 周{selectedSlot?.day.weekday} <span className="text-[#f97316] text-sm ml-1">{getRelativeDateStr()}</span></span>
-             <span className="text-xs dark:text-white/50 text-black/50">{selectedSlot?.slot.label} {selectedSlot?.slot.start}～{selectedSlot?.slot.end}</span>
+             <span className="text-xs dark:text-white/50 text-black/50">
+               {selectedSlot?.slot.label} {selectedSlot?.slot.displayTime || `${selectedSlot?.slot.start}～${selectedSlot?.slot.end}`}
+               {selectedSlot?.slot.isTight && (
+                 <span className="ml-2 text-[#f97316] font-bold">时间紧张，只能做简单点的哦</span>
+               )}
+             </span>
           </div>
           <button onClick={hideModal} className="dark:text-white/50 text-black/50 text-xl px-2">×</button>
         </div>
