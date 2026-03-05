@@ -5,9 +5,6 @@
 const WORK_CAL_URL = 'https://p228-caldav.icloud.com.cn/published/2/MTY4NjUyNzUzNjAxNjg2NeST_Tn2EHy6yE2hkvWkYhtgsVRJM_iMUhuHPUSHHgSr';
 const HOLIDAY_CAL_URL = 'https://calendars.icloud.com/holidays/cn_zh.ics/';
 
-// Use a proxy if needed (e.g. Supabase Edge Function)
-const PROXY_URL = import.meta.env.VITE_PROXY_URL || '';
-
 const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
 
 /**
@@ -135,7 +132,9 @@ function getDateRangeDays(days) {
   // 其实直接构造 Date(UTC) 递增即可
   const base = Date.UTC(start.y, start.m - 1, start.d, 0, 0, 0);
 
-  for (let i = 0; i < days; i++) {
+  // 从明天开始 (i=1) 到 i <= days (共21天)
+  // 如果要排除今天，且要未来21天，则从 i=1 到 i=21
+  for (let i = 1; i <= days; i++) {
     const ts = base + i * 24 * 3600 * 1000;
     const d = new Date(ts); // 这里的 d 是 UTC 时间，其 getUTC... 就是上海的日期
     res.push({
@@ -429,7 +428,8 @@ function getSlotAvailabilityNiuma(day, slot, events) {
 
 // 构建数据
 export function buildScheduleData(workEvents, holidayEvents, months = 2) {
-  const days = Math.ceil(30 * months);
+  // const days = Math.ceil(30 * months); // Old logic
+  const days = 21; // Future 21 days (excluding today logic handled in getDateRangeDays)
   const targetDays = getDateRangeDays(days);
   const holidayMap = buildHolidayMap(holidayEvents);
 
@@ -518,14 +518,12 @@ async function fallbackFetch(url) {
   let targetUrl = url;
   
   // 本地开发代理逻辑：如果没有配置 VITE_PROXY_URL，则尝试走本地 Vite 代理
-  if (import.meta.env.DEV && !PROXY_URL) {
+  if (import.meta.env.DEV) {
     if (url.includes('p228-caldav.icloud.com.cn')) {
       targetUrl = '/api/work-calendar';
     } else if (url.includes('calendars.icloud.com')) {
       targetUrl = '/api/holiday-calendar';
     }
-  } else if (PROXY_URL) {
-    targetUrl = `${PROXY_URL}${encodeURIComponent(url)}`;
   }
 
   try {
