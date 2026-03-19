@@ -132,9 +132,8 @@ function getDateRangeDays(days) {
   // 其实直接构造 Date(UTC) 递增即可
   const base = Date.UTC(start.y, start.m - 1, start.d, 0, 0, 0);
 
-  // 从明天开始 (i=1) 到 i <= days (共21天)
-  // 如果要排除今天，且要未来21天，则从 i=1 到 i=21
-  for (let i = 1; i <= days; i++) {
+  // 从今天开始 (i=0) 到 i < days（共 days 天）
+  for (let i = 0; i < days; i++) {
     const ts = base + i * 24 * 3600 * 1000;
     const d = new Date(ts); // 这里的 d 是 UTC 时间，其 getUTC... 就是上海的日期
     res.push({
@@ -429,7 +428,7 @@ function getSlotAvailabilityNiuma(day, slot, events) {
 // 构建数据
 export function buildScheduleData(workEvents, holidayEvents, months = 2) {
   // const days = Math.ceil(30 * months); // Old logic
-  const days = 21; // Future 21 days (excluding today logic handled in getDateRangeDays)
+  const days = 21; // Future 21 days (including today)
   const targetDays = getDateRangeDays(days);
   const holidayMap = buildHolidayMap(holidayEvents);
 
