@@ -21,7 +21,7 @@ export default async function handler(req, res) {
 
   let targetUrl = '';
   if (type === 'work') {
-    targetUrl = 'https://p228-caldav.icloud.com.cn/published/2/MTY4NjUyNzUzNjAxNjg2NeST_Tn2EHy6yE2hkvWkYhtgsVRJM_iMUhuHPUSHHgSr';
+    targetUrl = 'https://outlook.live.com/owa/calendar/00000000-0000-0000-0000-000000000000/48be9371-5a7c-4c58-8a64-4268b3012841/cid-06E665F8FD44A075/calendar.ics';
   } else if (type === 'holiday') {
     targetUrl = 'https://calendars.icloud.com/holidays/cn_zh.ics/';
   } else {
@@ -29,7 +29,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch(targetUrl);
+    const response = await fetch(targetUrl, {
+      redirect: 'follow',
+      headers: {
+        Accept: 'text/calendar,text/plain;q=0.9,*/*;q=0.8'
+      }
+    });
     if (!response.ok) {
       throw new Error(`Upstream fetch failed: ${response.status}`);
     }

@@ -2,7 +2,7 @@
 // 核心逻辑：所有时间计算统一转换为 UTC 时间戳（毫秒）进行比较
 // 定义 "Shanghai Time" 为 UTC+8
 
-const WORK_CAL_URL = 'https://p228-caldav.icloud.com.cn/published/2/MTY4NjUyNzUzNjAxNjg2NeST_Tn2EHy6yE2hkvWkYhtgsVRJM_iMUhuHPUSHHgSr';
+const WORK_CAL_URL = 'https://outlook.live.com/owa/calendar/00000000-0000-0000-0000-000000000000/48be9371-5a7c-4c58-8a64-4268b3012841/cid-06E665F8FD44A075/calendar.ics';
 const HOLIDAY_CAL_URL = 'https://calendars.icloud.com/holidays/cn_zh.ics/';
 
 const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
@@ -518,7 +518,7 @@ async function fallbackFetch(url) {
   
   // 本地开发代理逻辑：如果没有配置 VITE_PROXY_URL，则尝试走本地 Vite 代理
   if (import.meta.env.DEV) {
-    if (url.includes('p228-caldav.icloud.com.cn')) {
+    if (url.includes('outlook.live.com/owa/calendar')) {
       targetUrl = '/api/work-calendar';
     } else if (url.includes('calendars.icloud.com')) {
       targetUrl = '/api/holiday-calendar';
@@ -534,7 +534,7 @@ async function fallbackFetch(url) {
   }
 }
 
-const CACHE_KEY = 'luo_schedule_cache_v5'; // Bump version
+const CACHE_KEY = 'wt_schedule_cache_v1';
 const CACHE_TTL = 3 * 60 * 1000;
 
 // Hardcoded holidays for demo/fallback (2024-2026)

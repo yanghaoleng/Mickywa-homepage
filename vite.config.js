@@ -8,9 +8,13 @@ export default defineConfig({
     proxy: {
       // 本地开发代理 iCloud 日历，解决 CORS 问题
       '/api/work-calendar': {
-        target: 'https://p228-caldav.icloud.com.cn',
+        target: 'https://outlook.live.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/work-calendar/, '/published/2/MTY4NjUyNzUzNjAxNjg2NeST_Tn2EHy6yE2hkvWkYhtgsVRJM_iMUhuHPUSHHgSr'),
+        rewrite: (path) =>
+          path.replace(
+            /^\/api\/work-calendar/,
+            '/owa/calendar/00000000-0000-0000-0000-000000000000/48be9371-5a7c-4c58-8a64-4268b3012841/cid-06E665F8FD44A075/calendar.ics'
+          ),
       },
       '/api/holiday-calendar': {
         target: 'https://calendars.icloud.com',
