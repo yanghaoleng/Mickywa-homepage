@@ -116,18 +116,3 @@
 .animate-color-change {
   animation: color-change 2s ease-in-out infinite;
 }
-
-#day-2026-5-1 > div > div.slot-item {
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-#day-2026-5-8 > div > div.slot-item {
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-
-#day-2026-5-14 > div > div.slot-item {
-  padding-left: 10px;
-  padding-right: 10px;
-}

@@ -586,7 +586,7 @@ export default function Schedule({ theme }) {
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
-                                      <div className="slot-item w-full h-full px-2 py-1 rounded-[12px] flex flex-col items-start justify-center gap-1 dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
+                                      <div className="slot-item w-full h-full px-2 py-1 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
                                         <div className="min-w-0 flex items-center gap-1.5">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
