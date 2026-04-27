@@ -87,10 +87,16 @@ function parseICS(text) {
            }
            
            if (start !== null && end !== null) {
+             const duration = end - start;
+             const startShanghai = new Date(start + SHANGHAI_OFFSET_MS);
+             const isMidnightShanghai = startShanghai.getUTCHours() === 0 && startShanghai.getUTCMinutes() === 0;
+             const isAllDay = isDateOnly || (isMidnightShanghai && duration >= 24 * 60 * 60 * 1000);
+
              events.push({
                summary: current.SUMMARY || '',
                start, // timestamp
-               end    // timestamp
+               end,   // timestamp
+               isAllDay
              });
            }
         }
@@ -297,7 +303,10 @@ function isSlotBusy(day, slot, events) {
 
   // 构造 Slot 的真实 UTC 时间戳
   // Slot Start (Shanghai) = UTC(y, m-1, d, sh, sm) - 8h
-  const slotStart = Date.UTC(day.y, day.m - 1, day.d, sh, sm, 0) - SHANGHAI_OFFSET_MS;
+  const conflictStartH = slot.key === 'evening' ? 17 : sh;
+  const conflictStartM = slot.key === 'evening' ? 0 : sm;
+
+  const slotStart = Date.UTC(day.y, day.m - 1, day.d, conflictStartH, conflictStartM, 0) - SHANGHAI_OFFSET_MS;
   const slotEnd = Date.UTC(day.y, day.m - 1, day.d, eh, em, 0) - SHANGHAI_OFFSET_MS;
 
   // 检查是否过期 (Past check)
@@ -315,10 +324,14 @@ function isSlotBusy(day, slot, events) {
     return true; // 已过期，视为 busy
   }
 
-  return events.some(e => {
-    // 冲突逻辑：(EventStart < SlotEnd) && (EventEnd > SlotStart)
-    return e.start < slotEnd && e.end > slotStart;
-  });
+  return events
+    .filter(e => !e.isAllDay)
+    .some(e => {
+      if (slot.key === 'evening') {
+        return e.start < slotEnd && e.end >= slotStart;
+      }
+      return e.start < slotEnd && e.end > slotStart;
+    });
 }
 
 // 牛马模式 (Niuma Mode) - 灵活时间判定备份

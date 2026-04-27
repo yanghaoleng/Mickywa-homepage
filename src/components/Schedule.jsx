@@ -489,6 +489,10 @@ export default function Schedule({ theme }) {
                                 : isSelected
                                   ? "!text-[#3A3A3A] dark:!text-[#3A3A3A]"
                                   : "text-[#083A8E] dark:text-[#FFFFFF]";
+
+                              const metaTextClass = isSelected
+                                ? "text-[#3A3A3A]/50 dark:text-[#083A8E]/45"
+                                : "text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50";
                               
                                   return (
                                     <div 
@@ -520,10 +524,10 @@ export default function Schedule({ theme }) {
                                         <div className="min-w-0 flex items-center gap-1.5">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
+                                            <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
                                           )}
                                           {isToday && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今</span>
+                                            <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -548,10 +552,10 @@ export default function Schedule({ theme }) {
                                         <div className="min-w-0 flex items-center gap-1.5">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
+                                            <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
                                           )}
                                           {isToday && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今</span>
+                                            <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -576,10 +580,10 @@ export default function Schedule({ theme }) {
                                         <div className="min-w-0 flex items-center gap-1.5">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
+                                            <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
                                           )}
                                           {isToday && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今</span>
+                                            <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -590,10 +594,10 @@ export default function Schedule({ theme }) {
                                         <div className="min-w-0 flex items-center gap-1.5">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
+                                            <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
                                           )}
                                           {isToday && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今</span>
+                                            <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>

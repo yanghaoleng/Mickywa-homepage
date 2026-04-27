@@ -17,6 +17,46 @@
 
 ## 字体
 
+### Typography Tokens
+
+| Token | 值 | 现用场景（示例） |
+|------|----|------------------|
+| `font.weight.semibold` | 600 | 日期数字（加粗） |
+| `font.size.monthTitle` | `text-xl` | 月标题（如 “5月”） |
+| `font.size.weekday` | `text-xs` | 周标题（一二三四五六日） |
+| `font.size.dateNumber` | `text-base` | 日期数字（如 “8”） |
+| `font.size.status` | `text-xs` | 可预约状态（白天/晚上/不空） |
+| `font.size.meta` | `text-[10px]` | 节假日/“今”标签 |
+| `text.color.primary` | `#3A3A3A` | 正文默认色 |
+| `text.color.muted` | `#3A3A3A/50` | 次要信息（节假日/今） |
+| `text.color.brand` | `#083A8E` | 亮色模式按钮文字（可预约） |
+
+说明：当前项目主要通过 Tailwind 类名落地（如 `text-base` / `text-xs` / `text-[10px]`），这些值在这里统一作为 token 记录。
+
 ## 间距
 
+### Spacing Tokens
+
+| Token | 值 | 现用场景（示例） |
+|------|----|------------------|
+| `space.grid.gap` | `gap-1`（4px） | 日期网格横纵间距、周内间距一致 |
+| `space.weekHeader.pb` | `pb-1.5`（6px） | 周标题行与日期网格的间距 |
+| `space.slot.px` | `px-2.5`（10px） | 预约按钮左右内边距 |
+| `space.slot.py` | `py-2`（8px） | 预约按钮上下内边距 |
+| `space.slot.gap` | `gap-1`（4px） | 预约按钮内两行之间间距 |
+
 ## 组件
+
+### Component Tokens
+
+| Token | 值 | 现用场景（示例） |
+|------|----|------------------|
+| `radius.slot` | `12px` | 预约按钮圆角（`rounded-[12px]`） |
+| `shadow.slot.inset.light` | `0 0 32px 0 rgba(255,255,255,0.80) inset` | 亮色模式按钮内阴影 |
+| `shadow.slot.inset.dark` | `0 0 32px 0 rgba(255,255,255,0.20) inset` | 暗色模式按钮内阴影 |
+| `layout.cell` | `aspect-square` | 日期单元格正方形布局 |
+
+### 规则（可预约判定）
+
+- 全天日程忽略：`isAllDay` 的事件不参与“是否有空”的判断。
+- 晚上是否有空：晚上时段在冲突判断时从 `17:00` 开始；只要日程“贴到 17:00”（事件结束时间 `>= 17:00` 且与 17:00-22:00 有交集），则晚上判定为 `不空`。
