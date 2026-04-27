@@ -35,6 +35,8 @@ export default function Schedule({ theme }) {
   });
   const [bookingText, setBookingText] = useState('');
   const [toast, setToast] = useState(null); // { message, type }
+  const [markBgColor, setMarkBgColor] = useState('transparent');
+  const [markAnimation, setMarkAnimation] = useState(false);
 
   const dayRefs = useRef({});
 
@@ -182,6 +184,23 @@ export default function Schedule({ theme }) {
     setShowModal(false);
   };
 
+  const handleMarkClick = () => {
+    const colors = ['#D3F1FF', '#CFEDD9', '#FFDDDD', '#FCF7BD'];
+    setMarkAnimation(true);
+    
+    let index = 0;
+    const interval = setInterval(() => {
+      setMarkBgColor(colors[index]);
+      index = (index + 1) % colors.length;
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(interval);
+      setMarkBgColor('transparent');
+      setMarkAnimation(false);
+    }, 600);
+  };
+
   const updateForm = (field, value) => {
     setForm(prev => {
       // Special handling for style multiselect
@@ -247,21 +266,28 @@ export default function Schedule({ theme }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col pb-32 dark:text-[#efefee] text-[#1a1a1a] dark:bg-[#101012] bg-[#f6f6f4] transition-colors duration-300">
-      <div className="pt-0 pb-4 dark:bg-[#101012] bg-[#f6f6f4] transition-colors duration-300 relative z-50">
-        <img
-          src="/assets/topimg.webp"
-          className="w-full block relative z-50 opacity-100 filter-none mix-blend-normal"
-          style={{ filter: 'none', opacity: 1, mixBlendMode: 'normal' }}
-          alt="mickywa"
-        />
+    <div className="min-h-screen flex flex-col pb-32 dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
+      <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
+        <div className="flex flex-col items-center justify-start space-y-2">
+          <div className="relative" onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
+            <div 
+              className="absolute inset-0 rounded-full transition-colors duration-100" 
+              style={{ 
+                backgroundColor: markBgColor, 
+                animation: markAnimation ? 'colorShift 0.6s ease-in-out' : 'none' 
+              }} 
+            />
+            <img src="/assets/mark.svg" alt="mickywa mark" className="w-[46px] h-auto relative z-10" />
+          </div>
+          <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
+        </div>
       </div>
 
       <div className="px-5 flex-1">
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
-            <span className="dark:text-white/70 text-black/70 text-sm">加载中...</span>
+            <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm">加载中...</span>
           </div>
         )}
 
@@ -275,10 +301,10 @@ export default function Schedule({ theme }) {
 
         {error && (
           <div className="h-80 flex flex-col items-center justify-center">
-            <span className="dark:text-white/70 text-black/70 text-sm mb-8">获取日程失败</span>
+            <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm mb-8">获取日程失败</span>
             <button 
               onClick={() => fetchData()}
-              className="px-8 py-2 bg-[#1f1f22] text-[#f6f6f4] dark:bg-[#e9e9e6] dark:text-[#151518] rounded-full text-xs"
+              className="px-8 py-2 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs"
             >
               重新加载
             </button>
@@ -298,15 +324,15 @@ export default function Schedule({ theme }) {
                 <div className="flex justify-between items-center mb-4">
                   <div className="flex items-baseline gap-3">
                     <span className="text-lg font-semibold">{item.label}</span>
-                    <span className="dark:text-white/70 text-black/70">周{item.weekday}</span>
+                    <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">周{item.weekday}</span>
                     {index === 0 && (
-                      <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-[#5b2327] text-[#f6f6f4]/90 dark:bg-[#7a2f34] dark:text-white/90">
+                      <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-[#975322] text-[#FFFFFF]/90 dark:bg-[#975322] dark:text-[#FFFFFF]/90">
                         今天
                       </span>
                     )}
                   </div>
                   {item.holidayName && (
-                    <div className="text-gray-600 dark:text-gray-300 font-medium text-right">{item.holidayName}</div>
+                    <div className="text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60 font-medium text-right">{item.holidayName}</div>
                   )}
                 </div>
 
@@ -329,19 +355,19 @@ export default function Schedule({ theme }) {
                           slot-item flex-1 p-2 h-20 rounded-xl border flex flex-col items-start justify-center
                           transition-all duration-300 transform cursor-pointer
                           ${isBusy 
-                            ? 'dark:bg-white/5 bg-[#ececea] dark:border-white/15 border-black/10 opacity-50 cursor-not-allowed' 
-                            : 'bg-white text-[#2a1a0e] border-2 border-[#8b5a2b]/60 hover:border-[#8b5a2b]/80 hover:bg-[#fafafa] dark:bg-[#2b1a12] dark:text-[#f6f6f4] dark:border-2 dark:border-[#6f4a2c]/70 dark:hover:border-[#a4774a]/70 dark:hover:bg-[#24150f] shadow-[0_2px_0_rgba(0,0,0,0.08)]'
+                            ? 'dark:bg-[#333333]/10 bg-[#333333]/10 dark:border-[#FFFFFF]/8 border-[#333333]/10 opacity-50 cursor-not-allowed' 
+                            : 'bg-[#D3F1FF] text-[#083A8E] border border-[#083A8E]/60 hover:border-[#083A8E]/80 hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:border dark:border-[#D3F1FF]/70 dark:hover:border-[#D3F1FF]/70 dark:hover:bg-[#083A8E]/90 shadow-[0_2px_0_rgba(0,0,0,0.08)]'
                           }
-                          ${isActive ? '!opacity-100 shadow-lg animate-float !bg-[#8b5a2b] !border-[#8b5a2b] ring-2 ring-[#8b5a2b]/15 dark:!bg-[#3a2416] dark:!border-[#a4774a]/70 dark:ring-[#a4774a]/20' : ''}
+                          ${isActive ? '!opacity-100 shadow-lg animate-float !bg-[#083A8E] !border !border-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:!border !border-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]' : ''}
                           ${isShaking ? 'shake-feedback' : ''}
                         `}>
-                        <span className={`text-base font-bold block mb-0.5 ${isActive ? 'text-[#f5efc3] dark:text-[#f6f6f4]' : (isBusy ? 'dark:text-white/60 text-black/50' : (isFree ? 'text-[#2a1a0e] dark:text-[#f6f6f4]' : ''))}`}>
+                        <span className={`text-base font-bold block mb-0.5 ${isActive ? 'text-[#FFFFFF] dark:text-[#083A8E]' : (isBusy ? 'dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50' : (isFree ? 'text-[#083A8E] dark:text-[#FFFFFF]' : ''))}`}>
                           {slot.label}
                         </span>
-                        <span className={`text-[10px] whitespace-nowrap block ${isBusy ? 'dark:text-white/40 text-black/40' : (isFree ? 'text-[#2a1a0e]/60 dark:text-[#f6f6f4]/70' : '')} ${isActive ? '!text-[#f5efc3]/70 dark:!text-[#f6f6f4]/75' : ''}`}>
+                        <span className={`text-[10px] whitespace-nowrap block ${isBusy ? 'dark:text-[#FFFFFF]/40 text-[#3A3A3A]/40' : (isFree ? 'text-[#083A8E]/60 dark:text-[#FFFFFF]/70' : '')} ${isActive ? '!text-[#FFFFFF]/70 dark:!text-[#083A8E]/75' : ''}`}>
                           {slot.displayTime || `${slot.start}～${slot.end}`}
                         </span>
-                        <span className={`text-[10px] block mt-0.5 ${isBusy ? 'dark:text-white/40 text-black/40' : (isFree ? 'text-[#2a1a0e]/70 dark:text-[#f6f6f4]/80' : '')} ${isActive ? '!text-[#f5efc3]/85 dark:!text-[#f6f6f4]/85' : ''}`}>
+                        <span className={`text-[10px] block mt-0.5 ${isBusy ? 'dark:text-[#FFFFFF]/40 text-[#3A3A3A]/40' : (isFree ? 'text-[#083A8E]/70 dark:text-[#FFFFFF]/80' : '')} ${isActive ? '!text-[#FFFFFF]/85 dark:!text-[#083A8E]/85' : ''}`}>
                           {isBusy ? '不可预约' : '可预约'}
                         </span>
                       </div>
@@ -351,7 +377,7 @@ export default function Schedule({ theme }) {
               </div>
             ))}
             <div className="h-10"></div>
-            <div className="text-center text-xs dark:text-white/50 text-black/50 py-10 flex items-center justify-center">
+            <div className="text-center text-xs dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50 py-10 flex items-center justify-center">
               感谢支持 mickywa！
             </div>
           </div>
@@ -361,27 +387,27 @@ export default function Schedule({ theme }) {
       {showBackToday && !selectedSlot && (
         <button 
           onClick={scrollToToday}
-          className="fixed right-5 bottom-10 px-4 py-2 text-xs bg-[#1f1f22] text-[#f6f6f4] dark:bg-[#e9e9e6] dark:text-[#151518] rounded-full shadow-lg z-40"
+          className="fixed right-5 bottom-10 px-4 py-2 text-xs bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full shadow-lg z-40"
         >
           返回今天
         </button>
       )}
 
       {/* Bottom Booking Bar */}
-      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 dark:bg-[#101012] bg-[#f6f6f4] border-t dark:border-white/10 border-black/10 z-50 flex items-center justify-between safe-area-bottom max-w-[440px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
+      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 dark:bg-[#333333] bg-[#FFFFFF] border-t dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10 z-50 flex items-center justify-between safe-area-bottom max-w-[440px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
         {displaySlot && (
           <>
             <div className="flex flex-col">
-              <span className="text-sm dark:text-white/70 text-black/70">
+              <span className="text-sm dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">
                 {displaySlot.day.label} 周{displaySlot.day.weekday}
               </span>
-              <span className="text-lg font-bold dark:text-white text-black">
+              <span className="text-lg font-bold dark:text-[#FFFFFF] text-[#3A3A3A]">
                 {displaySlot.slot.label} {displaySlot.slot.displayTime || `${displaySlot.slot.start}～${displaySlot.slot.end}`}
               </span>
             </div>
             <button
               onClick={handleBookClick}
-              className="px-8 py-3 bg-[#1f1f22] text-[#f6f6f4] dark:bg-[#e9e9e6] dark:text-[#151518] font-bold rounded-full shadow-lg transform transition-transform active:scale-95"
+              className="px-8 py-3 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] font-bold rounded-full shadow-lg transform transition-transform active:scale-95"
             >
               预约
             </button>
@@ -399,34 +425,34 @@ export default function Schedule({ theme }) {
 
       {/* Modal Content */}
       <div 
-        className={`modal-container fixed inset-x-0 bottom-0 dark:bg-[#101012] bg-[#f6f6f4] border-t dark:border-white/10 border-black/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] dark:text-[#efefee] text-[#1a1a1a] max-w-[440px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
+        className={`modal-container fixed inset-x-0 bottom-0 dark:bg-[#333333] bg-[#FFFFFF] border-t dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] dark:text-[#FFFFFF] text-[#3A3A3A] max-w-[440px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
       >
-        <div className="p-4 flex items-center justify-between border-b dark:border-white/10 border-black/10">
+        <div className="p-4 flex items-center justify-between border-b dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10">
           <div className="text-base font-medium flex flex-col">
-             <span>{selectedSlot?.day.label} 周{selectedSlot?.day.weekday} <span className="text-gray-600 dark:text-gray-300 text-sm ml-1">{getRelativeDateStr()}</span></span>
-             <span className="text-xs dark:text-white/50 text-black/50">
+             <span>{selectedSlot?.day.label} 周{selectedSlot?.day.weekday} <span className="text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60 text-sm ml-1">{getRelativeDateStr()}</span></span>
+             <span className="text-xs dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50">
                {selectedSlot?.slot.label} {selectedSlot?.slot.displayTime || `${selectedSlot?.slot.start}～${selectedSlot?.slot.end}`}
                {selectedSlot?.slot.isTight && (
-                 <span className="ml-2 text-gray-900 dark:text-white font-bold">时间紧张，只能做简单点的哦</span>
+                 <span className="ml-2 text-[#3A3A3A] dark:text-[#FFFFFF] font-bold">时间紧张，只能做简单点的哦</span>
                )}
              </span>
-             <span className="text-xs text-[#8b5a2b] dark:text-[#a4774a] font-medium mt-0.5">
+             <span className="text-xs text-[#975322] dark:text-[#975322] font-medium mt-0.5">
                {getEstimateStr()}
              </span>
           </div>
-          <button onClick={hideModal} className="dark:text-white/50 text-black/50 text-xl px-2">×</button>
+          <button onClick={hideModal} className="dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50 text-xl px-2">×</button>
         </div>
 
         <div className="flex-1 p-6 overflow-y-auto">
             {/* Length */}
             <div className="mb-6">
-              <label className="block text-sm mb-2 dark:text-white/70 text-black/70">长度</label>
+              <label className="block text-sm mb-2 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">长度</label>
               <div className="grid grid-cols-3 gap-3">
                 {LENGTH_OPTIONS.map(opt => (
                   <div 
                     key={opt}
                     onClick={() => updateForm('length', opt)}
-                    className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.length === opt ? 'bg-gray-900 border-gray-900 text-white dark:bg-white dark:border-white dark:text-black' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/5'}`}
+                    className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.length === opt ? 'bg-[#975322] border-[#975322] text-[#FFFFFF] dark:bg-[#975322] dark:border-[#975322] dark:text-[#FFFFFF]' : 'dark:border-[#FFFFFF]/20 border-[#3A3A3A]/10 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 dark:bg-[#CFEDD9]/5 bg-[#CFEDD9]/5'}`}
                   >
                     {opt}
                   </div>
@@ -436,7 +462,7 @@ export default function Schedule({ theme }) {
 
             {/* Style (Multiselect) */}
             <div className="mb-6">
-              <label className="block text-sm mb-2 dark:text-white/70 text-black/70">款式（可多选）</label>
+              <label className="block text-sm mb-2 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">款式（可多选）</label>
               <div className="grid grid-cols-4 gap-2">
                 {STYLE_OPTIONS.map(opt => {
                   const isSelected = Array.isArray(form.style) && form.style.includes(opt);
@@ -444,7 +470,7 @@ export default function Schedule({ theme }) {
                     <div 
                       key={opt}
                       onClick={() => updateForm('style', opt)}
-                      className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${isSelected ? 'bg-gray-900 border-gray-900 text-white dark:bg-white dark:border-white dark:text-black' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/5'}`}
+                      className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${isSelected ? 'bg-[#975322] border-[#975322] text-[#FFFFFF] dark:bg-[#975322] dark:border-[#975322] dark:text-[#FFFFFF]' : 'dark:border-[#FFFFFF]/20 border-[#3A3A3A]/10 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 dark:bg-[#CFEDD9]/5 bg-[#CFEDD9]/5'}`}
                     >
                       {opt}
                     </div>
@@ -455,13 +481,13 @@ export default function Schedule({ theme }) {
 
             {/* Remove */}
             <div className="mb-6">
-              <label className="block text-sm mb-2 dark:text-white/70 text-black/70">卸甲</label>
+              <label className="block text-sm mb-2 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">卸甲</label>
               <div className="flex gap-3">
                 {REMOVE_OPTIONS.map(opt => (
                   <div 
                     key={opt}
                     onClick={() => updateForm('remove', opt)}
-                    className={`flex-1 text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.remove === opt ? 'bg-gray-900 border-gray-900 text-white dark:bg-white dark:border-white dark:text-black' : 'dark:border-white/20 border-black/10 dark:text-white/70 text-black/70 dark:bg-white/5 bg-black/5'}`}
+                    className={`flex-1 text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.remove === opt ? 'bg-[#975322] border-[#975322] text-[#FFFFFF] dark:bg-[#975322] dark:border-[#975322] dark:text-[#FFFFFF]' : 'dark:border-[#FFFFFF]/20 border-[#3A3A3A]/10 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 dark:bg-[#CFEDD9]/5 bg-[#CFEDD9]/5'}`}
                   >
                     {opt}
                   </div>
@@ -471,19 +497,19 @@ export default function Schedule({ theme }) {
 
             {/* Booking Text */}
             <div className="mb-6">
-              <label className="block text-sm mb-2 dark:text-white/70 text-black/70">预约文案</label>
+              <label className="block text-sm mb-2 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">预约文案</label>
               <textarea 
                 value={bookingText}
                 onChange={(e) => setBookingText(e.target.value)}
-                className="w-full h-32 px-4 py-3 rounded-lg border dark:border-white/15 border-black/10 dark:bg-white/5 bg-black/5 dark:text-[#efefee] text-[#1a1a1a] text-sm focus:outline-none focus:border-[#1f1f22] dark:focus:border-white/20"
+                className="w-full h-32 px-4 py-3 rounded-lg border dark:border-[#FFFFFF]/15 border-[#3A3A3A]/10 dark:bg-[#CFEDD9]/5 bg-[#CFEDD9]/5 dark:text-[#FFFFFF] text-[#3A3A3A] text-sm focus:outline-none focus:border-[#975322] dark:focus:border-[#975322]"
               />
             </div>
         </div>
 
-        <div className="p-4 pb-8 border-t dark:border-white/10 border-black/10 safe-area-bottom">
+        <div className="p-4 pb-8 border-t dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10 safe-area-bottom">
           <button 
             onClick={copyToClipboard}
-            className="w-full h-10 rounded-full text-sm font-bold bg-[#1f1f22] text-[#f6f6f4] dark:bg-[#e9e9e6] dark:text-[#151518] shadow-lg active:scale-95 transition-transform"
+            className="w-full h-10 rounded-full text-sm font-bold bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-lg active:scale-95 transition-transform"
           >
             复制
           </button>
@@ -492,7 +518,7 @@ export default function Schedule({ theme }) {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black/80 text-white px-6 py-3 rounded-lg text-sm z-[200] fade-in">
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#3A3A3A]/80 text-[#FCF7BD] px-6 py-3 rounded-lg text-sm z-[200] fade-in">
           {toast.message}
         </div>
       )}

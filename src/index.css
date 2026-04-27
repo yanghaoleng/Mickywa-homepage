@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+.title-svg {
+  filter: brightness(0) saturate(100%) invert(25%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(95%) contrast(85%);
+}
+
+.dark .title-svg {
+  filter: brightness(0) saturate(100%) invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%);
+}
+
 @layer utilities {
   .shake-feedback {
     animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
