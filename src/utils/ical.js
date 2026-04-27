@@ -222,22 +222,8 @@ export function buildScheduleData(workEvents, holidayCnYears, months = 2) {
       // 切换逻辑：使用严格模式
       let busy = isSlotBusy(day, slot, workEvents);
       
-      // 添加工作日不可预约逻辑：周一到周五 9:30-18:00 不可预约，除非是节假日
-      if (isWorkday) {
-        const [sh, sm] = slot.start.split(':').map(Number);
-        const [eh, em] = slot.end.split(':').map(Number);
-        const slotStartMinutes = sh * 60 + sm;
-        const slotEndMinutes = eh * 60 + em;
-        const workStartMinutes = 9 * 60 + 30; // 9:30
-        const workEndMinutes = 18 * 60; // 18:00
-        
-        // 如果时间段与工作日工作时间有重叠，则不可预约
-        if (slotStartMinutes < workEndMinutes && slotEndMinutes > workStartMinutes) {
-          busy = true;
-        }
-      }
-
-      if (isShiftWorkday && slot.key !== 'evening') {
+      // 工作日（含补班）默认只有白天不可约；晚上是否可约仅取决于个人日程。
+      if (isWorkday && slot.key !== 'evening') {
         busy = true;
       }
 

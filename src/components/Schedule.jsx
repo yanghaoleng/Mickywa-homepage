@@ -39,18 +39,23 @@ export default function Schedule({ theme }) {
   const [markAnimation, setMarkAnimation] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [contentKey, setContentKey] = useState(0);
+  const [pressedSlotId, setPressedSlotId] = useState(null);
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
+  const pressTimeoutRef = useRef(null);
 
-  const animatePress = (e) => {
-    const el = e?.currentTarget;
-    if (!el) return;
-    el.classList.remove('press-bouncy');
-    void el.offsetWidth;
-    el.classList.add('press-bouncy');
-    setTimeout(() => {
-      el.classList.remove('press-bouncy');
+  const triggerSlotPress = (slotId) => {
+    if (!slotId) return;
+    if (pressTimeoutRef.current) {
+      clearTimeout(pressTimeoutRef.current);
+      pressTimeoutRef.current = null;
+    }
+    setPressedSlotId(null);
+    requestAnimationFrame(() => setPressedSlotId(slotId));
+    pressTimeoutRef.current = setTimeout(() => {
+      setPressedSlotId(null);
+      pressTimeoutRef.current = null;
     }, 360);
   };
 
@@ -86,6 +91,15 @@ export default function Schedule({ theme }) {
     fetchData();
     const timer = setInterval(() => fetchData(true), 3 * 60 * 1000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (pressTimeoutRef.current) {
+        clearTimeout(pressTimeoutRef.current);
+        pressTimeoutRef.current = null;
+      }
+    };
   }, []);
 
   // 倒计时逻辑
@@ -465,7 +479,7 @@ export default function Schedule({ theme }) {
                                 ? '补班'
                                 : (item.holidayName ? item.holidayName.slice(0, 2) : '');
                               
-                              if (!isShiftWorkday && freeSlots.length > 0) {
+                              if (freeSlots.length > 0) {
                                 const freeSlotKeys = freeSlots.map(slot => slot.key);
                                 if (freeSlotKeys.includes('morning') && freeSlotKeys.includes('noon') && freeSlotKeys.includes('afternoon') && freeSlotKeys.includes('evening')) {
                                   bookingStatus = '全天';
@@ -487,6 +501,18 @@ export default function Schedule({ theme }) {
                                            item.date.getFullYear() === new Date().getFullYear();
 
                               const isSelected = selectedSlot && selectedSlot.day.key === item.key;
+                              const fullDaySlot = isFullDay ? item.slots.find(slot => slot.status === 'free') : null;
+                              const fullDaySlotIdx = fullDaySlot ? item.slots.indexOf(fullDaySlot) : null;
+                              const fullDayUniqueKey = fullDaySlotIdx !== null ? `${item.key}-${fullDaySlotIdx}` : null;
+
+                              const daySlot = isMorning ? item.slots.find(slot => ['morning', 'noon', 'afternoon'].includes(slot.key)) : null;
+                              const daySlotIdx = daySlot ? item.slots.indexOf(daySlot) : null;
+                              const dayUniqueKey = daySlotIdx !== null ? `${item.key}-${daySlotIdx}` : null;
+
+                              const eveningSlot = isEvening ? item.slots.find(slot => slot.key === 'evening') : null;
+                              const eveningSlotIdx = eveningSlot ? item.slots.indexOf(eveningSlot) : null;
+                              const eveningUniqueKey = eveningSlotIdx !== null ? `${item.key}-${eveningSlotIdx}` : null;
+                              const showFocus = bookingType !== 'busy' && isSelected;
                               const primaryTextClass = bookingType === 'busy'
                                 ? "dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50"
                                 : isSelected
@@ -510,22 +536,20 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          animatePress(e);
-                                          // 选择第一个可预约的时间段
-                                          const firstFreeSlot = item.slots.find(slot => slot.status === 'free');
-                                          if (firstFreeSlot) {
-                                            const slotIdx = item.slots.indexOf(firstFreeSlot);
-                                            onSlotTap(item, firstFreeSlot, slotIdx);
-                                          }
+                                          triggerSlotPress(fullDayUniqueKey);
+                                          if (fullDaySlot && fullDaySlotIdx !== null) onSlotTap(item, fullDaySlot, fullDaySlotIdx);
                                         }}
-                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-[3000ms] ease-out transform cursor-pointer relative overflow-hidden",
+                                          pressedSlotId === fullDayUniqueKey ? "press-bouncy" : "",
                                           bookingType === 'busy' 
                                             ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed" 
-                                            : isSelected
-                                              ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
-                                              : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
+                                            : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
+                                          showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
-                                        <div className="min-w-0 flex items-center">
+                                        {bookingType !== 'busy' && (
+                                          <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity duration-[3000ms] ease-out", showFocus ? "opacity-100" : "opacity-0"].join(' ')}></div>
+                                        )}
+                                        <div className="min-w-0 flex items-center relative z-10">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
@@ -534,27 +558,23 @@ export default function Schedule({ theme }) {
                                             <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
-                                        <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
+                                        <div className={["text-xs leading-tight relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && isMorning && (
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          animatePress(e);
-                                          // 选择白天的时间段
-                                          const daySlot = item.slots.find(slot => ['morning', 'noon', 'afternoon'].includes(slot.key));
-                                          if (daySlot) {
-                                            const slotIdx = item.slots.indexOf(daySlot);
-                                            onSlotTap(item, daySlot, slotIdx);
-                                          }
+                                          triggerSlotPress(dayUniqueKey);
+                                          if (daySlot && daySlotIdx !== null) onSlotTap(item, daySlot, daySlotIdx);
                                         }}
-                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform cursor-pointer",
-                                          isSelected
-                                            ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
-                                            : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
+                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-[3000ms] ease-out transform cursor-pointer relative overflow-hidden",
+                                          pressedSlotId === dayUniqueKey ? "press-bouncy" : "",
+                                          "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
+                                          showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
-                                        <div className="min-w-0 flex items-center">
+                                        <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity duration-[3000ms] ease-out", showFocus ? "opacity-100" : "opacity-0"].join(' ')}></div>
+                                        <div className="min-w-0 flex items-center relative z-10">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
@@ -563,27 +583,23 @@ export default function Schedule({ theme }) {
                                             <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
-                                        <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
+                                        <div className={["text-xs leading-tight relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && isEvening && (
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          animatePress(e);
-                                          // 选择晚上的时间段
-                                          const eveningSlot = item.slots.find(slot => slot.key === 'evening');
-                                          if (eveningSlot) {
-                                            const slotIdx = item.slots.indexOf(eveningSlot);
-                                            onSlotTap(item, eveningSlot, slotIdx);
-                                          }
+                                          triggerSlotPress(eveningUniqueKey);
+                                          if (eveningSlot && eveningSlotIdx !== null) onSlotTap(item, eveningSlot, eveningSlotIdx);
                                         }}
-                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform cursor-pointer",
-                                          isSelected
-                                            ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
-                                            : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
+                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-[3000ms] ease-out transform cursor-pointer relative overflow-hidden",
+                                          pressedSlotId === eveningUniqueKey ? "press-bouncy" : "",
+                                          "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
+                                          showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
-                                        <div className="min-w-0 flex items-center">
+                                        <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity duration-[3000ms] ease-out", showFocus ? "opacity-100" : "opacity-0"].join(' ')}></div>
+                                        <div className="min-w-0 flex items-center relative z-10">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
@@ -592,7 +608,7 @@ export default function Schedule({ theme }) {
                                             <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
-                                        <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
+                                        <div className={["text-xs leading-tight relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
