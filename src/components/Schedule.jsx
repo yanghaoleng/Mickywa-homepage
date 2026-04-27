@@ -413,14 +413,16 @@ export default function Schedule({ theme }) {
                         weekRows.push(calendarGrid.slice(i, i + 7));
                       }
                       
-                      return weekRows.map((week, weekIndex) => (
-                        <div key={weekIndex} className="mb-2">
-                          <div className="grid grid-cols-7 gap-1">
-                            {week.map((item, dayIndex) => {
-                              if (!item) {
-                                // 空白天数
-                                return <div key={dayIndex} className="h-24"></div>;
-                              }
+                      return (
+                        <div className="flex flex-col gap-2">
+                          {weekRows.map((week, weekIndex) => (
+                            <div key={weekIndex}>
+                              <div className="grid grid-cols-7 gap-1">
+                                {week.map((item, dayIndex) => {
+                                  if (!item) {
+                                    // 空白天数
+                                    return <div key={dayIndex} className="h-[40px] pb-1.5"></div>;
+                                  }
                               
                               // 检查当天的可预约情况
                               const freeSlots = item.slots.filter(slot => slot.status === 'free');
@@ -451,14 +453,14 @@ export default function Schedule({ theme }) {
                                            item.date.getMonth() === new Date().getMonth() && 
                                            item.date.getFullYear() === new Date().getFullYear();
                               
-                              return (
-                                <div 
-                                  key={item.key}
-                                  id={`day-${item.key}`}
-                                  ref={el => dayRefs.current[item.key] = el}
-                                  className="spring-scale-in h-24"
-                                  style={{ animationDelay: `${monthIndex * 0.1 + weekIndex * 0.05 + dayIndex * 0.02}s` }}
-                                >
+                                  return (
+                                    <div 
+                                      key={item.key}
+                                      id={`day-${item.key}`}
+                                      ref={el => dayRefs.current[item.key] = el}
+                                      className="spring-scale-in h-[40px] pb-1.5"
+                                      style={{ animationDelay: `${monthIndex * 0.1 + weekIndex * 0.05 + dayIndex * 0.02}s` }}
+                                    >
                                   <div className="text-center mb-1">
                                     <div className="flex items-center justify-center space-x-1">
                                       {isToday ? (
@@ -486,7 +488,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, firstFreeSlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item p-2 h-[26px] rounded-[24px] flex flex-col items-center justify-center transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item p-2 h-[28px] rounded-[24px] flex flex-col items-center justify-center transition-all duration-300 transform cursor-pointer hover:scale-125",
                                           bookingType === 'busy' 
                                             ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed" 
                                             : selectedSlot && selectedSlot.day.key === item.key
@@ -515,7 +517,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, daySlot, slotIdx);
                                           }
                                         }}
-                                        className={["h-[26px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer",
+                                        className={["h-[28px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer hover:scale-125",
                                           selectedSlot && selectedSlot.day.key === item.key
                                             ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
                                             : "bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
@@ -540,7 +542,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, eveningSlot, slotIdx);
                                           }
                                         }}
-                                        className={["h-[26px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer",
+                                        className={["h-[28px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer hover:scale-125",
                                           selectedSlot && selectedSlot.day.key === item.key
                                             ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
                                             : "bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
@@ -555,46 +557,27 @@ export default function Schedule({ theme }) {
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
-                                      <div className="h-[26px] p-2 rounded-[24px] flex items-center justify-center dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
+                                      <div className="h-[28px] p-2 rounded-[24px] flex items-center justify-center dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
                                         <span className="text-xs dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50">
                                           {bookingStatus}
                                         </span>
                                       </div>
                                     )}
                                   </div>
-                                </div>
-                              );
-                            })}
-                          </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ));
+                      );
                     })()}
                   </div>
                 );
               });
             })()}
 
-            <div className="spring-scale-in" style={{ animationDelay: `${schedule.length * 0.08 + 0.1}s` }}>
-              <div className="text-center text-xs dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50 flex items-center justify-center mb-2">
-                感谢支持羊石坨坨！
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Bottom Booking Bar */}
-      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 dark:bg-[#333333] bg-[#FFFFFF] border-t dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10 z-50 flex items-center safe-area-bottom max-w-[440px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
-        {displaySlot && (
-          <div className="flex-1">
-            <div className="flex flex-col">
-              <span className="text-sm dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">
-                {displaySlot.day.label} 周{displaySlot.day.weekday}
-              </span>
-              <span className="text-lg font-bold dark:text-[#FFFFFF] text-[#3A3A3A]">
-                {displaySlot.slot.label}
-              </span>
-            </div>
           </div>
         )}
       </div>
