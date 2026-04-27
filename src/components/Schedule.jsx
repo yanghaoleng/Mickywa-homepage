@@ -37,6 +37,7 @@ export default function Schedule({ theme }) {
   const [toast, setToast] = useState(null); // { message, type }
   const [markBgColor, setMarkBgColor] = useState('');
   const [markAnimation, setMarkAnimation] = useState(false);
+  const [countdown, setCountdown] = useState(0);
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
@@ -64,6 +65,23 @@ export default function Schedule({ theme }) {
     const timer = setInterval(() => fetchData(true), 3 * 60 * 1000);
     return () => clearInterval(timer);
   }, []);
+
+  // 倒计时逻辑
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setInterval(() => {
+        setCountdown(prev => {
+          if (prev <= 1) {
+            clearInterval(timer);
+            fetchData();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [countdown]);
 
   // Update booking text when form or slot changes
   useEffect(() => {
@@ -332,10 +350,10 @@ export default function Schedule({ theme }) {
           <div className="h-80 flex flex-col items-center justify-center">
             <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm mb-8">获取日程失败</span>
             <button 
-              onClick={() => fetchData()}
+              onClick={() => setCountdown(3)}
               className="px-8 py-2 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs"
             >
-              重新加载
+              {countdown > 0 ? `自动刷新 (${countdown}s)` : '重新加载'}
             </button>
           </div>
         )}
@@ -356,11 +374,11 @@ export default function Schedule({ theme }) {
               return Object.entries(months).map(([monthKey, days], monthIndex) => {
                 const [year, month] = monthKey.split('-');
                 return (
-                  <div key={monthKey} className="mb-8 spring-scale-in" style={{ animationDelay: `${monthIndex * 0.1}s` }}>
+                  <div key={monthKey} className="mb-4 spring-scale-in" style={{ animationDelay: `${monthIndex * 0.1}s` }}>
                     <h2 className="text-xl font-bold mb-2 dark:text-[#FFFFFF] text-[#3A3A3A]">{month}月</h2>
                     
                     {/* 星期标题 */}
-                    <div className="grid grid-cols-7 gap-2 mb-2">
+                    <div className="grid grid-cols-7 gap-1 mb-1">
                       {['一', '二', '三', '四', '五', '六', '日'].map((day, index) => (
                         <div key={index} className="text-center text-xs dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 font-medium">
                           {day}
@@ -396,8 +414,8 @@ export default function Schedule({ theme }) {
                       }
                       
                       return weekRows.map((week, weekIndex) => (
-                        <div key={weekIndex} className="mb-4">
-                          <div className="grid grid-cols-7 gap-2">
+                        <div key={weekIndex} className="mb-2">
+                          <div className="grid grid-cols-7 gap-1">
                             {week.map((item, dayIndex) => {
                               if (!item) {
                                 // 空白天数
@@ -445,7 +463,7 @@ export default function Schedule({ theme }) {
                                     <div className="flex items-center justify-center space-x-1">
                                       {isToday ? (
                                         <div className="inline-block px-2 py-0.5 rounded-full text-xs bg-[#FCF7BD] text-[#563117] dark:bg-[#FCF7BD]/80 dark:text-[#563117] font-medium leading-tight">
-                                          今日
+                                          今天
                                         </div>
                                       ) : (
                                         <div className="text-sm dark:text-[#FFFFFF] text-[#3A3A3A]">{item.label}</div>
@@ -456,82 +474,94 @@ export default function Schedule({ theme }) {
                                     </div>
                                   </div>
 
-                                  {isFullDay ? (
-                                    <div 
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        // 选择第一个可预约的时间段
-                                        const firstFreeSlot = item.slots.find(slot => slot.status === 'free');
-                                        if (firstFreeSlot) {
-                                          const slotIdx = item.slots.indexOf(firstFreeSlot);
-                                          onSlotTap(item, firstFreeSlot, slotIdx);
-                                        }
-                                      }}
-                                      className={`
-                                        slot-item p-2 h-16 rounded-[4px] flex flex-col items-center justify-center
-                                        transition-all duration-300 transform cursor-pointer
-                                        ${bookingType === 'busy' 
-                                          ? 'dark:bg-[#FFFFFF]/4 bg-[#333333]/10 dark:border-[#FFFFFF]/8 border-[#333333]/10 opacity-50 cursor-not-allowed' 
-                                          : 'bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:border dark:border-[#D3F1FF]/70 dark:hover:border-[#D3F1FF]/70 dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset]'
-                                        }
-                                      `}>
-                                      <span className={`text-xs ${bookingType === 'busy' ? 'dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50' : 'text-[#083A8E] dark:text-[#FFFFFF]'}`}>
-                                        {bookingStatus}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div className="h-16">
-                                      {isMorning && (
-                                        <div 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            // 选择白天的时间段
-                                            const daySlot = item.slots.find(slot => ['morning', 'noon', 'afternoon'].includes(slot.key));
-                                            if (daySlot) {
-                                              const slotIdx = item.slots.indexOf(daySlot);
-                                              onSlotTap(item, daySlot, slotIdx);
-                                            }
-                                          }}
-                                          className="h-full p-1 rounded-[4px] flex items-center justify-center
-                                            transition-all duration-300 transform cursor-pointer
-                                            bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:border dark:border-[#D3F1FF]/70 dark:hover:border-[#D3F1FF]/70 dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset]"
-                                        >
-                                          <span className="text-xs text-[#083A8E] dark:text-[#FFFFFF]">
-                                            {bookingStatus}
-                                          </span>
-                                        </div>
-                                      )}
-                                      {isEvening && (
-                                        <div 
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            // 选择晚上的时间段
-                                            const eveningSlot = item.slots.find(slot => slot.key === 'evening');
-                                            if (eveningSlot) {
-                                              const slotIdx = item.slots.indexOf(eveningSlot);
-                                              onSlotTap(item, eveningSlot, slotIdx);
-                                            }
-                                          }}
-                                          className="h-full p-1 rounded-[4px] flex items-center justify-center
-                                            transition-all duration-300 transform cursor-pointer
-                                            bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:border dark:border-[#D3F1FF]/70 dark:hover:border-[#D3F1FF]/70 dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset]"
-                                        >
-                                          <span className="text-xs text-[#083A8E] dark:text-[#FFFFFF]">
-                                            {bookingStatus}
-                                          </span>
-                                        </div>
-                                      )}
-                                      {!isMorning && !isEvening && (
-                                        <div className="h-full p-2 rounded-[4px] border flex items-center justify-center
-                                          dark:bg-[#FFFFFF]/4 bg-[#333333]/10 dark:border-[#FFFFFF]/8 border-[#333333]/10 opacity-50 cursor-not-allowed"
-                                        >
-                                          <span className="text-xs dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50">
-                                            {bookingStatus}
-                                          </span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
+                                  <div>
+                                    {isFullDay && (
+                                      <div 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          // 选择第一个可预约的时间段
+                                          const firstFreeSlot = item.slots.find(slot => slot.status === 'free');
+                                          if (firstFreeSlot) {
+                                            const slotIdx = item.slots.indexOf(firstFreeSlot);
+                                            onSlotTap(item, firstFreeSlot, slotIdx);
+                                          }
+                                        }}
+                                        className={["slot-item p-2 h-[26px] rounded-[24px] flex flex-col items-center justify-center transition-all duration-300 transform cursor-pointer",
+                                          bookingType === 'busy' 
+                                            ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed" 
+                                            : selectedSlot && selectedSlot.day.key === item.key
+                                              ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
+                                              : "bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
+                                        ].join(' ')}>
+                                        <span className={["text-xs",
+                                          bookingType === 'busy' 
+                                            ? "dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50"
+                                            : selectedSlot && selectedSlot.day.key === item.key
+                                              ? "!text-[#FFFFFF] dark:!text-[#083A8E]"
+                                              : "text-[#083A8E] dark:text-[#FFFFFF]"
+                                        ].join(' ')}>
+                                          {bookingStatus}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {!isFullDay && isMorning && (
+                                      <div 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          // 选择白天的时间段
+                                          const daySlot = item.slots.find(slot => ['morning', 'noon', 'afternoon'].includes(slot.key));
+                                          if (daySlot) {
+                                            const slotIdx = item.slots.indexOf(daySlot);
+                                            onSlotTap(item, daySlot, slotIdx);
+                                          }
+                                        }}
+                                        className={["h-[26px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer",
+                                          selectedSlot && selectedSlot.day.key === item.key
+                                            ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
+                                            : "bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
+                                        ].join(' ')}>
+                                        <span className={["text-xs",
+                                          selectedSlot && selectedSlot.day.key === item.key
+                                            ? "!text-[#FFFFFF] dark:!text-[#083A8E]"
+                                            : "text-[#083A8E] dark:text-[#FFFFFF]"
+                                        ].join(' ')}>
+                                          {bookingStatus}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {!isFullDay && isEvening && (
+                                      <div 
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          // 选择晚上的时间段
+                                          const eveningSlot = item.slots.find(slot => slot.key === 'evening');
+                                          if (eveningSlot) {
+                                            const slotIdx = item.slots.indexOf(eveningSlot);
+                                            onSlotTap(item, eveningSlot, slotIdx);
+                                          }
+                                        }}
+                                        className={["h-[26px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer",
+                                          selectedSlot && selectedSlot.day.key === item.key
+                                            ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
+                                            : "bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
+                                        ].join(' ')}>
+                                        <span className={["text-xs",
+                                          selectedSlot && selectedSlot.day.key === item.key
+                                            ? "!text-[#FFFFFF] dark:!text-[#083A8E]"
+                                            : "text-[#083A8E] dark:text-[#FFFFFF]"
+                                        ].join(' ')}>
+                                          {bookingStatus}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {!isFullDay && !isMorning && !isEvening && (
+                                      <div className="h-[26px] p-2 rounded-[24px] flex items-center justify-center dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
+                                        <span className="text-xs dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50">
+                                          {bookingStatus}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               );
                             })}

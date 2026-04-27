@@ -89,3 +89,14 @@
 .spring-click {
   animation: spring-click 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+@keyframes color-change {
+  0%, 100% { background-color: #D3F1FF; }
+  25% { background-color: #CFEDD9; }
+  50% { background-color: #FFDDDD; }
+  75% { background-color: #FCF7BD; }
+}
+
+.animate-color-change {
+  animation: color-change 2s ease-in-out infinite;
+}

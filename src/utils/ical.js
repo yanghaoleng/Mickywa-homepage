@@ -547,7 +547,7 @@ async function fallbackFetch(url) {
   }
 }
 
-const CACHE_KEY = 'wt_schedule_cache_v1';
+const CACHE_KEY = 'mickywa_schedule_cache_v1';
 const CACHE_TTL = 3 * 60 * 1000;
 
 // Hardcoded holidays for demo/fallback (2024-2026)
