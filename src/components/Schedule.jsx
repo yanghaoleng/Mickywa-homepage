@@ -358,8 +358,8 @@ export default function Schedule({ theme }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col pb-32 dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
-      <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
+    <div className="min-h-screen flex flex-col pb-32 dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300" style={{ backgroundColor: markBgColor || undefined }}>
+      <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start" style={{ backgroundColor: markBgColor || undefined }}>
         <div className="flex flex-col items-center justify-start space-y-2 spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
             <svg width="46" height="42" viewBox="0 0 46 42" fill="none" xmlns="http://www.w3.org/2000/svg">
