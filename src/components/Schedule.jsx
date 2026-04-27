@@ -38,20 +38,10 @@ export default function Schedule({ theme }) {
   const [markBgColor, setMarkBgColor] = useState('');
   const [markAnimation, setMarkAnimation] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [contentKey, setContentKey] = useState(0);
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
-
-  const animatePress = (e) => {
-    const el = e?.currentTarget;
-    if (!el) return;
-    el.classList.remove('press-shrink');
-    void el.offsetWidth;
-    el.classList.add('press-shrink');
-    setTimeout(() => {
-      el.classList.remove('press-shrink');
-    }, 240);
-  };
 
   const fetchData = async (isAuto = false) => {
     if (!isAuto) {
@@ -223,6 +213,7 @@ export default function Schedule({ theme }) {
         imgElement.classList.remove('spring-click');
       }, 400);
     }
+    setContentKey(k => k + 1);
   };
 
   const playMarkAnimation = () => {
@@ -380,7 +371,7 @@ export default function Schedule({ theme }) {
         )}
 
         {!loading && !error && (
-          <div className="pb-10">
+          <div key={contentKey} className="pb-10">
             {/* 按月分组 */}
             {(() => {
               const months = {};
@@ -398,15 +389,16 @@ export default function Schedule({ theme }) {
                 return (
                   <div key={monthKey} className="mb-4 spring-scale-in" style={{ animationDelay: `${monthIndex * 0.1}s` }}>
                     <h2 className="text-xl font-bold mb-2 dark:text-[#FFFFFF] text-[#3A3A3A]">{month}月</h2>
-                    
-                    {/* 星期标题 */}
-                    <div className="grid grid-cols-7 gap-1 pb-1.5">
-                      {['一', '二', '三', '四', '五', '六', '日'].map((day, index) => (
-                        <div key={index} className="text-center text-xs dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 font-medium">
-                          {day}
-                        </div>
-                      ))}
-                    </div>
+
+                    {monthIndex === 0 && (
+                      <div className="grid grid-cols-7 gap-1 pb-1.5">
+                        {['一', '二', '三', '四', '五', '六', '日'].map((day, index) => (
+                          <div key={index} className="text-center text-xs dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 font-medium">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     
                     {(() => {
                       // 获取当前月份展示的第一天
@@ -511,7 +503,6 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          animatePress(e);
                                           // 选择第一个可预约的时间段
                                           const firstFreeSlot = item.slots.find(slot => slot.status === 'free');
                                           if (firstFreeSlot) {
@@ -532,7 +523,7 @@ export default function Schedule({ theme }) {
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
                                           )}
                                           {isToday && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今天</span>
+                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -542,7 +533,6 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          animatePress(e);
                                           // 选择白天的时间段
                                           const daySlot = item.slots.find(slot => ['morning', 'noon', 'afternoon'].includes(slot.key));
                                           if (daySlot) {
@@ -561,7 +551,7 @@ export default function Schedule({ theme }) {
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
                                           )}
                                           {isToday && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今天</span>
+                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -571,7 +561,6 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          animatePress(e);
                                           // 选择晚上的时间段
                                           const eveningSlot = item.slots.find(slot => slot.key === 'evening');
                                           if (eveningSlot) {
@@ -590,7 +579,7 @@ export default function Schedule({ theme }) {
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
                                           )}
                                           {isToday && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今天</span>
+                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -604,7 +593,7 @@ export default function Schedule({ theme }) {
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
                                           )}
                                           {isToday && (
-                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今天</span>
+                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
