@@ -514,7 +514,7 @@ export default function Schedule({ theme }) {
                                           bookingType === 'busy' 
                                             ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed" 
                                             : selectedSlot && selectedSlot.day.key === item.key
-                                              ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
+                                              ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF] dark:!text-[#083A8E]"
                                               : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
                                         <span className={["text-xs",
@@ -542,7 +542,7 @@ export default function Schedule({ theme }) {
                                         }}
                                         className={["h-[28px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer",
                                           selectedSlot && selectedSlot.day.key === item.key
-                                            ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
+                                            ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF] dark:!text-[#083A8E]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
                                         <span className={["text-xs",
@@ -568,7 +568,7 @@ export default function Schedule({ theme }) {
                                         }}
                                         className={["h-[28px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer",
                                           selectedSlot && selectedSlot.day.key === item.key
-                                            ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
+                                            ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF] dark:!text-[#083A8E]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
                                         <span className={["text-xs",
