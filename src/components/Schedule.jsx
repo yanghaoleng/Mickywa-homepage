@@ -519,7 +519,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, firstFreeSlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item w-full h-full px-2 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-full px-2 py-1 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform cursor-pointer",
                                           bookingType === 'busy' 
                                             ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed" 
                                             : isSelected
@@ -550,7 +550,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, daySlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item w-full h-full px-2 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-full px-2 py-1 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform cursor-pointer",
                                           isSelected
                                             ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
@@ -579,7 +579,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, eveningSlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item w-full h-full px-2 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-full px-2 py-1 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform cursor-pointer",
                                           isSelected
                                             ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
@@ -597,7 +597,7 @@ export default function Schedule({ theme }) {
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
-                                      <div className="slot-item w-full h-full px-2 rounded-[12px] flex flex-col items-start justify-center dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
+                                      <div className="slot-item w-full h-full px-2 py-1 rounded-[12px] flex flex-col items-start justify-center gap-1 dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
                                         <div className="min-w-0 flex items-center gap-1.5">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
