@@ -600,8 +600,15 @@ function getMockSchedule() {
   return { workEvents: [], holidayEvents: [], schedule };
 }
 
-export async function getCalendarsWithCache() {
+export async function getCalendarsWithCache({ forceMock = false } = {}) {
   const now = Date.now();
+
+  if (forceMock) {
+    const mockData = getMockSchedule();
+    mockData.isMock = true;
+    return mockData;
+  }
+
   try {
     const cachedStr = localStorage.getItem(CACHE_KEY);
     if (cachedStr) {
