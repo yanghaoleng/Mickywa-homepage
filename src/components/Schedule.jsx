@@ -60,7 +60,17 @@ export default function Schedule({ theme }) {
     }
     try {
       const res = await getCalendarsWithCache({ forceMock: import.meta.env.DEV });
-      setSchedule(res.schedule);
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const endExclusive = new Date(startOfToday);
+      endExclusive.setDate(endExclusive.getDate() + 22);
+
+      const nextDays = (res.schedule || [])
+        .filter(day => day?.date instanceof Date)
+        .filter(day => day.date >= startOfToday && day.date < endExclusive)
+        .sort((a, b) => a.date - b.date);
+
+      setSchedule(nextDays);
       setIsMock(!!res.isMock);
       setLoading(false);
       setError(false);
@@ -384,6 +394,7 @@ export default function Schedule({ theme }) {
               
               return Object.entries(months).map(([monthKey, days], monthIndex) => {
                 const [year, month] = monthKey.split('-');
+                const sortedDays = [...days].sort((a, b) => a.date - b.date);
                 return (
                   <div key={monthKey} className="mb-4 spring-scale-in" style={{ animationDelay: `${monthIndex * 0.1}s` }}>
                     <h2 className="text-xl font-bold mb-2 dark:text-[#FFFFFF] text-[#3A3A3A]">{month}月</h2>
@@ -398,8 +409,11 @@ export default function Schedule({ theme }) {
                     </div>
                     
                     {(() => {
-                      // 获取月份的第一天
-                      const firstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
+                      // 获取当前月份展示的第一天
+                      const firstVisible = sortedDays[0]?.date;
+                      if (!firstVisible) return null;
+
+                      const firstDay = new Date(firstVisible.getFullYear(), firstVisible.getMonth(), firstVisible.getDate());
                       // 获取第一天是星期几 (0=周日, 1=周一, ..., 6=周六)
                       const firstDayOfWeek = firstDay.getDay();
                       // 计算需要的空白天数（周一为1，所以如果第一天是周日，需要6个空白）
@@ -414,7 +428,7 @@ export default function Schedule({ theme }) {
                       }
                       
                       // 添加实际日期
-                      days.forEach(day => {
+                      sortedDays.forEach(day => {
                         calendarGrid.push(day);
                       });
                       
@@ -432,7 +446,7 @@ export default function Schedule({ theme }) {
                                 {week.map((item, dayIndex) => {
                                   if (!item) {
                                     // 空白天数
-                                    return <div key={dayIndex} className="h-[45px] pb-[5px]"></div>;
+                                    return <div key={dayIndex} className="h-[60px] pb-[5px]"></div>;
                                   }
                               
                               // 检查当天的可预约情况
@@ -489,7 +503,7 @@ export default function Schedule({ theme }) {
                                       key={item.key}
                                       id={`day-${item.key}`}
                                       ref={el => dayRefs.current[item.key] = el}
-                                      className="spring-scale-in h-[45px] pb-[5px]"
+                                      className="spring-scale-in h-[60px] pb-[5px]"
                                       style={{ animationDelay: `${monthIndex * 0.1 + weekIndex * 0.05 + dayIndex * 0.02}s` }}
                                     >
                                   <div>
@@ -505,7 +519,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, firstFreeSlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item w-full h-[32px] px-3 rounded-[24px] flex items-center justify-between transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-[52px] px-3 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
                                           bookingType === 'busy' 
                                             ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed" 
                                             : isSelected
@@ -521,7 +535,7 @@ export default function Schedule({ theme }) {
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
                                           )}
                                         </div>
-                                        <span className={["text-xs", primaryTextClass].join(' ')}>{bookingStatus}</span>
+                                        <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && isMorning && (
@@ -536,7 +550,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, daySlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item w-full h-[32px] px-3 rounded-[24px] flex items-center justify-between transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-[52px] px-3 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
                                           isSelected
                                             ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
@@ -550,7 +564,7 @@ export default function Schedule({ theme }) {
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
                                           )}
                                         </div>
-                                        <span className={["text-xs", primaryTextClass].join(' ')}>{bookingStatus}</span>
+                                        <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && isEvening && (
@@ -565,7 +579,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, eveningSlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item w-full h-[32px] px-3 rounded-[24px] flex items-center justify-between transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-[52px] px-3 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
                                           isSelected
                                             ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
@@ -579,11 +593,11 @@ export default function Schedule({ theme }) {
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
                                           )}
                                         </div>
-                                        <span className={["text-xs", primaryTextClass].join(' ')}>{bookingStatus}</span>
+                                        <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
-                                      <div className="slot-item w-full h-[32px] px-3 rounded-[24px] flex items-center justify-between dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
+                                      <div className="slot-item w-full h-[52px] px-3 rounded-[12px] flex flex-col items-start justify-center dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
                                         <div className="min-w-0 flex items-center gap-1.5">
                                           {isToday && (
                                             <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#D3F1FF] font-medium leading-tight shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset] dark:shadow-[0_0_24px_0_rgba(255,255,255,0.20)_inset]">今天</span>
@@ -593,7 +607,7 @@ export default function Schedule({ theme }) {
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
                                           )}
                                         </div>
-                                        <span className={["text-xs", primaryTextClass].join(' ')}>{bookingStatus}</span>
+                                        <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                   </div>
