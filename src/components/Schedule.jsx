@@ -432,7 +432,7 @@ export default function Schedule({ theme }) {
                                 {week.map((item, dayIndex) => {
                                   if (!item) {
                                     // 空白天数
-                                    return <div key={dayIndex} className="h-[40px] pb-[5px]"></div>;
+                                    return <div key={dayIndex} className="h-[45px] pb-[5px]"></div>;
                                   }
                               
                               // 检查当天的可预约情况
@@ -443,7 +443,7 @@ export default function Schedule({ theme }) {
                               let isMorning = false;
                               let isEvening = false;
 
-                              const isShiftWorkday = Boolean(item.holidayName && item.holidayName.includes('(班)'));
+                              const isShiftWorkday = Boolean(item.holidayName && item.holidayName.includes('班'));
                               const holidayLabel = isShiftWorkday
                                 ? '补班'
                                 : (item.holidayName ? item.holidayName.slice(0, 3) : '');
@@ -482,7 +482,7 @@ export default function Schedule({ theme }) {
                                       key={item.key}
                                       id={`day-${item.key}`}
                                       ref={el => dayRefs.current[item.key] = el}
-                                      className="spring-scale-in h-[40px] pb-[5px]"
+                                      className="spring-scale-in h-[45px] pb-[5px]"
                                       style={{ animationDelay: `${monthIndex * 0.1 + weekIndex * 0.05 + dayIndex * 0.02}s` }}
                                     >
                                   <div className="text-center mb-1">
