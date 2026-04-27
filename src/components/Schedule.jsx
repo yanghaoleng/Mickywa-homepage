@@ -356,7 +356,7 @@ export default function Schedule({ theme }) {
                     <span className="text-lg font-semibold">{item.label}</span>
                     <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">周{item.weekday}</span>
                     {index === 0 && (
-                      <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-[#975322] text-[#FFFFFF]/90 dark:bg-[#975322] dark:text-[#FFFFFF]/90">
+                      <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-[#3A3A3A] text-[#FFFFFF] dark:bg-[#FFFFFF] dark:text-[#3A3A3A]">
                         今天
                       </span>
                     )}
