@@ -43,6 +43,17 @@ export default function Schedule({ theme }) {
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
 
+  const animatePress = (e) => {
+    const el = e?.currentTarget;
+    if (!el) return;
+    el.classList.remove('press-bouncy');
+    void el.offsetWidth;
+    el.classList.add('press-bouncy');
+    setTimeout(() => {
+      el.classList.remove('press-bouncy');
+    }, 360);
+  };
+
   const fetchData = async (isAuto = false) => {
     if (!isAuto) {
       setLoading(true);
@@ -499,6 +510,7 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          animatePress(e);
                                           // 选择第一个可预约的时间段
                                           const firstFreeSlot = item.slots.find(slot => slot.status === 'free');
                                           if (firstFreeSlot) {
@@ -513,7 +525,7 @@ export default function Schedule({ theme }) {
                                               ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
                                               : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
-                                        <div className="min-w-0 flex items-center gap-1.5">
+                                        <div className="min-w-0 flex items-center">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
@@ -529,6 +541,7 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          animatePress(e);
                                           // 选择白天的时间段
                                           const daySlot = item.slots.find(slot => ['morning', 'noon', 'afternoon'].includes(slot.key));
                                           if (daySlot) {
@@ -541,7 +554,7 @@ export default function Schedule({ theme }) {
                                             ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
-                                        <div className="min-w-0 flex items-center gap-1.5">
+                                        <div className="min-w-0 flex items-center">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
@@ -557,6 +570,7 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          animatePress(e);
                                           // 选择晚上的时间段
                                           const eveningSlot = item.slots.find(slot => slot.key === 'evening');
                                           if (eveningSlot) {
@@ -569,7 +583,7 @@ export default function Schedule({ theme }) {
                                             ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
-                                        <div className="min-w-0 flex items-center gap-1.5">
+                                        <div className="min-w-0 flex items-center">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
@@ -583,7 +597,7 @@ export default function Schedule({ theme }) {
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
                                       <div className="slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
-                                        <div className="min-w-0 flex items-center gap-1.5">
+                                        <div className="min-w-0 flex items-center">
                                           <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>

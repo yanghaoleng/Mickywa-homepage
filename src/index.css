@@ -106,6 +106,25 @@
   animation: press-shrink 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
+@keyframes press-bouncy {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.8);
+  }
+  75% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.press-bouncy {
+  animation: press-bouncy 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
 @keyframes color-change {
   0%, 100% { background-color: #D3F1FF; }
   25% { background-color: #CFEDD9; }
