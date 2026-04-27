@@ -35,10 +35,11 @@ export default function Schedule({ theme }) {
   });
   const [bookingText, setBookingText] = useState('');
   const [toast, setToast] = useState(null); // { message, type }
-  const [markBgColor, setMarkBgColor] = useState('transparent');
+  const [markBgColor, setMarkBgColor] = useState('');
   const [markAnimation, setMarkAnimation] = useState(false);
 
   const dayRefs = useRef({});
+  const animationInterval = useRef(null);
 
   const fetchData = async (isAuto = false) => {
     if (!isAuto) {
@@ -185,6 +186,10 @@ export default function Schedule({ theme }) {
   };
 
   const handleMarkClick = () => {
+    playMarkAnimation();
+  };
+
+  const playMarkAnimation = () => {
     const colors = ['#D3F1FF', '#CFEDD9', '#FFDDDD', '#FCF7BD'];
     setMarkAnimation(true);
     
@@ -196,10 +201,32 @@ export default function Schedule({ theme }) {
 
     setTimeout(() => {
       clearInterval(interval);
-      setMarkBgColor('transparent');
+      // 动画结束后随机选择一个颜色作为背景
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+      setMarkBgColor(randomColor);
       setMarkAnimation(false);
     }, 600);
   };
+
+  // 组件挂载时初始化背景颜色并设置自动动画
+  useEffect(() => {
+    // 随机选择一个颜色作为初始背景
+    const colors = ['#D3F1FF', '#CFEDD9', '#FFDDDD', '#FCF7BD'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    setMarkBgColor(randomColor);
+
+    // 设置5秒定时器自动播放动画
+    animationInterval.current = setInterval(() => {
+      playMarkAnimation();
+    }, 5000);
+
+    // 组件卸载时清除定时器
+    return () => {
+      if (animationInterval.current) {
+        clearInterval(animationInterval.current);
+      }
+    };
+  }, []);
 
   const updateForm = (field, value) => {
     setForm(prev => {
@@ -397,9 +424,9 @@ export default function Schedule({ theme }) {
       )}
 
       {/* Bottom Booking Bar */}
-      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 dark:bg-[#333333] bg-[#FFFFFF] border-t dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10 z-50 flex items-center justify-between safe-area-bottom max-w-[440px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
+      <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 dark:bg-[#333333] bg-[#FFFFFF] border-t dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10 z-50 flex items-center safe-area-bottom max-w-[440px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
         {displaySlot && (
-          <>
+          <div className="flex-1">
             <div className="flex flex-col">
               <span className="text-sm dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">
                 {displaySlot.day.label} 周{displaySlot.day.weekday}
@@ -408,115 +435,8 @@ export default function Schedule({ theme }) {
                 {displaySlot.slot.label} {displaySlot.slot.displayTime || `${displaySlot.slot.start}～${displaySlot.slot.end}`}
               </span>
             </div>
-            <button
-              onClick={handleBookClick}
-              className="px-8 py-3 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] font-bold rounded-full shadow-lg transform transition-transform active:scale-95"
-            >
-              预约
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Modal Mask */}
-      {showModal && (
-        <div 
-          className="fixed inset-0 bg-black/60 z-[90]"
-          onClick={hideModal}
-        ></div>
-      )}
-
-      {/* Modal Content */}
-      <div 
-        className={`modal-container fixed inset-x-0 bottom-0 dark:bg-[#333333] bg-[#FFFFFF] border-t dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10 rounded-t-2xl z-[100] transform transition-transform duration-300 flex flex-col max-h-[90vh] dark:text-[#FFFFFF] text-[#3A3A3A] max-w-[440px] mx-auto min-w-[375px] ${showModal ? 'translate-y-0' : 'translate-y-full'}`}
-      >
-        <div className="p-4 flex items-center justify-between border-b dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10">
-          <div className="text-base font-medium flex flex-col">
-             <span>{selectedSlot?.day.label} 周{selectedSlot?.day.weekday} <span className="text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60 text-sm ml-1">{getRelativeDateStr()}</span></span>
-             <span className="text-xs dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50">
-               {selectedSlot?.slot.label} {selectedSlot?.slot.displayTime || `${selectedSlot?.slot.start}～${selectedSlot?.slot.end}`}
-               {selectedSlot?.slot.isTight && (
-                 <span className="ml-2 text-[#3A3A3A] dark:text-[#FFFFFF] font-bold">时间紧张，只能做简单点的哦</span>
-               )}
-             </span>
-             <span className="text-xs text-[#975322] dark:text-[#975322] font-medium mt-0.5">
-               {getEstimateStr()}
-             </span>
           </div>
-          <button onClick={hideModal} className="dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50 text-xl px-2">×</button>
-        </div>
-
-        <div className="flex-1 p-6 overflow-y-auto">
-            {/* Length */}
-            <div className="mb-6">
-              <label className="block text-sm mb-2 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">长度</label>
-              <div className="grid grid-cols-3 gap-3">
-                {LENGTH_OPTIONS.map(opt => (
-                  <div 
-                    key={opt}
-                    onClick={() => updateForm('length', opt)}
-                    className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.length === opt ? 'bg-[#975322] border-[#975322] text-[#FFFFFF] dark:bg-[#975322] dark:border-[#975322] dark:text-[#FFFFFF]' : 'dark:border-[#FFFFFF]/20 border-[#3A3A3A]/10 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 dark:bg-[#CFEDD9]/5 bg-[#CFEDD9]/5'}`}
-                  >
-                    {opt}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Style (Multiselect) */}
-            <div className="mb-6">
-              <label className="block text-sm mb-2 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">款式（可多选）</label>
-              <div className="grid grid-cols-4 gap-2">
-                {STYLE_OPTIONS.map(opt => {
-                  const isSelected = Array.isArray(form.style) && form.style.includes(opt);
-                  return (
-                    <div 
-                      key={opt}
-                      onClick={() => updateForm('style', opt)}
-                      className={`text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${isSelected ? 'bg-[#975322] border-[#975322] text-[#FFFFFF] dark:bg-[#975322] dark:border-[#975322] dark:text-[#FFFFFF]' : 'dark:border-[#FFFFFF]/20 border-[#3A3A3A]/10 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 dark:bg-[#CFEDD9]/5 bg-[#CFEDD9]/5'}`}
-                    >
-                      {opt}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Remove */}
-            <div className="mb-6">
-              <label className="block text-sm mb-2 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">卸甲</label>
-              <div className="flex gap-3">
-                {REMOVE_OPTIONS.map(opt => (
-                  <div 
-                    key={opt}
-                    onClick={() => updateForm('remove', opt)}
-                    className={`flex-1 text-center py-2 rounded-lg border text-xs cursor-pointer transition-colors ${form.remove === opt ? 'bg-[#975322] border-[#975322] text-[#FFFFFF] dark:bg-[#975322] dark:border-[#975322] dark:text-[#FFFFFF]' : 'dark:border-[#FFFFFF]/20 border-[#3A3A3A]/10 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 dark:bg-[#CFEDD9]/5 bg-[#CFEDD9]/5'}`}
-                  >
-                    {opt}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Booking Text */}
-            <div className="mb-6">
-              <label className="block text-sm mb-2 dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">预约文案</label>
-              <textarea 
-                value={bookingText}
-                onChange={(e) => setBookingText(e.target.value)}
-                className="w-full h-32 px-4 py-3 rounded-lg border dark:border-[#FFFFFF]/15 border-[#3A3A3A]/10 dark:bg-[#CFEDD9]/5 bg-[#CFEDD9]/5 dark:text-[#FFFFFF] text-[#3A3A3A] text-sm focus:outline-none focus:border-[#975322] dark:focus:border-[#975322]"
-              />
-            </div>
-        </div>
-
-        <div className="p-4 pb-8 border-t dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10 safe-area-bottom">
-          <button 
-            onClick={copyToClipboard}
-            className="w-full h-10 rounded-full text-sm font-bold bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-lg active:scale-95 transition-transform"
-          >
-            复制
-          </button>
-        </div>
+        )}
       </div>
 
       {/* Toast */}
