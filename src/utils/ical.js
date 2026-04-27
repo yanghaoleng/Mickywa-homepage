@@ -450,6 +450,7 @@ export function buildScheduleData(workEvents, holidayEvents, months = 2) {
     const weekday = '日一二三四五六'.charAt(day.weekdayIdx);
     const key = `${day.y}-${day.m}-${day.d}`;
     const isHoliday = !!holidayMap[key];
+    const isShiftWorkday = Boolean(isHoliday && String(holidayMap[key] || '').includes('班'));
     
     const slots = TIME_SLOTS.map(slot => {
       // 切换逻辑：使用严格模式
@@ -468,6 +469,10 @@ export function buildScheduleData(workEvents, holidayEvents, months = 2) {
         if (slotStartMinutes < workEndMinutes && slotEndMinutes > workStartMinutes) {
           busy = true;
         }
+      }
+
+      if (isShiftWorkday && slot.key !== 'evening') {
+        busy = true;
       }
 
       return {

@@ -471,14 +471,6 @@ export default function Schedule({ theme }) {
                                 }
                               }
 
-                              if (isShiftWorkday) {
-                                bookingStatus = '不空';
-                                bookingType = 'busy';
-                                isFullDay = false;
-                                isMorning = false;
-                                isEvening = false;
-                              }
-                              
                               const isToday = item.date.getDate() === new Date().getDate() && 
                                            item.date.getMonth() === new Date().getMonth() && 
                                            item.date.getFullYear() === new Date().getFullYear();
