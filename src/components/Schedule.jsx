@@ -220,7 +220,7 @@ export default function Schedule({ theme }) {
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
       setMarkBgColor(randomColor);
       setMarkAnimation(false);
-    }, 600);
+    }, 600 + colors.length * 100);
   };
 
   // 组件挂载时初始化背景颜色并设置自动动画
@@ -414,7 +414,7 @@ export default function Schedule({ theme }) {
                       }
                       
                       return (
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-3">
                           {weekRows.map((week, weekIndex) => (
                             <div key={weekIndex}>
                               <div className="grid grid-cols-7 gap-1">
@@ -426,13 +426,15 @@ export default function Schedule({ theme }) {
                               
                               // 检查当天的可预约情况
                               const freeSlots = item.slots.filter(slot => slot.status === 'free');
-                              let bookingStatus = '不可预约';
+                              let bookingStatus = '不空';
                               let bookingType = 'busy';
                               let isFullDay = false;
                               let isMorning = false;
                               let isEvening = false;
+
+                              const isShiftWorkday = Boolean(item.holidayName && item.holidayName.includes('(班)'));
                               
-                              if (freeSlots.length > 0) {
+                              if (!isShiftWorkday && freeSlots.length > 0) {
                                 const freeSlotKeys = freeSlots.map(slot => slot.key);
                                 if (freeSlotKeys.includes('morning') && freeSlotKeys.includes('noon') && freeSlotKeys.includes('afternoon') && freeSlotKeys.includes('evening')) {
                                   bookingStatus = '全天';
@@ -447,6 +449,14 @@ export default function Schedule({ theme }) {
                                   bookingType = 'free';
                                   isEvening = true;
                                 }
+                              }
+
+                              if (isShiftWorkday) {
+                                bookingStatus = '不空';
+                                bookingType = 'busy';
+                                isFullDay = false;
+                                isMorning = false;
+                                isEvening = false;
                               }
                               
                               const isToday = item.date.getDate() === new Date().getDate() && 
@@ -464,14 +474,14 @@ export default function Schedule({ theme }) {
                                   <div className="text-center mb-1">
                                     <div className="flex items-center justify-center space-x-1">
                                       {isToday ? (
-                                        <div className="inline-block px-2 py-0.5 rounded-full text-xs bg-[#FCF7BD] text-[#563117] dark:bg-[#FCF7BD]/80 dark:text-[#563117] font-medium leading-tight">
+                                        <div className="inline-block px-2 py-0.5 rounded-full text-xs bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#D3F1FF] font-medium leading-tight">
                                           今天
                                         </div>
                                       ) : (
                                         <div className="text-sm dark:text-[#FFFFFF] text-[#3A3A3A]">{item.label}</div>
                                       )}
                                       {item.holidayName && (
-                                        <div className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px]">{item.holidayName}</div>
+                                        <div className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[3.2em]">{item.holidayName.replace(/\(班\)/g, '').slice(0, 3)}</div>
                                       )}
                                     </div>
                                   </div>
