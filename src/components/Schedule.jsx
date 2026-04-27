@@ -425,14 +425,14 @@ export default function Schedule({ theme }) {
                       }
                       
                       return (
-                        <div className="flex flex-col gap-3.5">
+                        <div className="flex flex-col">
                           {weekRows.map((week, weekIndex) => (
                             <div key={weekIndex}>
                               <div className="grid grid-cols-7 gap-1">
                                 {week.map((item, dayIndex) => {
                                   if (!item) {
                                     // 空白天数
-                                    return <div key={dayIndex} className="h-[40px] pb-1.5"></div>;
+                                    return <div key={dayIndex} className="h-[40px] pb-[5px]"></div>;
                                   }
                               
                               // 检查当天的可预约情况
@@ -444,6 +444,9 @@ export default function Schedule({ theme }) {
                               let isEvening = false;
 
                               const isShiftWorkday = Boolean(item.holidayName && item.holidayName.includes('(班)'));
+                              const holidayLabel = isShiftWorkday
+                                ? '补班'
+                                : (item.holidayName ? item.holidayName.slice(0, 3) : '');
                               
                               if (!isShiftWorkday && freeSlots.length > 0) {
                                 const freeSlotKeys = freeSlots.map(slot => slot.key);
@@ -479,7 +482,7 @@ export default function Schedule({ theme }) {
                                       key={item.key}
                                       id={`day-${item.key}`}
                                       ref={el => dayRefs.current[item.key] = el}
-                                      className="spring-scale-in h-[40px] pb-1.5"
+                                      className="spring-scale-in h-[40px] pb-[5px]"
                                       style={{ animationDelay: `${monthIndex * 0.1 + weekIndex * 0.05 + dayIndex * 0.02}s` }}
                                     >
                                   <div className="text-center mb-1">
@@ -491,8 +494,8 @@ export default function Schedule({ theme }) {
                                       ) : (
                                         <div className="text-sm dark:text-[#FFFFFF] text-[#3A3A3A]">{item.label}</div>
                                       )}
-                                      {item.holidayName && (
-                                        <div className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[3.2em]">{item.holidayName.replace(/\(班\)/g, '').slice(0, 3)}</div>
+                                      {holidayLabel && (
+                                        <div className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[3.2em]">{holidayLabel}</div>
                                       )}
                                     </div>
                                   </div>
