@@ -44,3 +44,48 @@
 .fade-init {
   opacity: 0;
 }
+
+@keyframes soft-blur-in {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+.soft-blur-in {
+  animation: soft-blur-in 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes spring-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.spring-scale-in {
+  animation: spring-scale-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes spring-click {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+.spring-click {
+  animation: spring-click 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}

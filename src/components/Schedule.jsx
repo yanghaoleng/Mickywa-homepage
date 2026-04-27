@@ -13,7 +13,7 @@ export default function Schedule({ theme }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isMock, setIsMock] = useState(false);
-  const [visibleDays, setVisibleDays] = useState({});
+  
   const [showBackToday, setShowBackToday] = useState(false);
   
   // Selection state
@@ -52,9 +52,6 @@ export default function Schedule({ theme }) {
       setIsMock(!!res.isMock);
       setLoading(false);
       setError(false);
-      
-      // Init observer after render
-      setTimeout(initObserver, 100);
     } catch (e) {
       console.error(e);
       setLoading(false);
@@ -90,23 +87,6 @@ export default function Schedule({ theme }) {
 
     setBookingText(text);
   }, [form, selectedSlot]);
-
-  const initObserver = () => {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const key = entry.target.dataset.key;
-          setVisibleDays(prev => ({ ...prev, [key]: true }));
-        }
-      });
-    }, { threshold: 0.1 });
-
-    Object.values(dayRefs.current).forEach(el => {
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  };
 
   const handleScroll = () => {
     if (window.scrollY > 300) {
@@ -185,8 +165,25 @@ export default function Schedule({ theme }) {
     setShowModal(false);
   };
 
-  const handleMarkClick = () => {
+  const handleMarkClick = (e) => {
+    const svgElement = e.currentTarget.querySelector('svg');
+    if (svgElement) {
+      svgElement.classList.add('spring-click');
+      setTimeout(() => {
+        svgElement.classList.remove('spring-click');
+      }, 400);
+    }
     playMarkAnimation();
+  };
+
+  const handleTitleClick = (e) => {
+    const imgElement = e.currentTarget.querySelector('img');
+    if (imgElement) {
+      imgElement.classList.add('spring-click');
+      setTimeout(() => {
+        imgElement.classList.remove('spring-click');
+      }, 400);
+    }
   };
 
   const playMarkAnimation = () => {
@@ -295,7 +292,7 @@ export default function Schedule({ theme }) {
   return (
     <div className="min-h-screen flex flex-col pb-32 dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
       <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
-        <div className="flex flex-col items-center justify-start space-y-2">
+        <div className="flex flex-col items-center justify-start space-y-2 spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
             <svg width="46" height="42" viewBox="0 0 46 42" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path 
@@ -309,7 +306,9 @@ export default function Schedule({ theme }) {
               />
             </svg>
           </div>
-          <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
+          <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
+            <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
+          </div>
         </div>
       </div>
 
@@ -343,85 +342,216 @@ export default function Schedule({ theme }) {
 
         {!loading && !error && (
           <div className="pb-10">
-            {schedule.map((item, index) => (
-              <div 
-                key={item.key}
-                id={`day-${item.key}`}
-                data-key={item.key}
-                ref={el => dayRefs.current[item.key] = el}
-                className={`my-3 py-2 transition-all duration-500 transform ${visibleDays[item.key] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}
-              >
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-baseline gap-3">
-                    <span className="text-lg font-semibold">{item.label}</span>
-                    <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70">周{item.weekday}</span>
-                    {index === 0 && (
-                      <span className="ml-2 px-2 py-0.5 rounded-full text-xs bg-[#3A3A3A] text-[#FFFFFF] dark:bg-[#FFFFFF] dark:text-[#3A3A3A]">
-                        今天
-                      </span>
-                    )}
-                  </div>
-                  {item.holidayName && (
-                    <div className="text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60 font-medium text-right">{item.holidayName}</div>
-                  )}
-                </div>
-
-                <div className="flex justify-between gap-3">
-                  {item.slots.map((slot, slotIdx) => {
-                    const uniqueKey = `${item.key}-${slotIdx}`;
-                    const isBusy = slot.status !== 'free';
-                    const isActive = selectedSlot && selectedSlot.uniqueKey === uniqueKey;
-                    const isShaking = shakingSlotId === uniqueKey;
-                    const isFree = !isBusy;
+            {/* 按月分组 */}
+            {(() => {
+              const months = {};
+              schedule.forEach(day => {
+                const monthKey = `${day.date.getFullYear()}-${day.date.getMonth() + 1}`;
+                if (!months[monthKey]) {
+                  months[monthKey] = [];
+                }
+                months[monthKey].push(day);
+              });
+              
+              return Object.entries(months).map(([monthKey, days], monthIndex) => {
+                const [year, month] = monthKey.split('-');
+                return (
+                  <div key={monthKey} className="mb-8 spring-scale-in" style={{ animationDelay: `${monthIndex * 0.1}s` }}>
+                    <h2 className="text-xl font-bold mb-2 dark:text-[#FFFFFF] text-[#3A3A3A]">{month}月</h2>
                     
-                    return (
-                      <div
-                        key={slot.key}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSlotTap(item, slot, slotIdx);
-                        }}
-                        className={`
-                          slot-item flex-1 p-2 h-20 rounded-xl border flex flex-col items-start justify-center
-                          transition-all duration-300 transform cursor-pointer
-                          ${isBusy 
-                            ? 'dark:bg-[#FFFFFF]/4 bg-[#333333]/10 dark:border-[#FFFFFF]/8 border-[#333333]/10 opacity-50 cursor-not-allowed' 
-                            : 'bg-[#D3F1FF] text-[#083A8E] border border-[#083A8E]/60 hover:border-[#083A8E]/80 hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:border dark:border-[#D3F1FF]/70 dark:hover:border-[#D3F1FF]/70 dark:hover:bg-[#083A8E]/90 shadow-[0_2px_0_rgba(0,0,0,0.08)]'
-                          }
-                          ${isActive ? '!opacity-100 shadow-lg animate-float !bg-[#083A8E] !border !border-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:!border !border-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]' : ''}
-                          ${isShaking ? 'shake-feedback' : ''}
-                        `}>
-                        <span className={`text-base font-bold block mb-0.5 ${isActive ? 'text-[#FFFFFF] dark:text-[#083A8E]' : (isBusy ? 'dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50' : (isFree ? 'text-[#083A8E] dark:text-[#FFFFFF]' : ''))}`}>
-                          {slot.label}
-                        </span>
-                        <span className={`text-[10px] whitespace-nowrap block ${isBusy ? 'dark:text-[#FFFFFF]/40 text-[#3A3A3A]/40' : (isFree ? 'text-[#083A8E]/60 dark:text-[#FFFFFF]/70' : '')} ${isActive ? '!text-[#FFFFFF]/70 dark:!text-[#083A8E]/75' : ''}`}>
-                          {slot.displayTime || `${slot.start}～${slot.end}`}
-                        </span>
-                        <span className={`text-[10px] block mt-0.5 ${isBusy ? 'dark:text-[#FFFFFF]/40 text-[#3A3A3A]/40' : (isFree ? 'text-[#083A8E]/70 dark:text-[#FFFFFF]/80' : '')} ${isActive ? '!text-[#FFFFFF]/85 dark:!text-[#083A8E]/85' : ''}`}>
-                          {isBusy ? '不可预约' : '可预约'}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
+                    {/* 星期标题 */}
+                    <div className="grid grid-cols-7 gap-2 mb-2">
+                      {['一', '二', '三', '四', '五', '六', '日'].map((day, index) => (
+                        <div key={index} className="text-center text-xs dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 font-medium">
+                          {day}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    {(() => {
+                      // 获取月份的第一天
+                      const firstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
+                      // 获取第一天是星期几 (0=周日, 1=周一, ..., 6=周六)
+                      const firstDayOfWeek = firstDay.getDay();
+                      // 计算需要的空白天数（周一为1，所以如果第一天是周日，需要6个空白）
+                      const emptyDays = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+                      
+                      // 创建完整的日历网格
+                      const calendarGrid = [];
+                      
+                      // 添加空白天数
+                      for (let i = 0; i < emptyDays; i++) {
+                        calendarGrid.push(null);
+                      }
+                      
+                      // 添加实际日期
+                      days.forEach(day => {
+                        calendarGrid.push(day);
+                      });
+                      
+                      // 按7天一行分组
+                      const weekRows = [];
+                      for (let i = 0; i < calendarGrid.length; i += 7) {
+                        weekRows.push(calendarGrid.slice(i, i + 7));
+                      }
+                      
+                      return weekRows.map((week, weekIndex) => (
+                        <div key={weekIndex} className="mb-4">
+                          <div className="grid grid-cols-7 gap-2">
+                            {week.map((item, dayIndex) => {
+                              if (!item) {
+                                // 空白天数
+                                return <div key={dayIndex} className="h-24"></div>;
+                              }
+                              
+                              // 检查当天的可预约情况
+                              const freeSlots = item.slots.filter(slot => slot.status === 'free');
+                              let bookingStatus = '不可预约';
+                              let bookingType = 'busy';
+                              let isFullDay = false;
+                              let isMorning = false;
+                              let isEvening = false;
+                              
+                              if (freeSlots.length > 0) {
+                                const freeSlotKeys = freeSlots.map(slot => slot.key);
+                                if (freeSlotKeys.includes('morning') && freeSlotKeys.includes('noon') && freeSlotKeys.includes('afternoon') && freeSlotKeys.includes('evening')) {
+                                  bookingStatus = '全天';
+                                  bookingType = 'free';
+                                  isFullDay = true;
+                                } else if (freeSlotKeys.includes('morning') || freeSlotKeys.includes('noon') || freeSlotKeys.includes('afternoon')) {
+                                  bookingStatus = '白天';
+                                  bookingType = 'free';
+                                  isMorning = true;
+                                } else if (freeSlotKeys.includes('evening')) {
+                                  bookingStatus = '晚上';
+                                  bookingType = 'free';
+                                  isEvening = true;
+                                }
+                              }
+                              
+                              const isToday = item.date.getDate() === new Date().getDate() && 
+                                           item.date.getMonth() === new Date().getMonth() && 
+                                           item.date.getFullYear() === new Date().getFullYear();
+                              
+                              return (
+                                <div 
+                                  key={item.key}
+                                  id={`day-${item.key}`}
+                                  ref={el => dayRefs.current[item.key] = el}
+                                  className="spring-scale-in h-24"
+                                  style={{ animationDelay: `${monthIndex * 0.1 + weekIndex * 0.05 + dayIndex * 0.02}s` }}
+                                >
+                                  <div className="text-center mb-1">
+                                    <div className="flex items-center justify-center space-x-1">
+                                      {isToday ? (
+                                        <div className="inline-block px-2 py-0.5 rounded-full text-xs bg-[#FCF7BD] text-[#563117] dark:bg-[#FCF7BD]/80 dark:text-[#563117] font-medium leading-tight">
+                                          今日
+                                        </div>
+                                      ) : (
+                                        <div className="text-sm dark:text-[#FFFFFF] text-[#3A3A3A]">{item.label}</div>
+                                      )}
+                                      {item.holidayName && (
+                                        <div className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px]">{item.holidayName}</div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {isFullDay ? (
+                                    <div 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        // 选择第一个可预约的时间段
+                                        const firstFreeSlot = item.slots.find(slot => slot.status === 'free');
+                                        if (firstFreeSlot) {
+                                          const slotIdx = item.slots.indexOf(firstFreeSlot);
+                                          onSlotTap(item, firstFreeSlot, slotIdx);
+                                        }
+                                      }}
+                                      className={`
+                                        slot-item p-2 h-16 rounded-[4px] flex flex-col items-center justify-center
+                                        transition-all duration-300 transform cursor-pointer
+                                        ${bookingType === 'busy' 
+                                          ? 'dark:bg-[#FFFFFF]/4 bg-[#333333]/10 dark:border-[#FFFFFF]/8 border-[#333333]/10 opacity-50 cursor-not-allowed' 
+                                          : 'bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:border dark:border-[#D3F1FF]/70 dark:hover:border-[#D3F1FF]/70 dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset]'
+                                        }
+                                      `}>
+                                      <span className={`text-xs ${bookingType === 'busy' ? 'dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50' : 'text-[#083A8E] dark:text-[#FFFFFF]'}`}>
+                                        {bookingStatus}
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <div className="h-16">
+                                      {isMorning && (
+                                        <div 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            // 选择白天的时间段
+                                            const daySlot = item.slots.find(slot => ['morning', 'noon', 'afternoon'].includes(slot.key));
+                                            if (daySlot) {
+                                              const slotIdx = item.slots.indexOf(daySlot);
+                                              onSlotTap(item, daySlot, slotIdx);
+                                            }
+                                          }}
+                                          className="h-full p-1 rounded-[4px] flex items-center justify-center
+                                            transition-all duration-300 transform cursor-pointer
+                                            bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:border dark:border-[#D3F1FF]/70 dark:hover:border-[#D3F1FF]/70 dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset]"
+                                        >
+                                          <span className="text-xs text-[#083A8E] dark:text-[#FFFFFF]">
+                                            {bookingStatus}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {isEvening && (
+                                        <div 
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            // 选择晚上的时间段
+                                            const eveningSlot = item.slots.find(slot => slot.key === 'evening');
+                                            if (eveningSlot) {
+                                              const slotIdx = item.slots.indexOf(eveningSlot);
+                                              onSlotTap(item, eveningSlot, slotIdx);
+                                            }
+                                          }}
+                                          className="h-full p-1 rounded-[4px] flex items-center justify-center
+                                            transition-all duration-300 transform cursor-pointer
+                                            bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:border dark:border-[#D3F1FF]/70 dark:hover:border-[#D3F1FF]/70 dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset]"
+                                        >
+                                          <span className="text-xs text-[#083A8E] dark:text-[#FFFFFF]">
+                                            {bookingStatus}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {!isMorning && !isEvening && (
+                                        <div className="h-full p-2 rounded-[4px] border flex items-center justify-center
+                                          dark:bg-[#FFFFFF]/4 bg-[#333333]/10 dark:border-[#FFFFFF]/8 border-[#333333]/10 opacity-50 cursor-not-allowed"
+                                        >
+                                          <span className="text-xs dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50">
+                                            {bookingStatus}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                );
+              });
+            })()}
+
+            <div className="spring-scale-in" style={{ animationDelay: `${schedule.length * 0.08 + 0.1}s` }}>
+              <div className="text-center text-xs dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50 flex items-center justify-center mb-2">
+                感谢支持羊石坨坨！
               </div>
-            ))}
-            <div className="h-10"></div>
-            <div className="text-center text-xs dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50 py-10 flex items-center justify-center">
-              感谢支持 mickywa！
             </div>
           </div>
         )}
       </div>
-
-      {showBackToday && !selectedSlot && (
-        <button 
-          onClick={scrollToToday}
-          className="fixed right-5 bottom-10 px-4 py-2 text-xs bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full shadow-lg z-40"
-        >
-          返回今天
-        </button>
-      )}
 
       {/* Bottom Booking Bar */}
       <div className={`bottom-bar fixed inset-x-0 bottom-0 p-4 pb-8 dark:bg-[#333333] bg-[#FFFFFF] border-t dark:border-[#3A3A3A]/10 border-[#3A3A3A]/10 z-50 flex items-center safe-area-bottom max-w-[440px] mx-auto min-w-[375px] transition-all duration-300 transform ${selectedSlot ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0 pointer-events-none'}`}>
@@ -432,7 +562,7 @@ export default function Schedule({ theme }) {
                 {displaySlot.day.label} 周{displaySlot.day.weekday}
               </span>
               <span className="text-lg font-bold dark:text-[#FFFFFF] text-[#3A3A3A]">
-                {displaySlot.slot.label} {displaySlot.slot.displayTime || `${displaySlot.slot.start}～${displaySlot.slot.end}`}
+                {displaySlot.slot.label}
               </span>
             </div>
           </div>

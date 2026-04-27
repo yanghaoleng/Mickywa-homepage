@@ -433,7 +433,7 @@ export function buildScheduleData(workEvents, holidayEvents, months = 2) {
   const holidayMap = buildHolidayMap(holidayEvents);
 
   return targetDays.map(day => {
-    const label = `${day.m}月${day.d}日`;
+    const label = `${day.d}`;
     const weekday = '日一二三四五六'.charAt(day.weekdayIdx);
     const key = `${day.y}-${day.m}-${day.d}`;
     const isHoliday = !!holidayMap[key];
@@ -568,7 +568,7 @@ function seededRandom(seed) {
 function getMockSchedule() {
   const targetDays = getDateRangeDays(60);
   const schedule = targetDays.map((day, i) => {
-    const label = `${day.m}月${day.d}日`;
+    const label = `${day.d}`;
     const weekday = '日一二三四五六'.charAt(day.weekdayIdx);
     const key = `${day.y}-${day.m}-${day.d}`;
     
