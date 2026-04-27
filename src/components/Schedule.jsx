@@ -521,7 +521,7 @@ export default function Schedule({ theme }) {
                                           bookingType === 'busy' 
                                             ? "dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50"
                                             : selectedSlot && selectedSlot.day.key === item.key
-                                              ? "!text-[#FFFFFF] dark:!text-[#083A8E]"
+                                              ? "!text-[#3A3A3A] dark:!text-[#3A3A3A]"
                                               : "text-[#083A8E] dark:text-[#FFFFFF]"
                                         ].join(' ')}>
                                           {bookingStatus}
@@ -547,7 +547,7 @@ export default function Schedule({ theme }) {
                                         ].join(' ')}>
                                         <span className={["text-xs",
                                           selectedSlot && selectedSlot.day.key === item.key
-                                            ? "!text-[#FFFFFF] dark:!text-[#083A8E]"
+                                            ? "!text-[#3A3A3A] dark:!text-[#3A3A3A]"
                                             : "text-[#083A8E] dark:text-[#FFFFFF]"
                                         ].join(' ')}>
                                           {bookingStatus}
@@ -573,7 +573,7 @@ export default function Schedule({ theme }) {
                                         ].join(' ')}>
                                         <span className={["text-xs",
                                           selectedSlot && selectedSlot.day.key === item.key
-                                            ? "!text-[#FFFFFF] dark:!text-[#083A8E]"
+                                            ? "!text-[#3A3A3A] dark:!text-[#3A3A3A]"
                                             : "text-[#083A8E] dark:text-[#FFFFFF]"
                                         ].join(' ')}>
                                           {bookingStatus}
