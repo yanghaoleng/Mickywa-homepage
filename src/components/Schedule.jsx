@@ -472,16 +472,24 @@ export default function Schedule({ theme }) {
                                       style={{ animationDelay: `${monthIndex * 0.1 + weekIndex * 0.05 + dayIndex * 0.02}s` }}
                                     >
                                   <div className="text-center mb-1">
-                                    <div className="flex items-center justify-center space-x-1">
+                                    <div className="flex items-center justify-center">
                                       {isToday ? (
-                                        <div className="inline-block px-2 py-0.5 rounded-full text-xs bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#D3F1FF] font-medium leading-tight">
-                                          今天
-                                        </div>
+                                        <>
+                                          <div className="inline-flex items-center px-2 py-0.5 rounded-l-full text-xs bg-[#083A8E] text-[#FFFFFF] font-medium leading-tight">
+                                            今天
+                                          </div>
+                                          <div className="inline-flex items-center px-2 py-0.5 rounded-r-full text-xs bg-[#083A8E] text-[#FFFFFF] font-medium leading-tight shadow-[inset_0_0_18px_rgba(255,255,255,0.25)] dark:shadow-[inset_0_0_18px_rgba(255,255,255,0.10)]">
+                                            {item.label}
+                                          </div>
+                                        </>
                                       ) : (
-                                        <div className="text-sm dark:text-[#FFFFFF] text-[#3A3A3A]">{item.label}</div>
+                                        <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-[#333333]/5 dark:bg-[#FFFFFF]/6 text-[#3A3A3A] dark:text-[#FFFFFF] font-medium leading-tight shadow-[inset_0_0_18px_rgba(255,255,255,0.35)] dark:shadow-[inset_0_0_18px_rgba(255,255,255,0.10)]">
+                                          {item.label}
+                                        </div>
                                       )}
+
                                       {item.holidayName && (
-                                        <div className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[3.2em]">{item.holidayName.replace(/\(班\)/g, '').slice(0, 3)}</div>
+                                        <div className="ml-1 text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[3.2em]">{item.holidayName.replace(/\(班\)/g, '').slice(0, 3)}</div>
                                       )}
                                     </div>
                                   </div>
@@ -498,11 +506,11 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, firstFreeSlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item p-2 h-[28px] rounded-[24px] flex flex-col items-center justify-center transition-all duration-300 transform cursor-pointer hover:scale-125",
+                                        className={["slot-item relative p-2 h-[28px] rounded-[24px] flex flex-col items-center justify-center transition-all duration-300 transform cursor-pointer hover:scale-125",
                                           bookingType === 'busy' 
                                             ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed" 
                                             : selectedSlot && selectedSlot.day.key === item.key
-                                              ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
+                                              ? "z-[999] !opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
                                               : "bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
                                         <span className={["text-xs",
@@ -527,9 +535,9 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, daySlot, slotIdx);
                                           }
                                         }}
-                                        className={["h-[28px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer hover:scale-125",
+                                        className={["relative h-[28px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer hover:scale-125",
                                           selectedSlot && selectedSlot.day.key === item.key
-                                            ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
+                                            ? "z-[999] !opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
                                             : "bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
                                         <span className={["text-xs",
@@ -552,9 +560,9 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, eveningSlot, slotIdx);
                                           }
                                         }}
-                                        className={["h-[28px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer hover:scale-125",
+                                        className={["relative h-[28px] p-1 rounded-[24px] flex items-center justify-center transition-all duration-300 transform cursor-pointer hover:scale-125",
                                           selectedSlot && selectedSlot.day.key === item.key
-                                            ? "!opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
+                                            ? "z-[999] !opacity-100 shadow-lg -translate-y-1.25 animate-color-change !bg-[#083A8E] ring-2 ring-[#083A8E]/15 dark:!bg-[#D3F1FF] dark:ring-[#D3F1FF]/20 dark:!text-[#083A8E]"
                                             : "bg-[#D3F1FF] text-[#083A8E] hover:bg-[#D3F1FF]/80 dark:bg-[#083A8E] dark:text-[#FFFFFF] dark:hover:bg-[#083A8E]/90 shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
                                         <span className={["text-xs",
