@@ -45,6 +45,15 @@ export default function Schedule({ theme }) {
   const animationInterval = useRef(null);
   const pressTimeoutRef = useRef(null);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!markBgColor) return;
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) {
+      themeMeta.setAttribute('content', markBgColor);
+    }
+  }, [markBgColor, theme]);
+
   const triggerSlotPress = (slotId) => {
     if (!slotId) return;
     if (pressTimeoutRef.current) {
