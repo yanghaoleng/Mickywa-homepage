@@ -435,12 +435,27 @@ export function buildScheduleData(workEvents, holidayEvents, months = 2) {
   return targetDays.map(day => {
     const label = `${day.m}月${day.d}日`;
     const weekday = '日一二三四五六'.charAt(day.weekdayIdx);
+    const key = `${day.y}-${day.m}-${day.d}`;
+    const isHoliday = !!holidayMap[key];
     
     const slots = TIME_SLOTS.map(slot => {
       // 切换逻辑：使用严格模式
-      const busy = isSlotBusy(day, slot, workEvents);
-      // 如果需要切回牛马模式，解开下面注释并注释掉上面一行
-      // const avail = getSlotAvailabilityNiuma(day, slot, workEvents);
+      let busy = isSlotBusy(day, slot, workEvents);
+      
+      // 添加工作日不可预约逻辑：周一到周五 9:30-18:00 不可预约，除非是节假日
+      if (!isHoliday && day.weekdayIdx >= 1 && day.weekdayIdx <= 5) {
+        const [sh, sm] = slot.start.split(':').map(Number);
+        const [eh, em] = slot.end.split(':').map(Number);
+        const slotStartMinutes = sh * 60 + sm;
+        const slotEndMinutes = eh * 60 + em;
+        const workStartMinutes = 9 * 60 + 30; // 9:30
+        const workEndMinutes = 18 * 60; // 18:00
+        
+        // 如果时间段与工作日工作时间有重叠，则不可预约
+        if (slotStartMinutes < workEndMinutes && slotEndMinutes > workStartMinutes) {
+          busy = true;
+        }
+      }
 
       return {
         key: slot.key,
@@ -454,14 +469,12 @@ export function buildScheduleData(workEvents, holidayEvents, months = 2) {
       };
     });
 
-    const key = `${day.y}-${day.m}-${day.d}`;
-
     return {
       date: day.dateObj, // 传给 UI/formatOrderText 使用
       key,
       label,
       weekday,
-      holidayName: holidayMap[key] || '',
+      holidayName: isHoliday ? holidayMap[key] : '',
       slots
     };
   });
