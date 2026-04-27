@@ -5,6 +5,8 @@
 const WORK_CAL_URL = 'https://outlook.live.com/owa/calendar/00000000-0000-0000-0000-000000000000/48be9371-5a7c-4c58-8a64-4268b3012841/cid-06E665F8FD44A075/calendar.ics';
 const HOLIDAY_CAL_URL = 'https://calendars.icloud.com/holidays/cn_zh.ics/';
 
+const HOLIDAY_CN_BASE_URL = 'https://fastly.jsdelivr.net/gh/NateScarlet/holiday-cn@master';
+
 const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
 
 /**
@@ -439,25 +441,34 @@ function getSlotAvailabilityNiuma(day, slot, events) {
 }
 
 // 构建数据
-export function buildScheduleData(workEvents, holidayEvents, months = 2) {
+export function buildScheduleData(workEvents, holidayCnYears, months = 2) {
   // const days = Math.ceil(30 * months); // Old logic
   const days = 21; // Future 21 days (including today)
   const targetDays = getDateRangeDays(days);
-  const holidayMap = buildHolidayMap(holidayEvents);
+  const statutory = buildStatutoryHolidayMaps(holidayCnYears);
 
   return targetDays.map(day => {
     const label = `${day.d}`;
     const weekday = '日一二三四五六'.charAt(day.weekdayIdx);
     const key = `${day.y}-${day.m}-${day.d}`;
-    const isHoliday = !!holidayMap[key];
-    const isShiftWorkday = Boolean(isHoliday && String(holidayMap[key] || '').includes('班'));
+    const isStatOffDay = statutory.offDays.has(key);
+    const isWorkdayOverride = statutory.workDays.has(key);
+    const isWeekend = day.weekdayIdx === 0 || day.weekdayIdx === 6;
+    const isShiftWorkday = isWorkdayOverride && isWeekend;
+    const holidayName = isShiftWorkday ? '补班' : (statutory.nameByDate[key] || '');
+
+    const isWorkday = (() => {
+      if (isStatOffDay) return false;
+      if (isWorkdayOverride) return true;
+      return day.weekdayIdx >= 1 && day.weekdayIdx <= 5;
+    })();
     
     const slots = TIME_SLOTS.map(slot => {
       // 切换逻辑：使用严格模式
       let busy = isSlotBusy(day, slot, workEvents);
       
       // 添加工作日不可预约逻辑：周一到周五 9:30-18:00 不可预约，除非是节假日
-      if (!isHoliday && day.weekdayIdx >= 1 && day.weekdayIdx <= 5) {
+      if (isWorkday) {
         const [sh, sm] = slot.start.split(':').map(Number);
         const [eh, em] = slot.end.split(':').map(Number);
         const slotStartMinutes = sh * 60 + sm;
@@ -492,28 +503,10 @@ export function buildScheduleData(workEvents, holidayEvents, months = 2) {
       key,
       label,
       weekday,
-      holidayName: isHoliday ? holidayMap[key] : '',
+      holidayName,
       slots
     };
   });
-}
-
-function buildHolidayMap(holidayEvents) {
-  const map = {};
-  holidayEvents.forEach(e => {
-    if (!e.summary) return;
-    // 节假日通常是全天事件，start 是 00:00 Shanghai (in UTC)
-    // 我们将其转回上海的 Y-M-D
-    const d = new Date(e.start + SHANGHAI_OFFSET_MS);
-    const y = d.getUTCFullYear();
-    const m = d.getUTCMonth() + 1;
-    const day = d.getUTCDate();
-    const key = `${y}-${m}-${day}`;
-    if (!map[key]) {
-      map[key] = e.summary;
-    }
-  });
-  return map;
 }
 
 async function fetchICS(url, type) {
@@ -567,6 +560,59 @@ async function fallbackFetch(url) {
 
 const CACHE_KEY = 'mickywa_schedule_cache_v1';
 const CACHE_TTL = 3 * 60 * 1000;
+
+const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v1_';
+const HOLIDAY_CN_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+
+async function fetchHolidayCnYear(year) {
+  const url = `${HOLIDAY_CN_BASE_URL}/${year}.json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`holiday-cn fetch failed: ${res.status}`);
+  return await res.json();
+}
+
+async function getHolidayCnYearWithCache(year) {
+  const now = Date.now();
+  const cacheKey = `${HOLIDAY_CN_CACHE_PREFIX}${year}`;
+  try {
+    const cachedStr = localStorage.getItem(cacheKey);
+    if (cachedStr) {
+      const cached = JSON.parse(cachedStr);
+      if (cached && cached.timestamp && now - cached.timestamp < HOLIDAY_CN_CACHE_TTL) {
+        return cached.data;
+      }
+    }
+  } catch (_) {}
+
+  const data = await fetchHolidayCnYear(year);
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify({ timestamp: now, data }));
+  } catch (_) {}
+  return data;
+}
+
+function buildStatutoryHolidayMaps(holidayCnYears) {
+  const offDays = new Set();
+  const workDays = new Set();
+  const nameByDate = {};
+
+  (holidayCnYears || []).forEach(y => {
+    (y?.days || []).forEach(d => {
+      if (!d?.date) return;
+      const m = /^\s*(\d{4})-(\d{2})-(\d{2})\s*$/.exec(String(d.date));
+      if (!m) return;
+      const key = `${Number(m[1])}-${Number(m[2])}-${Number(m[3])}`;
+      nameByDate[key] = d.name || nameByDate[key] || '';
+      if (d.isOffDay) {
+        offDays.add(key);
+      } else {
+        workDays.add(key);
+      }
+    });
+  });
+
+  return { offDays, workDays, nameByDate };
+}
 
 // Hardcoded holidays for demo/fallback (2024-2026)
 const FALLBACK_HOLIDAYS = {
@@ -641,16 +687,18 @@ export async function getCalendarsWithCache({ forceMock = false } = {}) {
 
   try {
     // Pass 'work' and 'holiday' types to enable Vercel API routing
-    const [workText, holidayText] = await Promise.all([
+    const today = getShanghaiTodayComponents();
+    const years = [today.y, today.y + 1];
+
+    const [workText, holidayCnYears] = await Promise.all([
       fetchICS(WORK_CAL_URL, 'work'),
-      fetchICS(HOLIDAY_CAL_URL, 'holiday')
+      Promise.all(years.map(y => getHolidayCnYearWithCache(y)))
     ]);
 
     const workEvents = parseICS(workText);
-    const holidayEvents = parseICS(holidayText);
-    const schedule = buildScheduleData(workEvents, holidayEvents, 2);
+    const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
 
-    const data = { workEvents, holidayEvents, schedule, isMock: false };
+    const data = { workEvents, holidayCnYears, schedule, isMock: false };
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
     } catch (e) {
