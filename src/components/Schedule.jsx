@@ -400,7 +400,7 @@ export default function Schedule({ theme }) {
                     <h2 className="text-xl font-bold mb-2 dark:text-[#FFFFFF] text-[#3A3A3A]">{month}月</h2>
                     
                     {/* 星期标题 */}
-                    <div className="grid grid-cols-7 gap-1 mb-1">
+                    <div className="grid grid-cols-7 gap-1 pb-1.5">
                       {['一', '二', '三', '四', '五', '六', '日'].map((day, index) => (
                         <div key={index} className="text-center text-xs dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 font-medium">
                           {day}
@@ -439,14 +439,14 @@ export default function Schedule({ theme }) {
                       }
                       
                       return (
-                        <div className="flex flex-col">
+                        <div className="flex flex-col gap-1">
                           {weekRows.map((week, weekIndex) => (
                             <div key={weekIndex}>
                               <div className="grid grid-cols-7 gap-1">
                                 {week.map((item, dayIndex) => {
                                   if (!item) {
                                     // 空白天数
-                                    return <div key={dayIndex} className="h-[60px] pb-[5px]"></div>;
+                                    return <div key={dayIndex} className="aspect-square"></div>;
                                   }
                               
                               // 检查当天的可预约情况
@@ -503,7 +503,7 @@ export default function Schedule({ theme }) {
                                       key={item.key}
                                       id={`day-${item.key}`}
                                       ref={el => dayRefs.current[item.key] = el}
-                                      className="spring-scale-in h-[60px] pb-[5px]"
+                                      className="spring-scale-in aspect-square"
                                       style={{ animationDelay: `${monthIndex * 0.1 + weekIndex * 0.05 + dayIndex * 0.02}s` }}
                                     >
                                   <div>
@@ -519,7 +519,7 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, firstFreeSlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item w-full h-[52px] px-3 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-full px-2 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
                                           bookingType === 'busy' 
                                             ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed" 
                                             : isSelected
@@ -527,12 +527,12 @@ export default function Schedule({ theme }) {
                                               : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
                                         <div className="min-w-0 flex items-center gap-1.5">
-                                          {isToday && (
-                                            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#D3F1FF] font-medium leading-tight shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset] dark:shadow-[0_0_24px_0_rgba(255,255,255,0.20)_inset]">今天</span>
-                                          )}
-                                          <span className={["text-xs font-semibold", primaryTextClass].join(' ')}>{item.label}</span>
+                                          <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
+                                          )}
+                                          {isToday && (
+                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今天</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -550,18 +550,18 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, daySlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item w-full h-[52px] px-3 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-full px-2 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
                                           isSelected
                                             ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
                                         <div className="min-w-0 flex items-center gap-1.5">
-                                          {isToday && (
-                                            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#D3F1FF] font-medium leading-tight shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset] dark:shadow-[0_0_24px_0_rgba(255,255,255,0.20)_inset]">今天</span>
-                                          )}
-                                          <span className={["text-xs font-semibold", primaryTextClass].join(' ')}>{item.label}</span>
+                                          <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
+                                          )}
+                                          {isToday && (
+                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今天</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -579,32 +579,32 @@ export default function Schedule({ theme }) {
                                             onSlotTap(item, eveningSlot, slotIdx);
                                           }
                                         }}
-                                        className={["slot-item w-full h-[52px] px-3 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
+                                        className={["slot-item w-full h-full px-2 rounded-[12px] flex flex-col items-start justify-center transition-all duration-300 transform cursor-pointer",
                                           isSelected
                                             ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] dark:!bg-[#D3F1FF]"
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]"
                                         ].join(' ')}>
                                         <div className="min-w-0 flex items-center gap-1.5">
-                                          {isToday && (
-                                            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#D3F1FF] font-medium leading-tight shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset] dark:shadow-[0_0_24px_0_rgba(255,255,255,0.20)_inset]">今天</span>
-                                          )}
-                                          <span className={["text-xs font-semibold", primaryTextClass].join(' ')}>{item.label}</span>
+                                          <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
+                                          )}
+                                          {isToday && (
+                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今天</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
-                                      <div className="slot-item w-full h-[52px] px-3 rounded-[12px] flex flex-col items-start justify-center dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
+                                      <div className="slot-item w-full h-full px-2 rounded-[12px] flex flex-col items-start justify-center dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
                                         <div className="min-w-0 flex items-center gap-1.5">
-                                          {isToday && (
-                                            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#D3F1FF] font-medium leading-tight shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset] dark:shadow-[0_0_24px_0_rgba(255,255,255,0.20)_inset]">今天</span>
-                                          )}
-                                          <span className={["text-xs font-semibold", primaryTextClass].join(' ')}>{item.label}</span>
+                                          <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] truncate whitespace-nowrap max-w-[2.2em]">{holidayLabel}</span>
+                                          )}
+                                          {isToday && (
+                                            <span className="text-[#3A3A3A]/50 dark:text-[#FFFFFF]/50 text-[10px] whitespace-nowrap">今天</span>
                                           )}
                                         </div>
                                         <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
