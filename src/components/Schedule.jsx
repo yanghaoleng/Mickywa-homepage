@@ -52,6 +52,10 @@ export default function Schedule({ theme }) {
     if (themeMeta) {
       themeMeta.setAttribute('content', markBgColor);
     }
+    document.documentElement.style.backgroundColor = markBgColor;
+    if (document.body) {
+      document.body.style.backgroundColor = markBgColor;
+    }
   }, [markBgColor, theme]);
 
   const triggerSlotPress = (slotId) => {
