@@ -43,6 +43,7 @@ export default function Schedule({ theme }) {
   const [selectedSmartId, setSelectedSmartId] = useState(null);
   const [pendingScrollDayKey, setPendingScrollDayKey] = useState(null);
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
+  const [recNonce, setRecNonce] = useState(0);
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
@@ -108,10 +109,25 @@ export default function Schedule({ theme }) {
     const now = new Date();
     const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+    const activities = [
+      '去吃火锅',
+      '去逛同仁路',
+      '去喝一杯',
+      '去看电影',
+      '去玉林路散步',
+      '去吃烧烤',
+      '去泡咖啡馆',
+      '去春熙路逛街'
+    ];
+
     const isWeekend = (d) => {
       const dow = d.getDay();
       return dow === 0 || dow === 6;
     };
+
+    const isHoliday = (day) => Boolean(day.holidayName && day.holidayName !== '补班');
+    const isWorkday = (day) => day?.date instanceof Date && !isWeekend(day.date) && !day.holidayName;
+    const isNormalWeekend = (day) => day?.date instanceof Date && isWeekend(day.date) && !day.holidayName;
 
     const relOrWeek = (date) => {
       const rel = formatRelativeDate(date);
@@ -121,106 +137,160 @@ export default function Schedule({ theme }) {
       return rel;
     };
 
-    const workdayEvening = schedule
+    const pickSlots = (day, prefer) => {
+      if (!day?.slots?.length) return null;
+      const slot = prefer
+        ? day.slots.find(s => s.key === prefer && s.status === 'free')
+        : null;
+      if (slot) return { slot, label: slot.label };
+      return getAnyFreeSlot(day);
+    };
+
+    const nextWorkday = schedule
       .filter(d => d?.date instanceof Date)
       .filter(d => d.date >= base)
-      .filter(d => !isWeekend(d.date))
-      .filter(d => !d.holidayName)
-      .map(d => {
-        const evening = d.slots?.find(s => s.key === 'evening');
-        if (!evening || evening.status !== 'free') return null;
-        return {
-          id: `rec-work-evening-${d.key}`,
-          title: `${relOrWeek(d.date)}晚上可约`,
-          subtitle: '工作日晚上',
-          dayKey: d.key,
-          slotKey: 'evening',
-          date: d.date
-        };
-      })
-      .find(Boolean);
+      .filter(d => isWorkday(d))
+      .find(d => pickSlots(d, 'evening'));
+
+    const workdayRec = (() => {
+      if (!nextWorkday) return null;
+      const picked = pickSlots(nextWorkday, 'evening');
+      if (!picked) return null;
+      const dateText = `${relOrWeek(nextWorkday.date)}${picked.label === '全天' ? '' : picked.label}`;
+      return {
+        id: `rec-workday-${nextWorkday.key}`,
+        type: 'workday',
+        date: nextWorkday.date,
+        dateText,
+        dayKey: nextWorkday.key,
+        slotKey: picked.slot.key
+      };
+    })();
 
     const weekendDays = schedule
       .filter(d => d?.date instanceof Date)
       .filter(d => d.date >= base)
-      .filter(d => isWeekend(d.date))
-      .filter(d => !d.holidayName)
-      .filter(d => getAnyFreeSlot(d));
+      .filter(d => isNormalWeekend(d))
+      .filter(d => pickSlots(d));
 
-    const weekendSuggestion = (() => {
+    const weekendRec = (() => {
       if (weekendDays.length === 0) return null;
-      const first = weekendDays[0];
-      const firstKey = first.key;
-      const firstSlot = getAnyFreeSlot(first);
-      const prefix = weekPrefix(first.date);
-      const sat = first.date.getDay() === 6 ? first : weekendDays.find(d => d.date.getDay() === 6);
-      const sun = weekendDays.find(d => d.date.getDay() === 0 && d.date >= base);
+
+      const sat = weekendDays.find(d => d.date.getDay() === 6);
+      const sun = weekendDays.find(d => d.date.getDay() === 0);
       if (sat && sun) {
         const sameWeekend = Math.abs((sun.date - sat.date) / 86400000) <= 1;
         if (sameWeekend && weekPrefix(sat.date) === weekPrefix(sun.date)) {
+          const prefix = weekPrefix(sat.date);
+          const dateText = prefix ? `${prefix}六-日` : `${sat.date.getMonth() + 1}月${sat.date.getDate()}日-${sun.date.getDate()}日`;
+          const pickedSat = pickSlots(sat);
+          const pickedSun = pickSlots(sun);
+          const picked = pickedSat || pickedSun;
+          if (!picked) return null;
           return {
             id: `rec-weekend-${sat.key}`,
-            title: `${weekPrefix(sat.date) || relOrWeek(sat.date)}六-日可约`,
-            subtitle: '周末',
-            dayKey: sat.key,
-            slotKey: (getAnyFreeSlot(sat)?.slot?.key || 'evening'),
-            date: sat.date
+            type: 'weekend',
+            date: sat.date,
+            dateText,
+            dayKey: (pickedSat ? sat.key : sun.key),
+            slotKey: picked.slot.key
           };
         }
       }
+
+      const first = weekendDays[0];
+      const picked = pickSlots(first);
+      if (!picked) return null;
+      const prefix = weekPrefix(first.date);
+      const dateText = `${prefix ? `${prefix}${weekdayLabel(first.date)}` : relOrWeek(first.date)}${picked.label === '全天' ? '' : picked.label}`;
       return {
-        id: `rec-weekend-${firstKey}`,
-        title: `${prefix ? `${prefix}${weekdayLabel(first.date)}` : relOrWeek(first.date)}${firstSlot.label}可约`,
-        subtitle: '周末',
-        dayKey: firstKey,
-        slotKey: firstSlot.slot.key,
-        date: first.date
+        id: `rec-weekend-${first.key}`,
+        type: 'weekend',
+        date: first.date,
+        dateText,
+        dayKey: first.key,
+        slotKey: picked.slot.key
       };
     })();
 
     const holidayDays = schedule
       .filter(d => d?.date instanceof Date)
       .filter(d => d.date >= base)
-      .filter(d => d.holidayName && d.holidayName !== '补班')
-      .filter(d => getAnyFreeSlot(d));
+      .filter(d => isHoliday(d))
+      .filter(d => pickSlots(d));
 
-    const holidaySuggestion = (() => {
+    const holidayRec = (() => {
       if (holidayDays.length === 0) return null;
       const first = holidayDays[0];
       const name = first.holidayName;
-      const sameNameDays = holidayDays.filter(d => d.holidayName === name);
-      const firstTwo = sameNameDays.slice(0, 2);
-      if (firstTwo.length === 2) {
-        return {
-          id: `rec-holiday-${first.key}`,
-          title: `${name}前两天可约`,
-          subtitle: '节假日',
-          dayKey: first.key,
-          slotKey: (getAnyFreeSlot(first)?.slot?.key || 'morning'),
-          date: first.date
-        };
-      }
+      const same = holidayDays.filter(d => d.holidayName === name);
+      const picked = pickSlots(first);
+      if (!picked) return null;
+      const dateText = same.length >= 2 ? `${name}前两天` : `${name}当天`;
       return {
         id: `rec-holiday-${first.key}`,
-        title: `${name}当天可约`,
-        subtitle: '节假日',
+        type: 'holiday',
+        date: first.date,
+        dateText,
         dayKey: first.key,
-        slotKey: (getAnyFreeSlot(first)?.slot?.key || 'morning'),
-        date: first.date
+        slotKey: picked.slot.key
       };
     })();
 
-    return [workdayEvening, weekendSuggestion, holidaySuggestion]
+    const shouldAddHoliday = Boolean(workdayRec && weekendRec && holidayRec);
+
+    const shouldAddExtraWorkday = (() => {
+      if (!weekendRec) return false;
+      const diffDays = Math.round((weekendRec.date - base) / 86400000);
+      return diffDays >= 0 && diffDays <= 2;
+    })();
+
+    const extraWorkdayRec = (() => {
+      if (!shouldAddExtraWorkday || !weekendRec) return null;
+      const sat = weekendRec.date;
+      const sun = new Date(sat);
+      sun.setDate(sun.getDate() + (sat.getDay() === 6 ? 1 : 0));
+      const after = new Date(sun);
+      after.setDate(after.getDate() + 1);
+
+      const next = schedule
+        .filter(d => d?.date instanceof Date)
+        .filter(d => d.date >= after)
+        .filter(d => isWorkday(d))
+        .find(d => pickSlots(d, 'evening'));
+
+      if (!next) return null;
+      const picked = pickSlots(next, 'evening');
+      if (!picked) return null;
+      const dateText = `${relOrWeek(next.date)}${picked.label === '全天' ? '' : picked.label}`;
+      return {
+        id: `rec-workday-next-${next.key}`,
+        type: 'workday',
+        date: next.date,
+        dateText,
+        dayKey: next.key,
+        slotKey: picked.slot.key
+      };
+    })();
+
+    const list = [workdayRec, weekendRec];
+    if (shouldAddHoliday) {
+      list.push(holidayRec);
+    } else if (extraWorkdayRec && workdayRec && extraWorkdayRec.dayKey !== workdayRec.dayKey) {
+      list.push(extraWorkdayRec);
+    }
+
+    const normalized = list
       .filter(Boolean)
-      .sort((a, b) => {
-        const ad = a?.date?.getTime?.() ?? 0;
-        const bd = b?.date?.getTime?.() ?? 0;
-        if (ad !== bd) return ad - bd;
-        const order = { '节假日': 0, '周末': 1, '工作日晚上': 2 };
-        return (order[a.subtitle] ?? 9) - (order[b.subtitle] ?? 9);
-      })
+      .sort((a, b) => (a.date?.getTime?.() ?? 0) - (b.date?.getTime?.() ?? 0))
       .slice(0, 3);
-  }, [schedule]);
+
+    const shuffled = [...activities].sort(() => 0.5 - Math.random());
+    return normalized.map((r, idx) => ({
+      ...r,
+      title: `${r.dateText}可以${shuffled[idx % shuffled.length]}`
+    }));
+  }, [recNonce, schedule]);
 
   const handleRecommendationClick = (rec) => {
     if (!rec) return;
@@ -263,6 +333,7 @@ export default function Schedule({ theme }) {
         .sort((a, b) => a.date - b.date);
 
       setSchedule(nextDays);
+      setRecNonce(n => n + 1);
       setIsMock(!!res.isMock);
       setLoading(false);
       setError(false);
@@ -584,7 +655,7 @@ export default function Schedule({ theme }) {
         {!loading && !error && (
           <div key={contentKey} className="pb-10">
             <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] p-5 shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
-              <img src="/assets/找我耍.svg" alt="找我耍" className="h-8 w-auto mb-4" />
+              <img src="/assets/找我耍.svg" alt="找我耍" className="h-8 w-auto mb-4 dark:brightness-0 dark:invert" />
               <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[20px] p-4">
                 <div className="space-y-2">
                   {(recommendations.length ? recommendations : [{ id: 'rec-empty', title: '暂无可预约时间', subtitle: '', disabled: true }]).map((rec, idx) => {
@@ -592,10 +663,10 @@ export default function Schedule({ theme }) {
                     const isSelected = selectedSmartId && rec.id === selectedSmartId;
 
                     const lineCls = [
-                      "flex items-start gap-2",
+                      "relative flex items-start gap-2 transition-all duration-300 transform",
                       isDisabled ? "opacity-50" : "cursor-pointer",
                       pressedSlotId === rec.id ? "press-bouncy" : "",
-                      isSelected ? "bg-[#083A8E]/10 dark:bg-[#D3F1FF]/15 rounded-[12px] px-2 py-1" : ""
+                      isSelected ? "-translate-y-1.25 rounded-[12px] px-2 py-1" : ""
                     ].join(' ');
 
                     return (
@@ -605,8 +676,15 @@ export default function Schedule({ theme }) {
                         style={{ animationDelay: `${idx * 0.05}s` }}
                         onClick={() => !isDisabled && handleRecommendationClick(rec)}
                       >
-                        <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[#083A8E] dark:bg-[#D3F1FF] flex-shrink-0" />
-                        <div className="text-[#083A8E] dark:text-[#D3F1FF] text-sm font-medium leading-relaxed">
+                        {isSelected && (
+                          <div className="absolute inset-0 rounded-[12px] pointer-events-none animate-color-change" />
+                        )}
+                        <span className={["relative z-10 mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0",
+                          isSelected ? "bg-[#3A3A3A]" : "bg-[#083A8E] dark:bg-[#D3F1FF]"
+                        ].join(' ')} />
+                        <div className={["relative z-10 text-sm font-medium leading-relaxed",
+                          isSelected ? "text-[#3A3A3A]" : "text-[#083A8E] dark:text-[#D3F1FF]"
+                        ].join(' ')}>
                           {rec.title}
                         </div>
                       </div>
@@ -642,12 +720,12 @@ export default function Schedule({ theme }) {
                 const sortedDays = [...days].sort((a, b) => a.date - b.date);
                 return (
                   <div key={monthKey} className="mb-4 spring-scale-in" style={{ animationDelay: `${monthIndex * 0.1}s` }}>
-                    <h2 className="text-xl font-bold mb-2 dark:text-[#FFFFFF] text-[#3A3A3A]">{month}月</h2>
+                    <h2 className="text-lg font-bold mb-2 dark:text-[#FFFFFF] text-[#3A3A3A]">{month}月</h2>
 
                     {monthIndex === 0 && (
                       <div className="grid grid-cols-7 gap-1 pb-1.5">
                         {['一', '二', '三', '四', '五', '六', '日'].map((day, index) => (
-                          <div key={index} className="text-center text-xs dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 font-medium">
+                          <div key={index} className="text-center text-[11px] dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 font-medium whitespace-nowrap">
                             {day}
                           </div>
                         ))}
@@ -779,7 +857,7 @@ export default function Schedule({ theme }) {
                                           <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
                                         )}
                                         <div className="min-w-0 flex items-center relative z-10">
-                                          <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
+                                          <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
                                           )}
@@ -787,7 +865,7 @@ export default function Schedule({ theme }) {
                                             <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
-                                        <div className={["text-xs leading-tight relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
+                                        <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && isMorning && (
@@ -804,7 +882,7 @@ export default function Schedule({ theme }) {
                                         ].join(' ')}>
                                         <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
                                         <div className="min-w-0 flex items-center relative z-10">
-                                          <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
+                                          <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
                                           )}
@@ -812,7 +890,7 @@ export default function Schedule({ theme }) {
                                             <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
-                                        <div className={["text-xs leading-tight relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
+                                        <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && isEvening && (
@@ -828,8 +906,8 @@ export default function Schedule({ theme }) {
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
                                         <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
-                                        <div className="min-w-0 flex items-center relative z-10">
-                                          <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
+                                        <div className={"min-w-0 flex items-center relative z-10"}>
+                                          <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
                                           )}
@@ -837,13 +915,13 @@ export default function Schedule({ theme }) {
                                             <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
-                                        <div className={["text-xs leading-tight relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
+                                        <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
                                       <div className="slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
                                         <div className="min-w-0 flex items-center">
-                                          <span className={["text-base font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
+                                          <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
                                           )}
@@ -851,7 +929,7 @@ export default function Schedule({ theme }) {
                                             <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
-                                        <div className={["text-xs leading-tight", primaryTextClass].join(' ')}>{bookingStatus}</div>
+                                        <div className={["text-[11px] leading-tight whitespace-nowrap", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                   </div>

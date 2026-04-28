@@ -12,8 +12,8 @@ function App() {
     !['localhost', '127.0.0.1'].includes(window.location.hostname)
 
   return (
-    <div className="dark:bg-[#333333] bg-[#FFFFFF] h-screen overflow-hidden flex justify-center transition-colors duration-300">
-      <div className="w-full max-w-[440px] min-w-[375px] h-screen dark:bg-[#333333] bg-[#FFFFFF] overflow-hidden relative transition-colors duration-300">
+    <div className="dark:bg-[#333333] bg-[#FFFFFF] min-h-screen flex justify-center transition-colors duration-300">
+      <div className="w-full max-w-[440px] min-w-[375px] min-h-screen dark:bg-[#333333] bg-[#FFFFFF] relative transition-colors duration-300">
         <Schedule theme={theme} />
       </div>
       {enableVercelMetrics && <Analytics />}
