@@ -58,9 +58,8 @@
 
 ### 浏览器适配（iOS Safari）
 
-- 目标：让 Safari 顶部/底部工具栏区域尽量跟随页面背景色（避免露白），并在点击 Mark 时短暂跟随 Mark 的彩色。
-- 元信息：`<meta name="theme-color" content="...">` + `viewport-fit=cover` + `color-scheme`/`supported-color-schemes`。
-- 动态策略：在主题或 Mark 动画触发时，重建 `meta[name="theme-color"]`（删除旧节点再插入新节点），提高 iOS Safari 对动态 theme-color 的刷新命中率。
+- 目标：仅确保页面背景在 iOS Safari 顶部/底部安全区正常延伸（避免露白/露灰）。
+- 手段：保持 `viewport-fit=cover`，并通过 `html/body` 的 light/dark 背景色覆盖安全区。
 
 ### 交互动效（预约按钮）
 

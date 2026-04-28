@@ -45,23 +45,6 @@ export default function Schedule({ theme }) {
   const animationInterval = useRef(null);
   const pressTimeoutRef = useRef(null);
 
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    const bg = theme === 'dark' ? '#333333' : '#ffffff';
-    const chrome = markAnimation ? (markBgColor || bg) : bg;
-
-    const head = document.head || document.getElementsByTagName('head')[0];
-    if (!head) return;
-
-    const oldMetas = head.querySelectorAll('meta[name="theme-color"]');
-    oldMetas.forEach(m => m.remove());
-
-    const meta = document.createElement('meta');
-    meta.setAttribute('name', 'theme-color');
-    meta.setAttribute('content', chrome);
-    head.appendChild(meta);
-  }, [markAnimation, markBgColor, theme]);
-
   const triggerSlotPress = (slotId) => {
     if (!slotId) return;
     if (pressTimeoutRef.current) {
@@ -363,14 +346,6 @@ export default function Schedule({ theme }) {
 
   return (
     <div className="min-h-screen flex flex-col pb-32 dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
-      <div
-        className="pointer-events-none fixed inset-0 z-[500]"
-        style={{
-          opacity: markAnimation ? 1 : 0,
-          transition: 'opacity 200ms ease',
-          boxShadow: markBgColor ? `0 0 0 1px ${markBgColor} inset` : 'none'
-        }}
-      />
       <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start space-y-2 spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
