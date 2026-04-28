@@ -8,40 +8,6 @@ const LENGTH_OPTIONS = ['本甲', '短甲', '中长', '长甲', '延长', '待�
 const STYLE_OPTIONS = ['纯色', '跳色', '法式', '猫眼', '渐变', '设计', '待定'];
 const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
 
-const CHENGDU_PLAYS = [
-  '吃火锅',
-  '逛玉林路',
-  '看电影',
-  '打羽毛球',
-  '喝盖碗茶',
-  '逛太古里',
-  '去宽窄巷子走走',
-  '去人民公园晒太阳',
-  '夜骑锦江绿道',
-  '去文殊院祈福',
-  '看川剧变脸',
-  '逛春熙路',
-  '去东郊记忆拍照',
-  '逛SKP',
-  '去望江楼公园',
-  '撸串喝冰粉',
-  '搓一顿冒菜',
-  '去麓湖散步',
-  '周末露营',
-  '逛西村大院'
-];
-
-const mulberry32 = (seed) => {
-  let t = seed >>> 0;
-  return () => {
-    t += 0x6D2B79F5;
-    let x = t;
-    x = Math.imul(x ^ (x >>> 15), x | 1);
-    x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-};
-
 export default function Schedule({ theme }) {
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,28 +41,12 @@ export default function Schedule({ theme }) {
   const [contentKey, setContentKey] = useState(0);
   const [pressedSlotId, setPressedSlotId] = useState(null);
   const [selectedSmartId, setSelectedSmartId] = useState(null);
+  const [pendingScrollDayKey, setPendingScrollDayKey] = useState(null);
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
   const pressTimeoutRef = useRef(null);
-  const carouselRef = useRef(null);
-  const snapTimerRef = useRef(null);
-
-  const dailyPlays = useMemo(() => {
-    const now = new Date();
-    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const seed = base.getTime() / 86400000;
-    const rand = mulberry32(Math.floor(seed));
-    const arr = [...CHENGDU_PLAYS];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(rand() * (i + 1));
-      const tmp = arr[i];
-      arr[i] = arr[j];
-      arr[j] = tmp;
-    }
-    return arr;
-  }, []);
 
   const triggerSlotPress = (slotId) => {
     if (!slotId) return;
@@ -282,7 +232,18 @@ export default function Schedule({ theme }) {
     if (!slot) return;
     const slotIdx = day.slots.indexOf(slot);
     onSlotTap(day, slot, slotIdx);
+    setPendingScrollDayKey(day.key);
+    setIsCalendarExpanded(true);
   };
+
+  useEffect(() => {
+    if (!pendingScrollDayKey) return;
+    const el = document.getElementById(`day-${pendingScrollDayKey}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    setPendingScrollDayKey(null);
+  }, [pendingScrollDayKey]);
 
   const fetchData = async (isAuto = false) => {
     if (!isAuto) {
@@ -570,7 +531,7 @@ export default function Schedule({ theme }) {
   };
 
   return (
-    <div className="h-screen flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 overflow-hidden">
+    <div className="min-h-screen flex flex-col pb-32 dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
       <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start space-y-2 spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
@@ -592,7 +553,7 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div className="px-5 flex-1 overflow-hidden">
+      <div className="px-5 flex-1">
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -621,230 +582,52 @@ export default function Schedule({ theme }) {
         )}
 
         {!loading && !error && (
-          <div key={contentKey} className="h-full overflow-hidden">
-            <div
-              ref={carouselRef}
-              className="-mx-5 px-5 h-full no-scrollbar"
-              style={{
-                overflowX: 'auto',
-                overflowY: 'hidden',
-                scrollSnapType: 'x mandatory',
-                WebkitOverflowScrolling: 'touch'
-              }}
-              onScroll={(e) => {
-                const el = e.currentTarget;
-                if (snapTimerRef.current) {
-                  clearTimeout(snapTimerRef.current);
-                  snapTimerRef.current = null;
-                }
-                snapTimerRef.current = setTimeout(() => {
-                  const w = el.clientWidth;
-                  const idx = Math.round(el.scrollLeft / w);
-                  el.scrollTo({ left: idx * w, behavior: 'smooth' });
-                }, 120);
-              }}
-              onTouchEnd={() => {
-                const el = carouselRef.current;
-                if (!el) return;
-                const w = el.clientWidth;
-                const idx = Math.round(el.scrollLeft / w);
-                el.scrollTo({ left: idx * w, behavior: 'smooth' });
-              }}
-            >
-              <div className="flex gap-3 h-full" style={{ width: 'max-content' }}>
-                <section
-                  className="spring-scale-in h-full"
-                  style={{
-                    width: 'calc(100vw - 40px)',
-                    maxWidth: 400,
-                    scrollSnapAlign: 'start',
-                    scrollSnapStop: 'always'
-                  }}
-                >
-                  <div className="h-full rounded-[16px] border border-black/10 dark:border-white/15 bg-white dark:bg-[#333333] overflow-hidden flex flex-col">
-                    <div className="p-4 flex-1 overflow-hidden">
-                      <div className="text-sm font-semibold text-[#3A3A3A] dark:text-[#FFFFFF] mb-2">推荐</div>
-                      <div className="space-y-3">
-                        {(recommendations.length ? recommendations : [{ id: 'rec-empty', title: '暂无可预约时间', subtitle: '', disabled: true }])
-                          .slice(0, 3)
-                          .map((rec, idx) => {
-                            const isDisabled = !!rec.disabled;
-                            const isSelected = selectedSmartId && rec.id === selectedSmartId;
-                            const cls = [
-                              "slot-item w-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform",
-                              isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
-                              isSelected
-                                ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] !text-[#3A3A3A] dark:!bg-[#D3F1FF] dark:!text-[#3A3A3A]"
-                                : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
-                              pressedSlotId === rec.id ? "press-bouncy" : "",
-                              "spring-scale-in"
-                            ].join(' ');
-                            return (
-                              <div
-                                key={rec.id}
-                                className={cls}
-                                style={{ animationDelay: `${idx * 0.05}s` }}
-                                onClick={() => !isDisabled && handleRecommendationClick(rec)}
-                              >
-                                <div className="text-base font-semibold leading-none">{rec.title}</div>
-                                {!!rec.subtitle && <div className="text-xs leading-tight">{rec.subtitle}</div>}
-                              </div>
-                            );
-                          })}
-                      </div>
+          <div key={contentKey} className="pb-10">
+            <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] p-5 shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
+              <img src="/assets/找我耍.svg" alt="找我耍" className="h-8 w-auto mb-4" />
+              <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[20px] p-4">
+                <div className="space-y-2">
+                  {(recommendations.length ? recommendations : [{ id: 'rec-empty', title: '暂无可预约时间', subtitle: '', disabled: true }]).map((rec, idx) => {
+                    const isDisabled = !!rec.disabled;
+                    const isSelected = selectedSmartId && rec.id === selectedSmartId;
 
-                      <div className="mt-5">
-                        <div className="text-sm font-semibold text-[#3A3A3A] dark:text-[#FFFFFF] mb-2">成都玩法</div>
-                        <div className="space-y-2">
-                          {dailyPlays.slice(0, 10).map((t, idx) => (
-                            <div
-                              key={t}
-                              className="w-full px-3 py-2 rounded-[12px] border border-black/10 dark:border-white/15 bg-white/70 dark:bg-white/5 text-[#3A3A3A] dark:text-[#FFFFFF] spring-scale-in"
-                              style={{ animationDelay: `${(idx + 4) * 0.03}s` }}
-                            >
-                              <div className="text-sm font-medium">{t}</div>
-                            </div>
-                          ))}
+                    const lineCls = [
+                      "flex items-start gap-2",
+                      isDisabled ? "opacity-50" : "cursor-pointer",
+                      pressedSlotId === rec.id ? "press-bouncy" : "",
+                      isSelected ? "bg-[#083A8E]/10 dark:bg-[#D3F1FF]/15 rounded-[12px] px-2 py-1" : ""
+                    ].join(' ');
+
+                    return (
+                      <div
+                        key={rec.id}
+                        className={[lineCls, "spring-scale-in"].join(' ')}
+                        style={{ animationDelay: `${idx * 0.05}s` }}
+                        onClick={() => !isDisabled && handleRecommendationClick(rec)}
+                      >
+                        <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[#083A8E] dark:bg-[#D3F1FF] flex-shrink-0" />
+                        <div className="text-[#083A8E] dark:text-[#D3F1FF] text-sm font-medium leading-relaxed">
+                          {rec.title}
                         </div>
                       </div>
+                    );
+                  })}
 
-                      <div className="mt-5 flex items-center justify-between">
-                        <button
-                          className="text-sm text-[#083A8E] dark:text-[#D3F1FF] underline underline-offset-4 flex items-center gap-1"
-                          onClick={() => setIsCalendarExpanded(v => !v)}
-                        >
-                          <span>{isCalendarExpanded ? '收起日历' : '展开日历'}</span>
-                          <span
-                            className="inline-block transition-transform duration-200"
-                            style={{ transform: isCalendarExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}
-                          >
-                            →
-                          </span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div
-                      className={isCalendarExpanded ? "max-h-[55vh]" : "max-h-0"}
-                      style={{ transition: 'max-height 220ms ease', overflow: 'hidden' }}
-                    >
-                      <div className="px-4 pb-4">
-                        <div className="text-sm font-semibold text-[#3A3A3A] dark:text-[#FFFFFF] mb-2">月视图</div>
-                        <div className="text-xs text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60 mb-3">选择日期后将同步到预约表单</div>
-                      </div>
-                      <div className="px-4 pb-4 overflow-hidden">
-                        <div className="overflow-hidden">
-                          {(() => {
-                            const months = {};
-                            schedule.forEach(day => {
-                              const monthKey = `${day.date.getFullYear()}-${day.date.getMonth() + 1}`;
-                              if (!months[monthKey]) months[monthKey] = [];
-                              months[monthKey].push(day);
-                            });
-
-                            return Object.entries(months).map(([monthKey, days], monthIndex) => {
-                              const [, month] = monthKey.split('-');
-                              const sortedDays = [...days].sort((a, b) => a.date - b.date);
-                              return (
-                                <div key={monthKey} className="mb-4 spring-scale-in" style={{ animationDelay: `${monthIndex * 0.08}s` }}>
-                                  <h2 className="text-xl font-bold mb-2 dark:text-[#FFFFFF] text-[#3A3A3A]">{month}月</h2>
-                                  {monthIndex === 0 && (
-                                    <div className="grid grid-cols-7 gap-1 pb-1.5">
-                                      {['一', '二', '三', '四', '五', '六', '日'].map((d, index) => (
-                                        <div key={index} className="text-center text-xs dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 font-medium">
-                                          {d}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                  {(() => {
-                                    const firstVisible = sortedDays[0]?.date;
-                                    if (!firstVisible) return null;
-                                    const firstDay = new Date(firstVisible.getFullYear(), firstVisible.getMonth(), firstVisible.getDate());
-                                    const firstDayOfWeek = firstDay.getDay();
-                                    const emptyDays = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
-                                    const calendarGrid = [];
-                                    for (let i = 0; i < emptyDays; i++) calendarGrid.push({ type: 'empty', key: `empty-${monthKey}-${i}` });
-                                    sortedDays.forEach((day) => calendarGrid.push({ type: 'day', day }));
-                                    return (
-                                      <div className="grid grid-cols-7 gap-1">
-                                        {calendarGrid.map((cell) => {
-                                          if (cell.type === 'empty') return <div key={cell.key} className="aspect-square" />;
-                                          const day = cell.day;
-                                          const dayKey = day.key;
-                                          const isSelectedDay = selectedSlot?.day?.key === dayKey;
-                                          const hasFree = day.slots?.some(s => s.status === 'free');
-                                          const cls = [
-                                            "aspect-square rounded-[10px] flex items-center justify-center text-sm font-semibold transition-all duration-200",
-                                            hasFree
-                                              ? "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF]"
-                                              : "bg-black/5 text-[#3A3A3A]/40 dark:bg-white/10 dark:text-[#FFFFFF]/40",
-                                            isSelectedDay ? "animate-color-change" : ""
-                                          ].join(' ');
-                                          return (
-                                            <button
-                                              key={dayKey}
-                                              id={`day-${dayKey}`}
-                                              className={cls}
-                                              onClick={() => {
-                                                const slot = day.slots.find(s => s.status === 'free');
-                                                if (!slot) return;
-                                                triggerSlotPress(`daypick-${dayKey}`);
-                                                const slotIdx = day.slots.indexOf(slot);
-                                                onSlotTap(day, slot, slotIdx);
-                                              }}
-                                            >
-                                              {day.date.getDate()}
-                                            </button>
-                                          );
-                                        })}
-                                      </div>
-                                    );
-                                  })()}
-                                </div>
-                              );
-                            });
-                          })()}
-                        </div>
-                      </div>
+                  <div
+                    className="flex items-start gap-2 cursor-pointer spring-scale-in"
+                    style={{ animationDelay: `${recommendations.length * 0.05 + 0.05}s` }}
+                    onClick={() => setIsCalendarExpanded(v => !v)}
+                  >
+                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[#083A8E] dark:bg-[#D3F1FF] flex-shrink-0" />
+                    <div className="text-[#083A8E] dark:text-[#D3F1FF] text-sm font-medium leading-relaxed">
+                      {isCalendarExpanded ? '收起日历 ↑' : '展开日历 ↓'}
                     </div>
                   </div>
-                </section>
+                </div>
 
-                <section
-                  className="spring-scale-in h-full"
-                  style={{
-                    width: 'calc(100vw - 40px)',
-                    maxWidth: 400,
-                    scrollSnapAlign: 'end',
-                    scrollSnapStop: 'always'
-                  }}
-                >
-                  <div className="h-full rounded-[16px] border border-black/10 dark:border-white/15 bg-white dark:bg-[#333333] p-4">
-                    <div className="text-sm font-semibold text-[#3A3A3A] dark:text-[#FFFFFF] mb-2">板块 2</div>
-                    <div className="text-sm text-[#3A3A3A]/70 dark:text-[#FFFFFF]/70">按 Figma 稿补齐内容</div>
-                  </div>
-                </section>
+                <div className="my-4 h-px bg-[#3A3A3A]/10 dark:bg-[#FFFFFF]/10" />
 
-                <section
-                  className="spring-scale-in h-full"
-                  style={{
-                    width: 'calc(100vw - 40px)',
-                    maxWidth: 400,
-                    scrollSnapAlign: 'end',
-                    scrollSnapStop: 'always'
-                  }}
-                >
-                  <div className="h-full rounded-[16px] border border-black/10 dark:border-white/15 bg-white dark:bg-[#333333] p-4">
-                    <div className="text-sm font-semibold text-[#3A3A3A] dark:text-[#FFFFFF] mb-2">板块 3</div>
-                    <div className="text-sm text-[#3A3A3A]/70 dark:text-[#FFFFFF]/70">按 Figma 稿补齐内容</div>
-                  </div>
-                </section>
-              </div>
-            </div>
-
-            {/* 按月分组 */}
-            {false && (() => {
+                {isCalendarExpanded && (() => {
               const months = {};
               schedule.forEach(day => {
                 const monthKey = `${day.date.getFullYear()}-${day.date.getMonth() + 1}`;
@@ -1085,7 +868,8 @@ export default function Schedule({ theme }) {
                 );
               });
             })()}
-
+              </div>
+            </div>
           </div>
         )}
       </div>
