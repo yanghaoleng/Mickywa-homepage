@@ -56,6 +56,16 @@
 | `shadow.slot.inset.dark` | `0 0 32px 0 rgba(255,255,255,0.20) inset` | 暗色模式按钮内阴影 |
 | `layout.cell` | `aspect-square` | 日期单元格正方形布局 |
 
+### 浏览器适配（iOS Safari）
+
+- 目标：让 Safari 顶部/底部工具栏区域尽量跟随页面背景色（避免露白），并在点击 Mark 时短暂跟随 Mark 的彩色。
+- 元信息：`<meta name="theme-color" content="...">` + `viewport-fit=cover` + `color-scheme`/`supported-color-schemes`。
+- 动态策略：在主题或 Mark 动画触发时，重建 `meta[name="theme-color"]`（删除旧节点再插入新节点），提高 iOS Safari 对动态 theme-color 的刷新命中率。
+
+### 交互动效（预约按钮）
+
+- 点击反馈：`press-bouncy`（缩小到 0.8 → 超调到 1.06 → 回到 1.0），时长约 `320ms`，弹簧曲线 `cubic-bezier(0.34, 1.56, 0.64, 1)`。
+
 ### 规则（可预约判定）
 
 - 国家法定节假日数据源：使用 `holiday-cn`（抓取国务院公告）提供的 JSON 数据；仅以“是否休息日/是否补班”影响工作日判定，不再使用包含节气的通用节假日订阅源作为规则依据。

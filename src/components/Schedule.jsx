@@ -49,8 +49,17 @@ export default function Schedule({ theme }) {
     if (typeof document === 'undefined') return;
     const bg = theme === 'dark' ? '#333333' : '#ffffff';
     const chrome = markAnimation ? (markBgColor || bg) : bg;
-    const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
-    themeMetas.forEach(m => m.setAttribute('content', chrome));
+
+    const head = document.head || document.getElementsByTagName('head')[0];
+    if (!head) return;
+
+    const oldMetas = head.querySelectorAll('meta[name="theme-color"]');
+    oldMetas.forEach(m => m.remove());
+
+    const meta = document.createElement('meta');
+    meta.setAttribute('name', 'theme-color');
+    meta.setAttribute('content', chrome);
+    head.appendChild(meta);
   }, [markAnimation, markBgColor, theme]);
 
   const triggerSlotPress = (slotId) => {
