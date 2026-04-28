@@ -41,7 +41,6 @@ export default function Schedule({ theme }) {
   const [contentKey, setContentKey] = useState(0);
   const [pressedSlotId, setPressedSlotId] = useState(null);
   const [selectedSmartId, setSelectedSmartId] = useState(null);
-  const [pendingScrollDayKey, setPendingScrollDayKey] = useState(null);
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [recNonce, setRecNonce] = useState(0);
 
@@ -296,28 +295,7 @@ export default function Schedule({ theme }) {
     if (!rec) return;
     setSelectedSmartId(rec.id);
     triggerSlotPress(rec.id);
-    const day = schedule.find(d => d.key === rec.dayKey);
-    if (!day) return;
-    const slot = day.slots.find(s => s.key === rec.slotKey) || day.slots.find(s => s.status === 'free');
-    if (!slot) return;
-    const slotIdx = day.slots.indexOf(slot);
-    onSlotTap(day, slot, slotIdx);
-    setPendingScrollDayKey(day.key);
-    setIsCalendarExpanded(true);
   };
-
-  useEffect(() => {
-    if (!pendingScrollDayKey) return;
-    const el = document.getElementById(`day-${pendingScrollDayKey}`);
-    if (el) {
-      requestAnimationFrame(() => {
-        const rect = el.getBoundingClientRect();
-        const top = rect.top + window.scrollY - 10;
-        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
-      });
-    }
-    setPendingScrollDayKey(null);
-  }, [pendingScrollDayKey]);
 
   const fetchData = async (isAuto = false) => {
     if (!isAuto) {
@@ -861,13 +839,15 @@ export default function Schedule({ theme }) {
                                         {bookingType !== 'busy' && (
                                           <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
                                         )}
+                                        {isToday && (
+                                          <span className="absolute top-1 right-1 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
+                                            今
+                                          </span>
+                                        )}
                                         <div className="min-w-0 flex items-center relative z-10">
                                           <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
-                                          )}
-                                          {isToday && (
-                                            <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
                                         <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -886,13 +866,15 @@ export default function Schedule({ theme }) {
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
                                         <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
+                                        {isToday && (
+                                          <span className="absolute top-1 right-1 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
+                                            今
+                                          </span>
+                                        )}
                                         <div className="min-w-0 flex items-center relative z-10">
                                           <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
-                                          )}
-                                          {isToday && (
-                                            <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
                                         <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
@@ -911,27 +893,31 @@ export default function Schedule({ theme }) {
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
                                         <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
+                                        {isToday && (
+                                          <span className="absolute top-1 right-1 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
+                                            今
+                                          </span>
+                                        )}
                                         <div className={"min-w-0 flex items-center relative z-10"}>
                                           <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
-                                          )}
-                                          {isToday && (
-                                            <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
                                         <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
-                                      <div className="slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
+                                      <div className="slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform relative dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
+                                        {isToday && (
+                                          <span className="absolute top-1 right-1 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
+                                            今
+                                          </span>
+                                        )}
                                         <div className="min-w-0 flex items-center">
                                           <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
                                           {holidayLabel && (
                                             <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
-                                          )}
-                                          {isToday && (
-                                            <span className={["text-[10px] whitespace-nowrap", metaTextClass].join(' ')}>今</span>
                                           )}
                                         </div>
                                         <div className={["text-[11px] leading-tight whitespace-nowrap", primaryTextClass].join(' ')}>{bookingStatus}</div>
