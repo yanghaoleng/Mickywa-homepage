@@ -13,7 +13,7 @@ function App() {
 
   return (
     <div className="dark:bg-[#333333] bg-[#FFFFFF] min-h-screen flex justify-center transition-colors duration-300">
-      <div className="w-full max-w-[440px] min-w-[375px] min-h-screen dark:bg-[#333333] bg-[#FFFFFF] relative transition-colors duration-300">
+      <div className="w-full max-w-[440px] min-h-screen dark:bg-[#333333] bg-[#FFFFFF] relative transition-colors duration-300">
         <Schedule theme={theme} />
       </div>
       {enableVercelMetrics && <Analytics />}

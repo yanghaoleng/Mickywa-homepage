@@ -829,10 +829,10 @@ export default function Schedule({ theme }) {
                                           triggerSlotPress(fullDayUniqueKey);
                                           if (fullDaySlot && fullDaySlotIdx !== null) onSlotTap(item, fullDaySlot, fullDaySlotIdx);
                                         }}
-                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative overflow-hidden",
+                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
                                           pressedSlotId === fullDayUniqueKey ? "press-bouncy" : "",
                                           bookingType === 'busy' 
-                                            ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed" 
+                                            ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 cursor-not-allowed" 
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
@@ -840,17 +840,19 @@ export default function Schedule({ theme }) {
                                           <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
                                         )}
                                         {isToday && (
-                                          <span className="absolute top-1 right-1 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
+                                          <span className="pointer-events-none absolute -top-1.5 -right-1.5 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
                                             今
                                           </span>
                                         )}
-                                        <div className="min-w-0 flex items-center relative z-10">
-                                          <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
-                                          {holidayLabel && (
-                                            <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
-                                          )}
+                                        <div className={["w-full", bookingType === 'busy' ? "opacity-50" : ""].join(' ')}>
+                                          <div className="min-w-0 flex items-center relative z-10">
+                                            <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
+                                            {holidayLabel && (
+                                              <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
+                                            )}
+                                          </div>
+                                          <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                         </div>
-                                        <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && isMorning && (
@@ -860,14 +862,14 @@ export default function Schedule({ theme }) {
                                           triggerSlotPress(dayUniqueKey);
                                           if (daySlot && daySlotIdx !== null) onSlotTap(item, daySlot, daySlotIdx);
                                         }}
-                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative overflow-hidden",
+                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
                                           pressedSlotId === dayUniqueKey ? "press-bouncy" : "",
                                           "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
                                         <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
                                         {isToday && (
-                                          <span className="absolute top-1 right-1 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
+                                          <span className="pointer-events-none absolute -top-1.5 -right-1.5 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
                                             今
                                           </span>
                                         )}
@@ -887,14 +889,14 @@ export default function Schedule({ theme }) {
                                           triggerSlotPress(eveningUniqueKey);
                                           if (eveningSlot && eveningSlotIdx !== null) onSlotTap(item, eveningSlot, eveningSlotIdx);
                                         }}
-                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative overflow-hidden",
+                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
                                           pressedSlotId === eveningUniqueKey ? "press-bouncy" : "",
                                           "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
                                         <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
                                         {isToday && (
-                                          <span className="absolute top-1 right-1 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
+                                          <span className="pointer-events-none absolute -top-1.5 -right-1.5 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
                                             今
                                           </span>
                                         )}
@@ -908,19 +910,21 @@ export default function Schedule({ theme }) {
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
-                                      <div className="slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform relative dark:bg-[#FFFFFF]/4 bg-[#333333]/10 opacity-50 cursor-not-allowed">
+                                      <div className="slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform relative dark:bg-[#FFFFFF]/4 bg-[#333333]/10 cursor-not-allowed">
                                         {isToday && (
-                                          <span className="absolute top-1 right-1 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
+                                          <span className="pointer-events-none absolute -top-1.5 -right-1.5 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
                                             今
                                           </span>
                                         )}
-                                        <div className="min-w-0 flex items-center">
-                                          <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
-                                          {holidayLabel && (
-                                            <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
-                                          )}
+                                        <div className="opacity-50 w-full">
+                                          <div className="min-w-0 flex items-center">
+                                            <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
+                                            {holidayLabel && (
+                                              <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
+                                            )}
+                                          </div>
+                                          <div className={["text-[11px] leading-tight whitespace-nowrap", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                         </div>
-                                        <div className={["text-[11px] leading-tight whitespace-nowrap", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                   </div>
