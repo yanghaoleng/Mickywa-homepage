@@ -310,7 +310,11 @@ export default function Schedule({ theme }) {
     if (!pendingScrollDayKey) return;
     const el = document.getElementById(`day-${pendingScrollDayKey}`);
     if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      requestAnimationFrame(() => {
+        const rect = el.getBoundingClientRect();
+        const top = rect.top + window.scrollY - 10;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      });
     }
     setPendingScrollDayKey(null);
   }, [pendingScrollDayKey]);
@@ -665,7 +669,6 @@ export default function Schedule({ theme }) {
                     const lineCls = [
                       "relative flex items-start gap-2 transition-all duration-300 transform",
                       isDisabled ? "opacity-50" : "cursor-pointer",
-                      pressedSlotId === rec.id ? "press-bouncy" : "",
                       isSelected ? "-translate-y-1.25 rounded-[12px] px-2 py-1" : ""
                     ].join(' ');
 
@@ -679,13 +682,15 @@ export default function Schedule({ theme }) {
                         {isSelected && (
                           <div className="absolute inset-0 rounded-[12px] pointer-events-none animate-color-change" />
                         )}
-                        <span className={["relative z-10 mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0",
-                          isSelected ? "bg-[#3A3A3A]" : "bg-[#083A8E] dark:bg-[#D3F1FF]"
-                        ].join(' ')} />
-                        <div className={["relative z-10 text-sm font-medium leading-relaxed",
-                          isSelected ? "text-[#3A3A3A]" : "text-[#083A8E] dark:text-[#D3F1FF]"
-                        ].join(' ')}>
-                          {rec.title}
+                        <div className={["relative z-10 flex items-start gap-2", pressedSlotId === rec.id ? "press-jump" : ""].join(' ')}>
+                          <span className={["mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0",
+                            isSelected ? "bg-[#3A3A3A]" : "bg-[#083A8E] dark:bg-[#D3F1FF]"
+                          ].join(' ')} />
+                          <div className={["text-sm font-medium leading-relaxed",
+                            isSelected ? "text-[#3A3A3A]" : "text-[#083A8E] dark:text-[#D3F1FF]"
+                          ].join(' ')}>
+                            {rec.title}
+                          </div>
                         </div>
                       </div>
                     );
