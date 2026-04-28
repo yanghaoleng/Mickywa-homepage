@@ -686,9 +686,12 @@ export default function Schedule({ theme }) {
                   </div>
                 </div>
 
-                <div className="my-4 h-px bg-[#3A3A3A]/10 dark:bg-[#FFFFFF]/10" />
+                <div className={["overflow-hidden transition-[max-height,opacity] duration-500 ease-out",
+                  isCalendarExpanded ? "max-h-[2200px] opacity-100" : "max-h-0 opacity-0"
+                ].join(' ')}>
+                  <div className="my-4 h-px bg-[#3A3A3A]/10 dark:bg-[#FFFFFF]/10" />
 
-                {isCalendarExpanded && (() => {
+                  {(() => {
               const months = {};
               schedule.forEach(day => {
                 const monthKey = `${day.date.getFullYear()}-${day.date.getMonth() + 1}`;
@@ -941,6 +944,7 @@ export default function Schedule({ theme }) {
                 );
               });
             })()}
+                </div>
               </div>
             </div>
           </div>
