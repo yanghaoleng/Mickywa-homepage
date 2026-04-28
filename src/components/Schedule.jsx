@@ -636,9 +636,9 @@ export default function Schedule({ theme }) {
 
         {!loading && !error && (
           <div key={contentKey} className="pb-10 overflow-visible">
-            <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] p-5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
-              <img src="/assets/找我耍.svg" alt="找我耍" className="h-8 w-auto mb-4 dark:brightness-0 dark:invert" />
-              <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[20px] p-4 overflow-visible">
+            <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
+              <img src="/assets/找我耍.svg" alt="找我耍" className="h-8 w-auto mb-4 px-2 dark:brightness-0 dark:invert" />
+              <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
                 <div className="space-y-2">
                   {(recommendations.length ? recommendations : [{ id: 'rec-empty', title: '暂无可预约时间', subtitle: '', disabled: true }]).map((rec, idx) => {
                     const isDisabled = !!rec.disabled;
