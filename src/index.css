@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+html,
+body {
+  background-color: #f6f6f4;
+}
+
+.dark body {
+  background-color: #333333;
+}
+
 .title-svg {
   filter: brightness(0) saturate(100%) invert(25%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(95%) contrast(85%);
 }
