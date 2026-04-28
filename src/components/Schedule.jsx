@@ -40,7 +40,9 @@ export default function Schedule({ theme }) {
   const [countdown, setCountdown] = useState(0);
   const [contentKey, setContentKey] = useState(0);
   const [pressedSlotId, setPressedSlotId] = useState(null);
-  const [viewMode, setViewMode] = useState('calendar');
+  const [viewMode, setViewMode] = useState('smart');
+  const [selectedSmartId, setSelectedSmartId] = useState(null);
+  const [pendingScrollDayKey, setPendingScrollDayKey] = useState(null);
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
@@ -119,7 +121,7 @@ export default function Schedule({ theme }) {
       return rel;
     };
 
-    const firstWorkdayEvening = schedule
+    const workdayEvening = schedule
       .filter(d => d?.date instanceof Date)
       .filter(d => d.date >= base)
       .filter(d => !isWeekend(d.date))
@@ -132,7 +134,8 @@ export default function Schedule({ theme }) {
           title: `${relOrWeek(d.date)}晚上可约`,
           subtitle: '工作日晚上',
           dayKey: d.key,
-          slotKey: 'evening'
+          slotKey: 'evening',
+          date: d.date
         };
       })
       .find(Boolean);
@@ -141,7 +144,7 @@ export default function Schedule({ theme }) {
       .filter(d => d?.date instanceof Date)
       .filter(d => d.date >= base)
       .filter(d => isWeekend(d.date))
-      .filter(d => !d.holidayName || d.holidayName === '补班')
+      .filter(d => !d.holidayName)
       .filter(d => getAnyFreeSlot(d));
 
     const weekendSuggestion = (() => {
@@ -160,7 +163,8 @@ export default function Schedule({ theme }) {
             title: `${weekPrefix(sat.date) || relOrWeek(sat.date)}六-日可约`,
             subtitle: '周末',
             dayKey: sat.key,
-            slotKey: (getAnyFreeSlot(sat)?.slot?.key || 'evening')
+            slotKey: (getAnyFreeSlot(sat)?.slot?.key || 'evening'),
+            date: sat.date
           };
         }
       }
@@ -169,7 +173,8 @@ export default function Schedule({ theme }) {
         title: `${prefix ? `${prefix}${weekdayLabel(first.date)}` : relOrWeek(first.date)}${firstSlot.label}可约`,
         subtitle: '周末',
         dayKey: firstKey,
-        slotKey: firstSlot.slot.key
+        slotKey: firstSlot.slot.key,
+        date: first.date
       };
     })();
 
@@ -191,7 +196,8 @@ export default function Schedule({ theme }) {
           title: `${name}前两天可约`,
           subtitle: '节假日',
           dayKey: first.key,
-          slotKey: (getAnyFreeSlot(first)?.slot?.key || 'morning')
+          slotKey: (getAnyFreeSlot(first)?.slot?.key || 'morning'),
+          date: first.date
         };
       }
       return {
@@ -199,28 +205,45 @@ export default function Schedule({ theme }) {
         title: `${name}当天可约`,
         subtitle: '节假日',
         dayKey: first.key,
-        slotKey: (getAnyFreeSlot(first)?.slot?.key || 'morning')
+        slotKey: (getAnyFreeSlot(first)?.slot?.key || 'morning'),
+        date: first.date
       };
     })();
 
-    return [firstWorkdayEvening, weekendSuggestion, holidaySuggestion];
+    return [workdayEvening, weekendSuggestion, holidaySuggestion]
+      .filter(Boolean)
+      .sort((a, b) => {
+        const ad = a?.date?.getTime?.() ?? 0;
+        const bd = b?.date?.getTime?.() ?? 0;
+        if (ad !== bd) return ad - bd;
+        const order = { '节假日': 0, '周末': 1, '工作日晚上': 2 };
+        return (order[a.subtitle] ?? 9) - (order[b.subtitle] ?? 9);
+      })
+      .slice(0, 3);
   }, [schedule]);
 
   const handleRecommendationClick = (rec) => {
     if (!rec) return;
+    setSelectedSmartId(rec.id);
     triggerSlotPress(rec.id);
     const day = schedule.find(d => d.key === rec.dayKey);
     if (!day) return;
     const slot = day.slots.find(s => s.key === rec.slotKey) || day.slots.find(s => s.status === 'free');
     if (!slot) return;
     const slotIdx = day.slots.indexOf(slot);
-    setViewMode('calendar');
-    setTimeout(() => {
-      onSlotTap(day, slot, slotIdx);
-      const el = document.getElementById(`day-${day.key}`);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 60);
+    onSlotTap(day, slot, slotIdx);
+    setPendingScrollDayKey(day.key);
   };
+
+  useEffect(() => {
+    if (viewMode !== 'calendar') return;
+    if (!pendingScrollDayKey) return;
+    const el = document.getElementById(`day-${pendingScrollDayKey}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    setPendingScrollDayKey(null);
+  }, [pendingScrollDayKey, viewMode]);
 
   const fetchData = async (isAuto = false) => {
     if (!isAuto) {
@@ -588,27 +611,27 @@ export default function Schedule({ theme }) {
             </div>
 
             {viewMode === 'smart' && (
-              <div className="space-y-3">
-                {[
-                  { key: 'work', rec: recommendations[0] },
-                  { key: 'weekend', rec: recommendations[1] },
-                  { key: 'holiday', rec: recommendations[2] }
-                ].map(({ key, rec }) => {
+              <div className="space-y-3 spring-scale-in">
+                {(recommendations.length ? recommendations : [{ id: 'rec-empty', title: '暂无可预约时间', subtitle: '', disabled: true }]).map((rec, idx) => {
+                  const isDisabled = !!rec.disabled;
+                  const isSelected = selectedSmartId && rec.id === selectedSmartId;
+
                   const baseCls = [
                     "slot-item w-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform",
-                    rec ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
-                    "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
-                    pressedSlotId === (rec?.id || '') ? "press-bouncy" : ""
+                    isDisabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+                    isSelected ? "!opacity-100 -translate-y-1.25 animate-color-change !bg-[#083A8E] !text-[#3A3A3A] dark:!bg-[#D3F1FF] dark:!text-[#3A3A3A]" : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
+                    pressedSlotId === rec.id ? "press-bouncy" : ""
                   ].join(' ');
 
                   return (
                     <div
-                      key={key}
-                      className={baseCls}
-                      onClick={() => rec && handleRecommendationClick(rec)}
+                      key={rec.id}
+                      className={[baseCls, "spring-scale-in"].join(' ')}
+                      style={{ animationDelay: `${idx * 0.05}s` }}
+                      onClick={() => !isDisabled && handleRecommendationClick(rec)}
                     >
-                      <div className="text-base font-semibold leading-none">{rec?.title || '暂无可预约时间'}</div>
-                      <div className="text-xs leading-tight">{rec?.subtitle || ''}</div>
+                      <div className="text-base font-semibold leading-none">{rec.title}</div>
+                      {!!rec.subtitle && <div className="text-xs leading-tight">{rec.subtitle}</div>}
                     </div>
                   );
                 })}
