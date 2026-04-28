@@ -4,9 +4,10 @@
 
 html,
 body {
-  background-color: #f6f6f4;
+  background-color: #ffffff;
 }
 
+.dark html,
 .dark body {
   background-color: #333333;
 }
