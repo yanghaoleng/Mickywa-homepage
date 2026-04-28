@@ -47,10 +47,10 @@ export default function Schedule({ theme }) {
 
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    if (!markBgColor) return;
+    const bg = theme === 'dark' ? '#333333' : '#f6f6f4';
     const themeMetas = document.querySelectorAll('meta[name="theme-color"]');
-    themeMetas.forEach(m => m.setAttribute('content', markBgColor));
-  }, [markBgColor, theme]);
+    themeMetas.forEach(m => m.setAttribute('content', bg));
+  }, [theme]);
 
   const triggerSlotPress = (slotId) => {
     if (!slotId) return;
