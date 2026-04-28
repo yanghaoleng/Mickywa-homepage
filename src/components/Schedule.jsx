@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getCalendarsWithCache } from '../utils/ical';
 import { formatRelativeDate } from '../utils/time';
 import { estimateDuration, estimatePrice, formatDuration } from '../config/estimateConfig';
@@ -40,6 +40,7 @@ export default function Schedule({ theme }) {
   const [countdown, setCountdown] = useState(0);
   const [contentKey, setContentKey] = useState(0);
   const [pressedSlotId, setPressedSlotId] = useState(null);
+  const [viewMode, setViewMode] = useState('calendar');
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
@@ -57,6 +58,168 @@ export default function Schedule({ theme }) {
       setPressedSlotId(null);
       pressTimeoutRef.current = null;
     }, 360);
+  };
+
+  const weekdayLabel = (date) => {
+    const d = date.getDay();
+    return ['日', '一', '二', '三', '四', '五', '六'][d];
+  };
+
+  const weekPrefix = (date) => {
+    const now = new Date();
+    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const baseDow = base.getDay();
+    const baseMonday = new Date(base);
+    const offsetToMonday = baseDow === 0 ? -6 : 1 - baseDow;
+    baseMonday.setDate(baseMonday.getDate() + offsetToMonday);
+
+    const nextMonday = new Date(baseMonday);
+    nextMonday.setDate(nextMonday.getDate() + 7);
+    const nextNextMonday = new Date(baseMonday);
+    nextNextMonday.setDate(nextNextMonday.getDate() + 14);
+
+    if (date >= baseMonday && date < nextMonday) return '本周';
+    if (date >= nextMonday && date < nextNextMonday) return '下周';
+    return '';
+  };
+
+  const getAnyFreeSlot = (day) => {
+    if (!day?.slots?.length) return null;
+    const free = day.slots.filter(s => s.status === 'free');
+    if (free.length === 0) return null;
+    const keys = new Set(free.map(s => s.key));
+    const allKeys = ['morning', 'noon', 'afternoon', 'evening'];
+    const isFull = allKeys.every(k => keys.has(k));
+    if (isFull) {
+      const slot = day.slots.find(s => s.key === 'morning') || free[0];
+      return { slot, label: '全天' };
+    }
+    const evening = day.slots.find(s => s.key === 'evening' && s.status === 'free');
+    if (evening) return { slot: evening, label: '晚上' };
+    const daySlot = day.slots.find(s => ['morning', 'noon', 'afternoon'].includes(s.key) && s.status === 'free');
+    if (daySlot) return { slot: daySlot, label: '白天' };
+    return { slot: free[0], label: free[0].label };
+  };
+
+  const recommendations = useMemo(() => {
+    const now = new Date();
+    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const isWeekend = (d) => {
+      const dow = d.getDay();
+      return dow === 0 || dow === 6;
+    };
+
+    const relOrWeek = (date) => {
+      const rel = formatRelativeDate(date);
+      if (rel === '今天' || rel === '明天' || rel === '后天') return rel;
+      const prefix = weekPrefix(date);
+      if (prefix) return `${prefix}${weekdayLabel(date)}`;
+      return rel;
+    };
+
+    const firstWorkdayEvening = schedule
+      .filter(d => d?.date instanceof Date)
+      .filter(d => d.date >= base)
+      .filter(d => !isWeekend(d.date))
+      .filter(d => !d.holidayName)
+      .map(d => {
+        const evening = d.slots?.find(s => s.key === 'evening');
+        if (!evening || evening.status !== 'free') return null;
+        return {
+          id: `rec-work-evening-${d.key}`,
+          title: `${relOrWeek(d.date)}晚上可约`,
+          subtitle: '工作日晚上',
+          dayKey: d.key,
+          slotKey: 'evening'
+        };
+      })
+      .find(Boolean);
+
+    const weekendDays = schedule
+      .filter(d => d?.date instanceof Date)
+      .filter(d => d.date >= base)
+      .filter(d => isWeekend(d.date))
+      .filter(d => !d.holidayName || d.holidayName === '补班')
+      .filter(d => getAnyFreeSlot(d));
+
+    const weekendSuggestion = (() => {
+      if (weekendDays.length === 0) return null;
+      const first = weekendDays[0];
+      const firstKey = first.key;
+      const firstSlot = getAnyFreeSlot(first);
+      const prefix = weekPrefix(first.date);
+      const sat = first.date.getDay() === 6 ? first : weekendDays.find(d => d.date.getDay() === 6);
+      const sun = weekendDays.find(d => d.date.getDay() === 0 && d.date >= base);
+      if (sat && sun) {
+        const sameWeekend = Math.abs((sun.date - sat.date) / 86400000) <= 1;
+        if (sameWeekend && weekPrefix(sat.date) === weekPrefix(sun.date)) {
+          return {
+            id: `rec-weekend-${sat.key}`,
+            title: `${weekPrefix(sat.date) || relOrWeek(sat.date)}六-日可约`,
+            subtitle: '周末',
+            dayKey: sat.key,
+            slotKey: (getAnyFreeSlot(sat)?.slot?.key || 'evening')
+          };
+        }
+      }
+      return {
+        id: `rec-weekend-${firstKey}`,
+        title: `${prefix ? `${prefix}${weekdayLabel(first.date)}` : relOrWeek(first.date)}${firstSlot.label}可约`,
+        subtitle: '周末',
+        dayKey: firstKey,
+        slotKey: firstSlot.slot.key
+      };
+    })();
+
+    const holidayDays = schedule
+      .filter(d => d?.date instanceof Date)
+      .filter(d => d.date >= base)
+      .filter(d => d.holidayName && d.holidayName !== '补班')
+      .filter(d => getAnyFreeSlot(d));
+
+    const holidaySuggestion = (() => {
+      if (holidayDays.length === 0) return null;
+      const first = holidayDays[0];
+      const name = first.holidayName;
+      const sameNameDays = holidayDays.filter(d => d.holidayName === name);
+      const firstTwo = sameNameDays.slice(0, 2);
+      if (firstTwo.length === 2) {
+        return {
+          id: `rec-holiday-${first.key}`,
+          title: `${name}前两天可约`,
+          subtitle: '节假日',
+          dayKey: first.key,
+          slotKey: (getAnyFreeSlot(first)?.slot?.key || 'morning')
+        };
+      }
+      return {
+        id: `rec-holiday-${first.key}`,
+        title: `${name}当天可约`,
+        subtitle: '节假日',
+        dayKey: first.key,
+        slotKey: (getAnyFreeSlot(first)?.slot?.key || 'morning')
+      };
+    })();
+
+    return [firstWorkdayEvening, weekendSuggestion, holidaySuggestion];
+  }, [schedule]);
+
+  const handleRecommendationClick = (rec) => {
+    if (!rec) return;
+    triggerSlotPress(rec.id);
+    const day = schedule.find(d => d.key === rec.dayKey);
+    if (!day) return;
+    const slot = day.slots.find(s => s.key === rec.slotKey) || day.slots.find(s => s.status === 'free');
+    if (!slot) return;
+    const slotIdx = day.slots.indexOf(slot);
+    setViewMode('calendar');
+    setTimeout(() => {
+      onSlotTap(day, slot, slotIdx);
+      const el = document.getElementById(`day-${day.key}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 60);
   };
 
   const fetchData = async (isAuto = false) => {
@@ -397,8 +560,63 @@ export default function Schedule({ theme }) {
 
         {!loading && !error && (
           <div key={contentKey} className="pb-10">
+            <div className="mb-4 flex justify-center">
+              <div className="inline-flex p-1 rounded-full bg-[#333333]/10 dark:bg-[#FFFFFF]/10">
+                <button
+                  className={[
+                    "px-4 py-1.5 rounded-full text-xs transition-colors",
+                    viewMode === 'calendar'
+                      ? "bg-[#083A8E] text-[#FFFFFF] dark:bg-[#D3F1FF] dark:text-[#083A8E]"
+                      : "text-[#3A3A3A]/70 dark:text-[#FFFFFF]/70"
+                  ].join(' ')}
+                  onClick={() => setViewMode('calendar')}
+                >
+                  日历
+                </button>
+                <button
+                  className={[
+                    "px-4 py-1.5 rounded-full text-xs transition-colors",
+                    viewMode === 'smart'
+                      ? "bg-[#083A8E] text-[#FFFFFF] dark:bg-[#D3F1FF] dark:text-[#083A8E]"
+                      : "text-[#3A3A3A]/70 dark:text-[#FFFFFF]/70"
+                  ].join(' ')}
+                  onClick={() => setViewMode('smart')}
+                >
+                  智能
+                </button>
+              </div>
+            </div>
+
+            {viewMode === 'smart' && (
+              <div className="space-y-3">
+                {[
+                  { key: 'work', rec: recommendations[0] },
+                  { key: 'weekend', rec: recommendations[1] },
+                  { key: 'holiday', rec: recommendations[2] }
+                ].map(({ key, rec }) => {
+                  const baseCls = [
+                    "slot-item w-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform",
+                    rec ? "cursor-pointer" : "opacity-50 cursor-not-allowed",
+                    "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
+                    pressedSlotId === (rec?.id || '') ? "press-bouncy" : ""
+                  ].join(' ');
+
+                  return (
+                    <div
+                      key={key}
+                      className={baseCls}
+                      onClick={() => rec && handleRecommendationClick(rec)}
+                    >
+                      <div className="text-base font-semibold leading-none">{rec?.title || '暂无可预约时间'}</div>
+                      <div className="text-xs leading-tight">{rec?.subtitle || ''}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* 按月分组 */}
-            {(() => {
+            {viewMode === 'calendar' && (() => {
               const months = {};
               schedule.forEach(day => {
                 const monthKey = `${day.date.getFullYear()}-${day.date.getMonth() + 1}`;
