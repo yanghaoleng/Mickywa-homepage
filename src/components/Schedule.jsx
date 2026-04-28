@@ -606,7 +606,7 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div className="px-5 flex-1">
+      <div className="px-5 flex-1 overflow-visible">
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -635,10 +635,10 @@ export default function Schedule({ theme }) {
         )}
 
         {!loading && !error && (
-          <div key={contentKey} className="pb-10">
-            <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] p-5 shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
+          <div key={contentKey} className="pb-10 overflow-visible">
+            <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] p-5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
               <img src="/assets/找我耍.svg" alt="找我耍" className="h-8 w-auto mb-4 dark:brightness-0 dark:invert" />
-              <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[20px] p-4">
+              <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[20px] p-4 overflow-visible">
                 <div className="space-y-2">
                   {(recommendations.length ? recommendations : [{ id: 'rec-empty', title: '暂无可预约时间', subtitle: '', disabled: true }]).map((rec, idx) => {
                     const isDisabled = !!rec.disabled;
@@ -832,7 +832,7 @@ export default function Schedule({ theme }) {
                                           triggerSlotPress(fullDayUniqueKey);
                                           if (fullDaySlot && fullDaySlotIdx !== null) onSlotTap(item, fullDaySlot, fullDaySlotIdx);
                                         }}
-                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
+                                        className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
                                           pressedSlotId === fullDayUniqueKey ? "press-bouncy" : "",
                                           bookingType === 'busy' 
                                             ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 cursor-not-allowed" 
@@ -865,7 +865,7 @@ export default function Schedule({ theme }) {
                                           triggerSlotPress(dayUniqueKey);
                                           if (daySlot && daySlotIdx !== null) onSlotTap(item, daySlot, daySlotIdx);
                                         }}
-                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
+                                        className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
                                           pressedSlotId === dayUniqueKey ? "press-bouncy" : "",
                                           "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
@@ -892,7 +892,7 @@ export default function Schedule({ theme }) {
                                           triggerSlotPress(eveningUniqueKey);
                                           if (eveningSlot && eveningSlotIdx !== null) onSlotTap(item, eveningSlot, eveningSlotIdx);
                                         }}
-                                        className={["slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
+                                        className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
                                           pressedSlotId === eveningUniqueKey ? "press-bouncy" : "",
                                           "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
@@ -913,7 +913,7 @@ export default function Schedule({ theme }) {
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
-                                      <div className="slot-item w-full h-full px-2.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform relative dark:bg-[#FFFFFF]/4 bg-[#333333]/10 cursor-not-allowed">
+                                      <div className="slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform relative dark:bg-[#FFFFFF]/4 bg-[#333333]/10 cursor-not-allowed">
                                         {isToday && (
                                           <span className="pointer-events-none absolute -top-1.5 -right-1.5 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
                                             今
