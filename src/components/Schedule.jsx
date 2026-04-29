@@ -10,12 +10,14 @@ const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
 
 function SmartRecButton({
   idx,
+  recId,
   title,
   disabled,
   selected,
   fading,
   pressed,
   onActivate,
+  onBlurFade,
   animationDelay,
   setEl
 }) {
@@ -36,6 +38,9 @@ function SmartRecButton({
       onClick={(e) => {
         e.stopPropagation();
         if (!disabled) onActivate?.();
+      }}
+      onBlur={() => {
+        if (!disabled) onBlurFade?.(recId);
       }}
       onKeyDown={(e) => {
         if (disabled) return;
@@ -617,13 +622,28 @@ export default function Schedule({ theme }) {
     recommendationsRef.current = recommendations.filter(r => !r?.disabled);
   }, [recommendations]);
 
-  const handleRecommendationClick = (rec) => {
-    if (!rec) return;
+  const fadeOutSmartFill = (id) => {
+    if (!id) return;
+    if (selectedSmartIdRef.current !== id) return;
     if (smartFadeTimeoutRef.current) {
       clearTimeout(smartFadeTimeoutRef.current);
       smartFadeTimeoutRef.current = null;
     }
-    setFadingSmartId(null);
+    setFadingSmartId(id);
+    setSelectedSmartId(null);
+    smartFadeTimeoutRef.current = setTimeout(() => {
+      setFadingSmartId(null);
+      smartFadeTimeoutRef.current = null;
+    }, 1000);
+  };
+
+  const handleRecommendationClick = (rec) => {
+    if (!rec) return;
+    if (fadingSmartIdRef.current === rec.id && smartFadeTimeoutRef.current) {
+      clearTimeout(smartFadeTimeoutRef.current);
+      smartFadeTimeoutRef.current = null;
+      setFadingSmartId(null);
+    }
     setSelectedSmartId(rec.id);
     triggerSlotPress(rec.id);
     requestAnimationFrame(() => {
@@ -775,20 +795,8 @@ export default function Schedule({ theme }) {
   // Click background to deselect
   useEffect(() => {
     const handleGlobalClick = (e) => {
-      // If clicking inside a slot or the bottom bar or modal, do nothing
-      if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container') || e.target.closest('.theme-toggle') || e.target.closest('.smart-rec-item') || e.target.closest('.smart-toggle-btn')) {
+      if (e.target.closest('.smart-rec-item') || e.target.closest('.smart-toggle-btn')) {
         return;
-      }
-
-      if (selectedSlotRef.current) setSelectedSlot(null);
-
-      if (smartFadeTimeoutRef.current) {
-        clearTimeout(smartFadeTimeoutRef.current);
-        smartFadeTimeoutRef.current = null;
-      }
-      if (selectedSmartIdRef.current || fadingSmartIdRef.current) {
-        setFadingSmartId(null);
-        setSelectedSmartId(null);
       }
 
       const active = document.activeElement;
@@ -797,6 +805,12 @@ export default function Schedule({ theme }) {
           active.blur?.();
         }
       }
+
+      if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container') || e.target.closest('.theme-toggle')) {
+        return;
+      }
+
+      if (selectedSlotRef.current) setSelectedSlot(null);
     };
     
     window.addEventListener('click', handleGlobalClick);
@@ -819,11 +833,11 @@ export default function Schedule({ theme }) {
       const i = ((nextIndex % list.length) + list.length) % list.length;
       const rec = list[i];
       if (!rec?.id) return;
-      if (smartFadeTimeoutRef.current) {
+      if (fadingSmartIdRef.current === rec.id && smartFadeTimeoutRef.current) {
         clearTimeout(smartFadeTimeoutRef.current);
         smartFadeTimeoutRef.current = null;
+        setFadingSmartId(null);
       }
-      setFadingSmartId(null);
       setSelectedSmartId(rec.id);
       triggerSlotPress(rec.id);
       requestAnimationFrame(() => {
@@ -1112,6 +1126,7 @@ export default function Schedule({ theme }) {
                       <SmartRecButton
                         key={rec.id}
                         idx={idx}
+                        recId={rec.id}
                         title={rec.title}
                         disabled={isDisabled}
                         selected={Boolean(isSelected)}
@@ -1123,6 +1138,7 @@ export default function Schedule({ theme }) {
                           else delete smartRecRefs.current[rec.id];
                         }}
                         onActivate={() => handleRecommendationClick(rec)}
+                        onBlurFade={fadeOutSmartFill}
                       />
                     );
                   })}
