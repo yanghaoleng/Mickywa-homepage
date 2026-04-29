@@ -43,11 +43,13 @@ export default function Schedule({ theme }) {
   const [selectedSmartId, setSelectedSmartId] = useState(null);
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [isCalendarCollapsing, setIsCalendarCollapsing] = useState(false);
+  const [isCalendarCardBouncing, setIsCalendarCardBouncing] = useState(false);
   const [recNonce, setRecNonce] = useState(0);
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
   const pressTimeoutRef = useRef(null);
+  const calendarCardBounceTimeoutRef = useRef(null);
 
   const triggerSlotPress = (slotId) => {
     if (!slotId) return;
@@ -64,6 +66,7 @@ export default function Schedule({ theme }) {
   };
 
   const handleToggleCalendar = () => {
+    triggerSlotPress('toggle-calendar');
     if (isCalendarExpanded) {
       setIsCalendarCollapsing(true);
       window.setTimeout(() => setIsCalendarCollapsing(false), 220);
@@ -71,6 +74,19 @@ export default function Schedule({ theme }) {
       setIsCalendarCollapsing(false);
     }
     setIsCalendarExpanded(v => !v);
+  };
+
+  const triggerCalendarCardBounce = () => {
+    if (calendarCardBounceTimeoutRef.current) {
+      clearTimeout(calendarCardBounceTimeoutRef.current);
+      calendarCardBounceTimeoutRef.current = null;
+    }
+    setIsCalendarCardBouncing(false);
+    requestAnimationFrame(() => setIsCalendarCardBouncing(true));
+    calendarCardBounceTimeoutRef.current = window.setTimeout(() => {
+      setIsCalendarCardBouncing(false);
+      calendarCardBounceTimeoutRef.current = null;
+    }, 240);
   };
 
   const weekdayLabel = (date) => {
@@ -595,7 +611,7 @@ export default function Schedule({ theme }) {
   };
 
   return (
-    <div className="min-h-full flex flex-col pb-32 dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
+    <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
       <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start space-y-2 spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
@@ -617,7 +633,7 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div className="px-5 pt-3.5 pb-3.5 overflow-visible">
+      <div className="px-5 pt-3.5 pb-32 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -648,17 +664,25 @@ export default function Schedule({ theme }) {
         {!loading && !error && (
           <div key={contentKey} className="pb-10 overflow-visible">
             <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
-              <img src="/assets/找我耍.svg" alt="找我耍" className="h-8 w-auto mb-4 px-2 dark:brightness-0 dark:invert" />
-              <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
+              <img
+                src="/assets/找我耍.svg"
+                alt="找我耍"
+                className={["h-8 w-auto mb-4 px-2 dark:brightness-0 dark:invert",
+                  !isCalendarExpanded && isCalendarCardBouncing ? "calendar-title-bounce" : ""
+                ].join(' ')}
+              />
+              <div className={["bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible",
+                !isCalendarExpanded && isCalendarCardBouncing ? "calendar-card-bounce" : ""
+              ].join(' ')}>
                 <div className="space-y-2">
                   {(recommendations.length ? recommendations : [{ id: 'rec-empty', title: '暂无可预约时间', subtitle: '', disabled: true }]).map((rec, idx) => {
                     const isDisabled = !!rec.disabled;
                     const isSelected = selectedSmartId && rec.id === selectedSmartId;
 
                     const lineCls = [
-                      "relative flex items-start gap-2 transition-all duration-300 transform",
+                      "relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-2 py-1.5 min-h-[44px]",
                       isDisabled ? "opacity-50" : "cursor-pointer",
-                      isSelected ? "-translate-y-1.25 rounded-[12px] px-2 py-1" : ""
+                      isSelected ? "-translate-y-1.25" : ""
                     ].join(' ');
 
                     return (
@@ -672,10 +696,10 @@ export default function Schedule({ theme }) {
                           <div className="absolute inset-0 rounded-[12px] pointer-events-none animate-color-change" />
                         )}
                         <div className={["relative z-10 flex items-start gap-2", pressedSlotId === rec.id ? "press-jump" : ""].join(' ')}>
-                          <span className={["mt-2 w-1.5 h-1.5 rounded-full flex-shrink-0",
+                          <span className={["mt-2.5 w-1.5 h-1.5 rounded-full flex-shrink-0",
                             isSelected ? "bg-[#3A3A3A]" : "bg-[#083A8E] dark:bg-[#D3F1FF]"
                           ].join(' ')} />
-                          <div className={["text-sm font-medium leading-relaxed",
+                          <div className={["text-[16px] font-medium leading-relaxed",
                             isSelected ? "text-[#3A3A3A]" : "text-[#083A8E] dark:text-[#D3F1FF]"
                           ].join(' ')}>
                             {rec.title}
@@ -686,13 +710,15 @@ export default function Schedule({ theme }) {
                   })}
 
                   <div
-                    className="flex items-start gap-2 cursor-pointer spring-scale-in"
+                    className="relative flex items-start gap-2 cursor-pointer spring-scale-in transition-all duration-300 transform rounded-[12px] px-2 py-1.5 min-h-[44px]"
                     style={{ animationDelay: `${recommendations.length * 0.05 + 0.05}s` }}
                     onClick={handleToggleCalendar}
                   >
-                    <span className="mt-2 w-1.5 h-1.5 rounded-full bg-[#083A8E] dark:bg-[#D3F1FF] flex-shrink-0" />
-                    <div className="text-[#083A8E] dark:text-[#D3F1FF] text-sm font-medium leading-relaxed">
-                      {isCalendarExpanded ? '收起日历 ↑' : '展开日历 ↓'}
+                    <div className={["relative z-10 flex items-start gap-2", pressedSlotId === 'toggle-calendar' ? "press-gentle" : ""].join(' ')}>
+                      <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-[#083A8E] dark:bg-[#D3F1FF] flex-shrink-0" />
+                      <div className="text-[#083A8E] dark:text-[#D3F1FF] text-[16px] font-medium leading-relaxed">
+                        {isCalendarExpanded ? '收起日历 ↑' : '展开日历 ↓'}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -701,7 +727,12 @@ export default function Schedule({ theme }) {
                   !isCalendarExpanded && isCalendarCollapsing ? "collapse-gentle" : "",
                   isCalendarExpanded ? "duration-500" : "duration-150",
                   isCalendarExpanded ? "max-h-[2200px] opacity-100" : "max-h-0 opacity-0"
-                ].join(' ')}>
+                ].join(' ')}
+                onTransitionEnd={(e) => {
+                  if (!isCalendarExpanded && e.propertyName === 'max-height') {
+                    triggerCalendarCardBounce();
+                  }
+                }}>
                   <div className="my-4 h-px bg-[#3A3A3A]/10 dark:bg-[#FFFFFF]/10" />
 
                   {(() => {

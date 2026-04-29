@@ -10,8 +10,8 @@ body {
 html,
 body,
 #root {
-  min-height: 100%;
-  overflow-x: hidden;
+  height: 100%;
+  overflow: hidden;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -172,6 +172,64 @@ body,
 
 .press-jump {
   animation: press-jump 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes press-gentle {
+  0% {
+    transform: scale(1);
+  }
+  55% {
+    transform: scale(0.98);
+  }
+  80% {
+    transform: scale(1.01);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.press-gentle {
+  animation: press-gentle 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes calendar-card-bounce {
+  0% {
+    transform: scale(1);
+  }
+  60% {
+    transform: scale(0.99);
+  }
+  85% {
+    transform: scale(1.01);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.calendar-card-bounce {
+  transform-origin: top;
+  animation: calendar-card-bounce 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes calendar-title-bounce {
+  0% {
+    transform: translateY(0);
+  }
+  60% {
+    transform: translateY(-6px);
+  }
+  85% {
+    transform: translateY(1px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.calendar-title-bounce {
+  animation: calendar-title-bounce 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @keyframes collapse-gentle {
