@@ -854,6 +854,35 @@ export default function Schedule({ theme }) {
       if (showModalRef.current) return;
 
       const key = e.key;
+      if (key === 'Escape') {
+        const active = document.activeElement;
+        const inScope = active === document.body || active === document.documentElement || (rootRef.current && active instanceof HTMLElement && rootRef.current.contains(active));
+        if (!inScope && !selectedSlotRef.current && !selectedSmartIdRef.current && !fadingSmartIdRef.current) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (selectedSlotRef.current) setSelectedSlot(null);
+
+        const currentId = selectedSmartIdRef.current;
+        if (currentId) {
+          fadeOutSmartFill(currentId);
+        } else if (fadingSmartIdRef.current) {
+          if (smartFadeTimeoutRef.current) {
+            clearTimeout(smartFadeTimeoutRef.current);
+            smartFadeTimeoutRef.current = null;
+          }
+          setFadingSmartId(null);
+        }
+
+        if (rootRef.current && active instanceof HTMLElement && rootRef.current.contains(active)) {
+          if (active.matches('button,[role="button"],a,[tabindex]')) {
+            active.blur?.();
+          }
+        }
+        return;
+      }
+
       const isTab = key === 'Tab';
       const isPrev = (isTab && e.shiftKey) || key === 'ArrowLeft' || key === 'ArrowUp';
       const isNext = (isTab && !e.shiftKey) || key === 'ArrowRight' || key === 'ArrowDown';
