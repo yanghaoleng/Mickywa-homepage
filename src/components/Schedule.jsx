@@ -584,7 +584,7 @@ export default function Schedule({ theme }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col pb-32 dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
+    <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
       <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start space-y-2 spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
@@ -606,7 +606,7 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div className="px-5 flex-1 overflow-visible">
+      <div className="px-5 pt-3.5 pb-3.5 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -686,7 +686,8 @@ export default function Schedule({ theme }) {
                   </div>
                 </div>
 
-                <div className={["overflow-hidden transition-[max-height,opacity] duration-500 ease-out",
+                <div className={["overflow-hidden transition-[max-height,opacity] ease-out",
+                  isCalendarExpanded ? "duration-500" : "duration-150",
                   isCalendarExpanded ? "max-h-[2200px] opacity-100" : "max-h-0 opacity-0"
                 ].join(' ')}>
                   <div className="my-4 h-px bg-[#3A3A3A]/10 dark:bg-[#FFFFFF]/10" />
