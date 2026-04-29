@@ -611,7 +611,7 @@ export default function Schedule({ theme }) {
   };
 
   return (
-    <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
+    <div className="h-full min-h-0 overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
       <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start space-y-2 spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
@@ -633,7 +633,7 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div className="px-5 pt-3.5 pb-32 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
+      <div className="px-5 pt-3.5 pb-32 flex-1 min-h-0 overflow-y-auto overflow-x-visible overscroll-contain scroll-y-touch">
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>

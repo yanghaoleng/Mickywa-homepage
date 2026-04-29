@@ -5,6 +5,9 @@
 html,
 body {
   background-color: #ffffff;
+  height: 100%;
+  position: fixed;
+  inset: 0;
 }
 
 html,
@@ -12,6 +15,11 @@ body,
 #root {
   height: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
+}
+
+.scroll-y-touch {
+  -webkit-overflow-scrolling: touch;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -190,18 +198,21 @@ body,
 }
 
 .press-gentle {
-  animation: press-gentle 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: press-gentle 0.26s cubic-bezier(0.2, 1, 0.2, 1) forwards;
 }
 
 @keyframes calendar-card-bounce {
   0% {
     transform: scale(1);
   }
-  60% {
-    transform: scale(0.99);
+  50% {
+    transform: scale(0.985);
   }
-  85% {
-    transform: scale(1.01);
+  75% {
+    transform: scale(1.012);
+  }
+  90% {
+    transform: scale(0.997);
   }
   100% {
     transform: scale(1);
@@ -210,18 +221,21 @@ body,
 
 .calendar-card-bounce {
   transform-origin: top;
-  animation: calendar-card-bounce 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: calendar-card-bounce 0.42s cubic-bezier(0.2, 1, 0.2, 1) forwards;
 }
 
 @keyframes calendar-title-bounce {
   0% {
     transform: translateY(0);
   }
-  60% {
-    transform: translateY(-6px);
+  55% {
+    transform: translateY(-8px);
   }
-  85% {
-    transform: translateY(1px);
+  80% {
+    transform: translateY(2px);
+  }
+  92% {
+    transform: translateY(-1px);
   }
   100% {
     transform: translateY(0);
@@ -229,7 +243,7 @@ body,
 }
 
 .calendar-title-bounce {
-  animation: calendar-title-bounce 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: calendar-title-bounce 0.42s cubic-bezier(0.2, 1, 0.2, 1) forwards;
 }
 
 @keyframes collapse-gentle {
@@ -248,7 +262,7 @@ body,
 }
 
 .collapse-gentle {
-  animation: collapse-gentle 0.22s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: collapse-gentle 0.34s cubic-bezier(0.2, 1, 0.2, 1) forwards;
 }
 
 @keyframes color-change {
