@@ -164,38 +164,46 @@ export default function Schedule({ theme }) {
       ringEl.style.borderColor = color;
       ringEl.style.opacity = '0';
       ringEl.style.borderWidth = '0px';
+      ringEl.style.borderStyle = 'solid';
+      ringEl.style.boxSizing = 'border-box';
       ringEl.style.willChange = 'opacity,border-width';
-      const cancelOutward = springAnimate({
-        from: 0,
-        to: 2,
-        clampMin: 0,
-        clampMax: 2,
-        maxMs: 260,
-        onUpdate: (v) => {
-          ringEl.style.borderWidth = `${v}px`;
-          ringEl.style.opacity = String(Math.min(0.8, v / 2));
-        },
-        onComplete: () => {
-          const cancelReturn = springAnimate({
-            from: 2,
-            to: 0,
-            clampMin: 0,
-            clampMax: 2,
-            maxMs: 420,
-            onUpdate: (v) => {
-              ringEl.style.borderWidth = `${v}px`;
-              ringEl.style.opacity = String(Math.min(0.8, v / 2));
-            },
-            onComplete: () => {
-              ringEl.style.opacity = '';
-              ringEl.style.borderWidth = '';
-              ringEl.style.willChange = '';
-            }
-          });
-          springAnimMapRef.current.set('toggle-ring', cancelReturn);
-        }
-      });
-      springAnimMapRef.current.set('toggle-ring', cancelOutward);
+
+      cancelSpringForKey('toggle-ring-delay');
+      const delayId = window.setTimeout(() => {
+        const targetW = 1;
+        const cancelOutward = springAnimate({
+          from: 0,
+          to: targetW,
+          clampMin: 0,
+          clampMax: targetW,
+          maxMs: 260,
+          onUpdate: (v) => {
+            ringEl.style.borderWidth = `${v}px`;
+            ringEl.style.opacity = String(Math.min(0.7, v / targetW * 0.7));
+          },
+          onComplete: () => {
+            const cancelReturn = springAnimate({
+              from: targetW,
+              to: 0,
+              clampMin: 0,
+              clampMax: targetW,
+              maxMs: 420,
+              onUpdate: (v) => {
+                ringEl.style.borderWidth = `${v}px`;
+                ringEl.style.opacity = String(Math.min(0.7, v / targetW * 0.7));
+              },
+              onComplete: () => {
+                ringEl.style.opacity = '';
+                ringEl.style.borderWidth = '';
+                ringEl.style.willChange = '';
+              }
+            });
+            springAnimMapRef.current.set('toggle-ring', cancelReturn);
+          }
+        });
+        springAnimMapRef.current.set('toggle-ring', cancelOutward);
+      }, 50);
+      springAnimMapRef.current.set('toggle-ring-delay', () => window.clearTimeout(delayId));
     }
   };
 
