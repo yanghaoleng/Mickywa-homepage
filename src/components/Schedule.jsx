@@ -170,7 +170,7 @@ export default function Schedule({ theme }) {
 
       cancelSpringForKey('toggle-ring-delay');
       const delayId = window.setTimeout(() => {
-        const targetW = 1;
+        const targetW = 0.5;
         const cancelOutward = springAnimate({
           from: 0,
           to: targetW,
@@ -202,7 +202,7 @@ export default function Schedule({ theme }) {
           }
         });
         springAnimMapRef.current.set('toggle-ring', cancelOutward);
-      }, 50);
+      }, 150);
       springAnimMapRef.current.set('toggle-ring-delay', () => window.clearTimeout(delayId));
     }
   };
