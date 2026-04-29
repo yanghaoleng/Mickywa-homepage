@@ -43,13 +43,15 @@ export default function Schedule({ theme }) {
   const [selectedSmartId, setSelectedSmartId] = useState(null);
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [isCalendarCollapsing, setIsCalendarCollapsing] = useState(false);
-  const [isCalendarCardBouncing, setIsCalendarCardBouncing] = useState(false);
   const [recNonce, setRecNonce] = useState(0);
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
   const pressTimeoutRef = useRef(null);
-  const calendarCardBounceTimeoutRef = useRef(null);
+  const calendarCardRef = useRef(null);
+  const calendarTitleRef = useRef(null);
+  const calendarBounceRafRef = useRef(null);
+  const springAnimMapRef = useRef(new Map());
 
   const triggerSlotPress = (slotId) => {
     if (!slotId) return;
@@ -65,8 +67,176 @@ export default function Schedule({ theme }) {
     }, 360);
   };
 
-  const handleToggleCalendar = () => {
-    triggerSlotPress('toggle-calendar');
+  const springParams = { stiffness: 220, damping: 20, mass: 0.8 };
+
+  const springAnimate = ({ from, to, onUpdate, onComplete, maxMs = 800, clampMin = -Infinity, clampMax = Infinity }) => {
+    const { stiffness, damping, mass } = springParams;
+    let x = from;
+    let v = 0;
+    let lastT = performance.now();
+    const startT = lastT;
+    let rafId = null;
+    let stopped = false;
+
+    const tick = (t) => {
+      if (stopped) return;
+      const dt = Math.min(0.032, (t - lastT) / 1000);
+      lastT = t;
+
+      const a = (-stiffness * (x - to) - damping * v) / mass;
+      v += a * dt;
+      x += v * dt;
+
+      const next = Math.max(clampMin, Math.min(clampMax, x));
+      onUpdate?.(next);
+
+      const done = (Math.abs(v) < 0.001 && Math.abs(x - to) < 0.001) || (t - startT) > maxMs;
+      if (done) {
+        onUpdate?.(Math.max(clampMin, Math.min(clampMax, to)));
+        onComplete?.();
+        rafId = null;
+        return;
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => {
+      stopped = true;
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  };
+
+  const cancelSpringForKey = (key) => {
+    const map = springAnimMapRef.current;
+    const cancel = map.get(key);
+    if (cancel) cancel();
+    map.delete(key);
+  };
+
+  const randomPastel = () => {
+    const colors = ['#D3F1FF', '#CFEDD9', '#FFDDDD', '#FCF7BD', '#E7DDFF', '#FFE8CC'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  };
+
+  const playToggleRipple = (rootEl) => {
+    if (!rootEl) return;
+    const fillEl = rootEl.querySelector('[data-ripple-fill]');
+    const ringEl = rootEl.querySelector('[data-ripple-ring]');
+    if (!fillEl && !ringEl) return;
+
+    const color = randomPastel();
+
+    cancelSpringForKey('toggle-fill');
+    cancelSpringForKey('toggle-ring');
+
+    if (fillEl) {
+      fillEl.style.backgroundColor = color;
+      fillEl.style.opacity = '0';
+      fillEl.style.willChange = 'opacity';
+      const cancelIn = springAnimate({
+        from: 0,
+        to: 0.22,
+        clampMin: 0,
+        clampMax: 0.22,
+        maxMs: 260,
+        onUpdate: (v) => (fillEl.style.opacity = String(v)),
+        onComplete: () => {
+          const cancelOut = springAnimate({
+            from: 0.22,
+            to: 0,
+            clampMin: 0,
+            clampMax: 0.22,
+            maxMs: 320,
+            onUpdate: (v) => (fillEl.style.opacity = String(v)),
+            onComplete: () => {
+              fillEl.style.opacity = '';
+              fillEl.style.willChange = '';
+            }
+          });
+          springAnimMapRef.current.set('toggle-fill', cancelOut);
+        }
+      });
+      springAnimMapRef.current.set('toggle-fill', cancelIn);
+    }
+
+    if (ringEl) {
+      ringEl.style.borderColor = color;
+      ringEl.style.opacity = '0';
+      ringEl.style.borderWidth = '0px';
+      ringEl.style.willChange = 'opacity,border-width';
+      const cancelOutward = springAnimate({
+        from: 0,
+        to: 2,
+        clampMin: 0,
+        clampMax: 2,
+        maxMs: 260,
+        onUpdate: (v) => {
+          ringEl.style.borderWidth = `${v}px`;
+          ringEl.style.opacity = String(Math.min(0.8, v / 2));
+        },
+        onComplete: () => {
+          const cancelReturn = springAnimate({
+            from: 2,
+            to: 0,
+            clampMin: 0,
+            clampMax: 2,
+            maxMs: 420,
+            onUpdate: (v) => {
+              ringEl.style.borderWidth = `${v}px`;
+              ringEl.style.opacity = String(Math.min(0.8, v / 2));
+            },
+            onComplete: () => {
+              ringEl.style.opacity = '';
+              ringEl.style.borderWidth = '';
+              ringEl.style.willChange = '';
+            }
+          });
+          springAnimMapRef.current.set('toggle-ring', cancelReturn);
+        }
+      });
+      springAnimMapRef.current.set('toggle-ring', cancelOutward);
+    }
+  };
+
+  const playMonthSlotPress = (el) => {
+    if (!el) return;
+    cancelSpringForKey('month-press');
+    el.style.willChange = 'transform';
+    const setScale = (s) => {
+      el.style.setProperty('--tw-scale-x', String(s));
+      el.style.setProperty('--tw-scale-y', String(s));
+    };
+    const cancelDown = springAnimate({
+      from: 1,
+      to: 0.92,
+      clampMin: 0.92,
+      clampMax: 1,
+      maxMs: 220,
+      onUpdate: setScale,
+      onComplete: () => {
+        const cancelUp = springAnimate({
+          from: 0.92,
+          to: 1,
+          clampMin: 0.92,
+          clampMax: 1.02,
+          maxMs: 420,
+          onUpdate: setScale,
+          onComplete: () => {
+            el.style.removeProperty('--tw-scale-x');
+            el.style.removeProperty('--tw-scale-y');
+            el.style.willChange = '';
+          }
+        });
+        springAnimMapRef.current.set('month-press', cancelUp);
+      }
+    });
+    springAnimMapRef.current.set('month-press', cancelDown);
+  };
+
+  const handleToggleCalendar = (e) => {
+    e?.stopPropagation?.();
+    playToggleRipple(e?.currentTarget);
     if (isCalendarExpanded) {
       setIsCalendarCollapsing(true);
       window.setTimeout(() => setIsCalendarCollapsing(false), 220);
@@ -77,16 +247,56 @@ export default function Schedule({ theme }) {
   };
 
   const triggerCalendarCardBounce = () => {
-    if (calendarCardBounceTimeoutRef.current) {
-      clearTimeout(calendarCardBounceTimeoutRef.current);
-      calendarCardBounceTimeoutRef.current = null;
+    if (calendarBounceRafRef.current) {
+      cancelAnimationFrame(calendarBounceRafRef.current);
+      calendarBounceRafRef.current = null;
     }
-    setIsCalendarCardBouncing(false);
-    requestAnimationFrame(() => setIsCalendarCardBouncing(true));
-    calendarCardBounceTimeoutRef.current = window.setTimeout(() => {
-      setIsCalendarCardBouncing(false);
-      calendarCardBounceTimeoutRef.current = null;
-    }, 240);
+
+    const cardEl = calendarCardRef.current;
+    const titleEl = calendarTitleRef.current;
+    if (!cardEl && !titleEl) return;
+
+    const { stiffness, damping, mass } = springParams;
+    let x = 1;
+    let v = 0;
+    let lastT = performance.now();
+    const startT = lastT;
+
+    if (cardEl) cardEl.style.willChange = 'transform';
+    if (titleEl) titleEl.style.willChange = 'transform';
+
+    const tick = (t) => {
+      const dt = Math.min(0.032, (t - lastT) / 1000);
+      lastT = t;
+
+      const a = (-stiffness * x - damping * v) / mass;
+      v += a * dt;
+      x += v * dt;
+
+      const scale = 1 - 0.012 * x;
+      const ty = -6 * x;
+
+      if (cardEl) cardEl.style.transform = `scale(${scale})`;
+      if (titleEl) titleEl.style.transform = `translateY(${ty}px)`;
+
+      const done = (Math.abs(v) < 0.001 && Math.abs(x) < 0.001) || (t - startT) > 800;
+      if (done) {
+        if (cardEl) {
+          cardEl.style.transform = '';
+          cardEl.style.willChange = '';
+        }
+        if (titleEl) {
+          titleEl.style.transform = '';
+          titleEl.style.willChange = '';
+        }
+        calendarBounceRafRef.current = null;
+        return;
+      }
+
+      calendarBounceRafRef.current = requestAnimationFrame(tick);
+    };
+
+    calendarBounceRafRef.current = requestAnimationFrame(tick);
   };
 
   const weekdayLabel = (date) => {
@@ -469,6 +679,10 @@ export default function Schedule({ theme }) {
         return;
       }
       setSelectedSlot(null);
+      if (e.target.closest('.smart-rec-item') || e.target.closest('.smart-toggle-btn')) {
+        return;
+      }
+      setSelectedSmartId(null);
     };
     
     window.addEventListener('click', handleGlobalClick);
@@ -546,6 +760,38 @@ export default function Schedule({ theme }) {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const applyWidth = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.font = `20px "QH-bold-en"`;
+      let max = 0;
+      for (let i = 0; i <= 9; i += 1) {
+        const w = ctx.measureText(`${i}.`).width;
+        if (w > max) max = w;
+      }
+      const px = Math.ceil(max);
+      document.documentElement.style.setProperty('--qh-num-width', `${px}px`);
+    };
+
+    const run = async () => {
+      try {
+        if (document.fonts?.load) {
+          await document.fonts.load(`20px "QH-bold-en"`);
+        }
+      } catch {}
+      if (!cancelled) applyWidth();
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const updateForm = (field, value) => {
     setForm(prev => {
       // Special handling for style multiselect
@@ -611,7 +857,7 @@ export default function Schedule({ theme }) {
   };
 
   return (
-    <div className="h-full min-h-0 overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
+    <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
       <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start space-y-2 spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
@@ -633,7 +879,7 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div className="px-5 pt-3.5 pb-32 flex-1 min-h-0 overflow-y-auto overflow-x-visible overscroll-contain scroll-y-touch">
+      <div className="px-5 pt-3.5 pb-32 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -667,20 +913,21 @@ export default function Schedule({ theme }) {
               <img
                 src="/assets/找我耍.svg"
                 alt="找我耍"
-                className={["h-8 w-auto mb-4 px-2 dark:brightness-0 dark:invert",
-                  !isCalendarExpanded && isCalendarCardBouncing ? "calendar-title-bounce" : ""
-                ].join(' ')}
+                className="h-8 w-auto mb-4 px-2 dark:brightness-0 dark:invert"
+                ref={calendarTitleRef}
               />
-              <div className={["bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible",
-                !isCalendarExpanded && isCalendarCardBouncing ? "calendar-card-bounce" : ""
-              ].join(' ')}>
+              <div
+                ref={calendarCardRef}
+                className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible"
+              >
                 <div className="space-y-2">
                   {(recommendations.length ? recommendations : [{ id: 'rec-empty', title: '暂无可预约时间', subtitle: '', disabled: true }]).map((rec, idx) => {
                     const isDisabled = !!rec.disabled;
                     const isSelected = selectedSmartId && rec.id === selectedSmartId;
 
                     const lineCls = [
-                      "relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-2 py-1.5 min-h-[44px]",
+                      "smart-rec-item relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-2 py-1.5 min-h-[44px]",
+                      idx <= 1 ? "px-[14px]" : "",
                       isDisabled ? "opacity-50" : "cursor-pointer",
                       isSelected ? "-translate-y-1.25" : ""
                     ].join(' ');
@@ -690,18 +937,20 @@ export default function Schedule({ theme }) {
                         key={rec.id}
                         className={[lineCls, "spring-scale-in"].join(' ')}
                         style={{ animationDelay: `${idx * 0.05}s` }}
-                        onClick={() => !isDisabled && handleRecommendationClick(rec)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!isDisabled) handleRecommendationClick(rec);
+                        }}
                       >
                         {isSelected && (
                           <div className="absolute inset-0 rounded-[12px] pointer-events-none animate-color-change" />
                         )}
-                        <div className={["relative z-10 flex items-start gap-2", pressedSlotId === rec.id ? "press-jump" : ""].join(' ')}>
-                          <span className={["mt-2.5 w-1.5 h-1.5 rounded-full flex-shrink-0",
-                            isSelected ? "bg-[#3A3A3A]" : "bg-[#083A8E] dark:bg-[#D3F1FF]"
-                          ].join(' ')} />
+                        <div className={["relative z-10", pressedSlotId === rec.id ? "press-jump" : ""].join(' ')}>
                           <div className={["text-[16px] font-medium leading-relaxed",
+                            idx === 1 ? "px-0 mx-0" : "",
                             isSelected ? "text-[#3A3A3A]" : "text-[#083A8E] dark:text-[#D3F1FF]"
                           ].join(' ')}>
+                            <span className="qh-bold-en qh-num">{idx + 1}.</span>
                             {rec.title}
                           </div>
                         </div>
@@ -710,12 +959,13 @@ export default function Schedule({ theme }) {
                   })}
 
                   <div
-                    className="relative flex items-start gap-2 cursor-pointer spring-scale-in transition-all duration-300 transform rounded-[12px] px-2 py-1.5 min-h-[44px]"
+                    className="smart-toggle-btn relative flex items-start gap-2 cursor-pointer spring-scale-in transition-all duration-300 transform rounded-[12px] px-[14px] py-1.5 min-h-[44px] overflow-visible"
                     style={{ animationDelay: `${recommendations.length * 0.05 + 0.05}s` }}
                     onClick={handleToggleCalendar}
                   >
-                    <div className={["relative z-10 flex items-start gap-2", pressedSlotId === 'toggle-calendar' ? "press-gentle" : ""].join(' ')}>
-                      <span className="mt-2.5 w-1.5 h-1.5 rounded-full bg-[#083A8E] dark:bg-[#D3F1FF] flex-shrink-0" />
+                    <span data-ripple-fill className="absolute inset-0 rounded-[12px] pointer-events-none opacity-0" />
+                    <span data-ripple-ring className="absolute inset-0 rounded-[12px] pointer-events-none opacity-0 border-solid" />
+                    <div className="relative z-10">
                       <div className="text-[#083A8E] dark:text-[#D3F1FF] text-[16px] font-medium leading-relaxed">
                         {isCalendarExpanded ? '收起日历 ↑' : '展开日历 ↓'}
                       </div>
@@ -873,11 +1123,11 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          playMonthSlotPress(e.currentTarget);
                                           triggerSlotPress(fullDayUniqueKey);
                                           if (fullDaySlot && fullDaySlotIdx !== null) onSlotTap(item, fullDaySlot, fullDaySlotIdx);
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
-                                          pressedSlotId === fullDayUniqueKey ? "press-bouncy" : "",
                                           bookingType === 'busy' 
                                             ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 cursor-not-allowed" 
                                             : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
@@ -906,11 +1156,11 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          playMonthSlotPress(e.currentTarget);
                                           triggerSlotPress(dayUniqueKey);
                                           if (daySlot && daySlotIdx !== null) onSlotTap(item, daySlot, daySlotIdx);
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
-                                          pressedSlotId === dayUniqueKey ? "press-bouncy" : "",
                                           "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
@@ -933,11 +1183,11 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
+                                          playMonthSlotPress(e.currentTarget);
                                           triggerSlotPress(eveningUniqueKey);
                                           if (eveningSlot && eveningSlotIdx !== null) onSlotTap(item, eveningSlot, eveningSlotIdx);
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
-                                          pressedSlotId === eveningUniqueKey ? "press-bouncy" : "",
                                           "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
