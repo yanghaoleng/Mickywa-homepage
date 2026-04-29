@@ -41,6 +41,7 @@ export default function Schedule({ theme }) {
   const [contentKey, setContentKey] = useState(0);
   const [pressedSlotId, setPressedSlotId] = useState(null);
   const [selectedSmartId, setSelectedSmartId] = useState(null);
+  const [fadingSmartId, setFadingSmartId] = useState(null);
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [isCalendarCollapsing, setIsCalendarCollapsing] = useState(false);
   const [recNonce, setRecNonce] = useState(0);
@@ -52,6 +53,7 @@ export default function Schedule({ theme }) {
   const calendarTitleRef = useRef(null);
   const calendarBounceRafRef = useRef(null);
   const springAnimMapRef = useRef(new Map());
+  const smartFadeTimeoutRef = useRef(null);
 
   const triggerSlotPress = (slotId) => {
     if (!slotId) return;
@@ -207,14 +209,16 @@ export default function Schedule({ theme }) {
     }
   };
 
-  const playMonthSlotPress = (el) => {
-    if (!el) return;
-    cancelSpringForKey('month-press');
+  const playMonthSlotPress = (key, el) => {
+    if (!key || !el) return;
+    const pressKey = `month-press:${key}`;
+    cancelSpringForKey(pressKey);
     el.style.willChange = 'transform';
     const setScale = (s) => {
       el.style.setProperty('--tw-scale-x', String(s));
       el.style.setProperty('--tw-scale-y', String(s));
     };
+    setScale(1);
     const cancelDown = springAnimate({
       from: 1,
       to: 0.92,
@@ -236,10 +240,10 @@ export default function Schedule({ theme }) {
             el.style.willChange = '';
           }
         });
-        springAnimMapRef.current.set('month-press', cancelUp);
+        springAnimMapRef.current.set(pressKey, cancelUp);
       }
     });
-    springAnimMapRef.current.set('month-press', cancelDown);
+    springAnimMapRef.current.set(pressKey, cancelDown);
   };
 
   const handleToggleCalendar = (e) => {
@@ -538,6 +542,11 @@ export default function Schedule({ theme }) {
 
   const handleRecommendationClick = (rec) => {
     if (!rec) return;
+    if (smartFadeTimeoutRef.current) {
+      clearTimeout(smartFadeTimeoutRef.current);
+      smartFadeTimeoutRef.current = null;
+    }
+    setFadingSmartId(null);
     setSelectedSmartId(rec.id);
     triggerSlotPress(rec.id);
   };
@@ -683,14 +692,24 @@ export default function Schedule({ theme }) {
   useEffect(() => {
     const handleGlobalClick = (e) => {
       // If clicking inside a slot or the bottom bar or modal, do nothing
-      if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container') || e.target.closest('.theme-toggle')) {
+      if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container') || e.target.closest('.theme-toggle') || e.target.closest('.smart-rec-item') || e.target.closest('.smart-toggle-btn')) {
         return;
       }
       setSelectedSlot(null);
-      if (e.target.closest('.smart-rec-item') || e.target.closest('.smart-toggle-btn')) {
-        return;
+      if (selectedSmartId) {
+        if (smartFadeTimeoutRef.current) {
+          clearTimeout(smartFadeTimeoutRef.current);
+          smartFadeTimeoutRef.current = null;
+        }
+        setFadingSmartId(selectedSmartId);
+        setSelectedSmartId(null);
+        smartFadeTimeoutRef.current = setTimeout(() => {
+          setFadingSmartId(null);
+          smartFadeTimeoutRef.current = null;
+        }, 1000);
+      } else {
+        setFadingSmartId(null);
       }
-      setSelectedSmartId(null);
     };
     
     window.addEventListener('click', handleGlobalClick);
@@ -950,8 +969,13 @@ export default function Schedule({ theme }) {
                           if (!isDisabled) handleRecommendationClick(rec);
                         }}
                       >
-                        {isSelected && (
-                          <div className="absolute inset-0 rounded-[12px] pointer-events-none animate-color-change" />
+                        {(isSelected || rec.id === fadingSmartId) && (
+                          <div
+                            className={[
+                              "absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out",
+                              isSelected ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"
+                            ].join(' ')}
+                          />
                         )}
                         <div className={["relative z-10", pressedSlotId === rec.id ? "press-jump" : ""].join(' ')}>
                           <div className={["text-[16px] font-medium leading-relaxed",
@@ -1131,7 +1155,7 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          playMonthSlotPress(e.currentTarget);
+                                          playMonthSlotPress(fullDayUniqueKey, e.currentTarget);
                                           triggerSlotPress(fullDayUniqueKey);
                                           if (fullDaySlot && fullDaySlotIdx !== null) onSlotTap(item, fullDaySlot, fullDaySlotIdx);
                                         }}
@@ -1164,7 +1188,7 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          playMonthSlotPress(e.currentTarget);
+                                          playMonthSlotPress(dayUniqueKey, e.currentTarget);
                                           triggerSlotPress(dayUniqueKey);
                                           if (daySlot && daySlotIdx !== null) onSlotTap(item, daySlot, daySlotIdx);
                                         }}
@@ -1191,7 +1215,7 @@ export default function Schedule({ theme }) {
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          playMonthSlotPress(e.currentTarget);
+                                          playMonthSlotPress(eveningUniqueKey, e.currentTarget);
                                           triggerSlotPress(eveningUniqueKey);
                                           if (eveningSlot && eveningSlotIdx !== null) onSlotTap(item, eveningSlot, eveningSlotIdx);
                                         }}
