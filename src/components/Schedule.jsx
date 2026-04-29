@@ -8,6 +8,67 @@ const LENGTH_OPTIONS = ['本甲', '短甲', '中长', '长甲', '延长', '待�
 const STYLE_OPTIONS = ['纯色', '跳色', '法式', '猫眼', '渐变', '设计', '待定'];
 const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
 
+function SmartRecButton({
+  idx,
+  title,
+  disabled,
+  selected,
+  fading,
+  pressed,
+  onActivate,
+  animationDelay,
+  setEl
+}) {
+  const lineCls = [
+    "smart-rec-item relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-[14px] pt-2 pb-1.5 min-h-[44px]",
+    disabled ? "opacity-50" : "cursor-pointer",
+    selected ? "-translate-y-1.25" : ""
+  ].join(' ');
+
+  return (
+    <div
+      className={[lineCls, "spring-scale-in"].join(' ')}
+      style={{ animationDelay: `${animationDelay}s` }}
+      ref={setEl}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-pressed={Boolean(selected)}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!disabled) onActivate?.();
+      }}
+      onKeyDown={(e) => {
+        if (disabled) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          e.stopPropagation();
+          onActivate?.();
+        }
+      }}
+    >
+      {(selected || fading) && (
+        <div
+          className={[
+            "absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out",
+            selected ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"
+          ].join(' ')}
+        />
+      )}
+      <div className={["relative z-10 min-w-0 flex-1", pressed ? "press-jump" : ""].join(' ')}>
+        <div
+          className={[
+            "text-[16px] font-medium leading-relaxed truncate whitespace-nowrap",
+            selected ? "text-[#3A3A3A]" : "text-[#083A8E] dark:text-[#D3F1FF]"
+          ].join(' ')}
+        >
+          <span className="qh-bold-en qh-num">{idx + 1}.</span>
+          {title}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Schedule({ theme }) {
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -49,11 +110,23 @@ export default function Schedule({ theme }) {
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
   const pressTimeoutRef = useRef(null);
+  const rootRef = useRef(null);
   const calendarCardRef = useRef(null);
   const calendarTitleRef = useRef(null);
   const calendarBounceRafRef = useRef(null);
   const springAnimMapRef = useRef(new Map());
   const smartFadeTimeoutRef = useRef(null);
+  const selectedSmartIdRef = useRef(null);
+  const fadingSmartIdRef = useRef(null);
+  const selectedSlotRef = useRef(null);
+  const showModalRef = useRef(false);
+  const recommendationsRef = useRef([]);
+  const smartRecRefs = useRef({});
+
+  useEffect(() => { selectedSmartIdRef.current = selectedSmartId; }, [selectedSmartId]);
+  useEffect(() => { fadingSmartIdRef.current = fadingSmartId; }, [fadingSmartId]);
+  useEffect(() => { selectedSlotRef.current = selectedSlot; }, [selectedSlot]);
+  useEffect(() => { showModalRef.current = showModal; }, [showModal]);
 
   const triggerSlotPress = (slotId) => {
     if (!slotId) return;
@@ -540,6 +613,10 @@ export default function Schedule({ theme }) {
     }));
   }, [recNonce, schedule]);
 
+  useEffect(() => {
+    recommendationsRef.current = recommendations.filter(r => !r?.disabled);
+  }, [recommendations]);
+
   const handleRecommendationClick = (rec) => {
     if (!rec) return;
     if (smartFadeTimeoutRef.current) {
@@ -549,6 +626,13 @@ export default function Schedule({ theme }) {
     setFadingSmartId(null);
     setSelectedSmartId(rec.id);
     triggerSlotPress(rec.id);
+    requestAnimationFrame(() => {
+      const el = smartRecRefs.current?.[rec.id];
+      if (el) {
+        try { el.focus({ preventScroll: true }); } catch { el.focus?.(); }
+        el.scrollIntoView?.({ block: 'nearest' });
+      }
+    });
   };
 
   const fetchData = async (isAuto = false) => {
@@ -695,25 +779,95 @@ export default function Schedule({ theme }) {
       if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container') || e.target.closest('.theme-toggle') || e.target.closest('.smart-rec-item') || e.target.closest('.smart-toggle-btn')) {
         return;
       }
-      setSelectedSlot(null);
-      if (selectedSmartId) {
-        if (smartFadeTimeoutRef.current) {
-          clearTimeout(smartFadeTimeoutRef.current);
-          smartFadeTimeoutRef.current = null;
-        }
-        setFadingSmartId(selectedSmartId);
-        setSelectedSmartId(null);
-        smartFadeTimeoutRef.current = setTimeout(() => {
-          setFadingSmartId(null);
-          smartFadeTimeoutRef.current = null;
-        }, 1000);
-      } else {
+
+      if (selectedSlotRef.current) setSelectedSlot(null);
+
+      if (smartFadeTimeoutRef.current) {
+        clearTimeout(smartFadeTimeoutRef.current);
+        smartFadeTimeoutRef.current = null;
+      }
+      if (selectedSmartIdRef.current || fadingSmartIdRef.current) {
         setFadingSmartId(null);
+        setSelectedSmartId(null);
+      }
+
+      const active = document.activeElement;
+      if (rootRef.current && active instanceof HTMLElement && rootRef.current.contains(active)) {
+        if (active.matches('button,[role="button"],a,[tabindex]')) {
+          active.blur?.();
+        }
       }
     };
     
     window.addEventListener('click', handleGlobalClick);
     return () => window.removeEventListener('click', handleGlobalClick);
+  }, []);
+
+  useEffect(() => {
+    const isEditableTarget = (t) => {
+      const el = t instanceof HTMLElement ? t : null;
+      if (!el) return false;
+      if (el.isContentEditable) return true;
+      const tag = el.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+      return Boolean(el.closest('[contenteditable="true"]'));
+    };
+
+    const selectSmartByIndex = (nextIndex) => {
+      const list = recommendationsRef.current || [];
+      if (!list.length) return;
+      const i = ((nextIndex % list.length) + list.length) % list.length;
+      const rec = list[i];
+      if (!rec?.id) return;
+      if (smartFadeTimeoutRef.current) {
+        clearTimeout(smartFadeTimeoutRef.current);
+        smartFadeTimeoutRef.current = null;
+      }
+      setFadingSmartId(null);
+      setSelectedSmartId(rec.id);
+      triggerSlotPress(rec.id);
+      requestAnimationFrame(() => {
+        const el = smartRecRefs.current?.[rec.id];
+        if (el) {
+          try { el.focus({ preventScroll: true }); } catch { el.focus?.(); }
+          el.scrollIntoView?.({ block: 'nearest' });
+        }
+      });
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (showModalRef.current) return;
+
+      const key = e.key;
+      const isTab = key === 'Tab';
+      const isPrev = (isTab && e.shiftKey) || key === 'ArrowLeft' || key === 'ArrowUp';
+      const isNext = (isTab && !e.shiftKey) || key === 'ArrowRight' || key === 'ArrowDown';
+      if (!isPrev && !isNext) return;
+
+      const active = document.activeElement;
+      const inScope = active === document.body || active === document.documentElement || (rootRef.current && active instanceof HTMLElement && rootRef.current.contains(active));
+      if (!inScope) return;
+      if (isEditableTarget(e.target)) return;
+
+      const list = recommendationsRef.current || [];
+      if (!list.length) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      const currentId = selectedSmartIdRef.current;
+      const currentIndex = currentId ? list.findIndex(r => r?.id === currentId) : -1;
+      if (currentIndex === -1) {
+        selectSmartByIndex(0);
+        return;
+      }
+
+      selectSmartByIndex(isNext ? currentIndex + 1 : currentIndex - 1);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const openModal = () => {
@@ -903,7 +1057,7 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div className="px-5 pt-3.5 pb-32 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
+      <div ref={rootRef} className="px-5 pt-3.5 pb-32 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
         <div className="flex flex-col items-center justify-start spring-scale-in mb-3.5">
           <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
             <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
@@ -954,39 +1108,22 @@ export default function Schedule({ theme }) {
                     const isDisabled = !!rec.disabled;
                     const isSelected = selectedSmartId && rec.id === selectedSmartId;
 
-                    const lineCls = [
-                      "smart-rec-item relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-[14px] pt-2 pb-1.5 min-h-[44px]",
-                      isDisabled ? "opacity-50" : "cursor-pointer",
-                      isSelected ? "-translate-y-1.25" : ""
-                    ].join(' ');
-
                     return (
-                      <div
+                      <SmartRecButton
                         key={rec.id}
-                        className={[lineCls, "spring-scale-in"].join(' ')}
-                        style={{ animationDelay: `${idx * 0.05}s` }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!isDisabled) handleRecommendationClick(rec);
+                        idx={idx}
+                        title={rec.title}
+                        disabled={isDisabled}
+                        selected={Boolean(isSelected)}
+                        fading={rec.id === fadingSmartId}
+                        pressed={pressedSlotId === rec.id}
+                        animationDelay={idx * 0.05}
+                        setEl={(el) => {
+                          if (el) smartRecRefs.current[rec.id] = el;
+                          else delete smartRecRefs.current[rec.id];
                         }}
-                      >
-                        {(isSelected || rec.id === fadingSmartId) && (
-                          <div
-                            className={[
-                              "absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out",
-                              isSelected ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"
-                            ].join(' ')}
-                          />
-                        )}
-                        <div className={["relative z-10", pressedSlotId === rec.id ? "press-jump" : ""].join(' ')}>
-                          <div className={["text-[16px] font-medium leading-relaxed",
-                            isSelected ? "text-[#3A3A3A]" : "text-[#083A8E] dark:text-[#D3F1FF]"
-                          ].join(' ')}>
-                            <span className="qh-bold-en qh-num">{idx + 1}.</span>
-                            {rec.title}
-                          </div>
-                        </div>
-                      </div>
+                        onActivate={() => handleRecommendationClick(rec)}
+                      />
                     );
                   })}
 
