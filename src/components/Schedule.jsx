@@ -886,7 +886,7 @@ export default function Schedule({ theme }) {
   return (
     <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
       <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
-        <div className="flex flex-col items-center justify-start space-y-2 spring-scale-in">
+        <div className="flex flex-col items-center justify-start spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
             <svg width="46" height="42" viewBox="0 0 46 42" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path 
@@ -900,13 +900,15 @@ export default function Schedule({ theme }) {
               />
             </svg>
           </div>
-          <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
-            <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
-          </div>
         </div>
       </div>
 
       <div className="px-5 pt-3.5 pb-32 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
+        <div className="flex flex-col items-center justify-start spring-scale-in mb-3.5">
+          <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
+            <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
+          </div>
+        </div>
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -953,8 +955,7 @@ export default function Schedule({ theme }) {
                     const isSelected = selectedSmartId && rec.id === selectedSmartId;
 
                     const lineCls = [
-                      "smart-rec-item relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-2 py-1.5 min-h-[44px]",
-                      idx <= 1 ? "px-[14px]" : "",
+                      "smart-rec-item relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-[14px] pt-2 pb-1.5 min-h-[44px]",
                       isDisabled ? "opacity-50" : "cursor-pointer",
                       isSelected ? "-translate-y-1.25" : ""
                     ].join(' ');
@@ -979,7 +980,6 @@ export default function Schedule({ theme }) {
                         )}
                         <div className={["relative z-10", pressedSlotId === rec.id ? "press-jump" : ""].join(' ')}>
                           <div className={["text-[16px] font-medium leading-relaxed",
-                            idx === 1 ? "px-0 mx-0" : "",
                             isSelected ? "text-[#3A3A3A]" : "text-[#083A8E] dark:text-[#D3F1FF]"
                           ].join(' ')}>
                             <span className="qh-bold-en qh-num">{idx + 1}.</span>
@@ -1124,7 +1124,9 @@ export default function Schedule({ theme }) {
                               const fullDaySlotIdx = fullDaySlot ? item.slots.indexOf(fullDaySlot) : null;
                               const fullDayUniqueKey = fullDaySlotIdx !== null ? `${item.key}-${fullDaySlotIdx}` : null;
 
-                              const daySlot = isMorning ? item.slots.find(slot => ['morning', 'noon', 'afternoon'].includes(slot.key)) : null;
+                              const daySlot = isMorning
+                                ? item.slots.find(slot => slot.status === 'free' && ['morning', 'noon', 'afternoon'].includes(slot.key))
+                                : null;
                               const daySlotIdx = daySlot ? item.slots.indexOf(daySlot) : null;
                               const dayUniqueKey = daySlotIdx !== null ? `${item.key}-${daySlotIdx}` : null;
 
@@ -1202,13 +1204,15 @@ export default function Schedule({ theme }) {
                                             今
                                           </span>
                                         )}
-                                        <div className="min-w-0 flex items-center relative z-10">
-                                          <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
-                                          {holidayLabel && (
-                                            <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
-                                          )}
+                                        <div className="w-full">
+                                          <div className="min-w-0 flex items-center relative z-10">
+                                            <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
+                                            {holidayLabel && (
+                                              <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
+                                            )}
+                                          </div>
+                                          <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                         </div>
-                                        <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && isEvening && (
@@ -1229,13 +1233,15 @@ export default function Schedule({ theme }) {
                                             今
                                           </span>
                                         )}
-                                        <div className={"min-w-0 flex items-center relative z-10"}>
-                                          <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
-                                          {holidayLabel && (
-                                            <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
-                                          )}
+                                        <div className="w-full">
+                                          <div className="min-w-0 flex items-center relative z-10">
+                                            <span className={["text-[15px] font-semibold leading-none", primaryTextClass].join(' ')}>{item.label}</span>
+                                            {holidayLabel && (
+                                              <span className={["text-[10px] truncate whitespace-nowrap max-w-[2.2em]", metaTextClass].join(' ')}>{holidayLabel}</span>
+                                            )}
+                                          </div>
+                                          <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                         </div>
-                                        <div className={["text-[11px] leading-tight whitespace-nowrap relative z-10", primaryTextClass].join(' ')}>{bookingStatus}</div>
                                       </div>
                                     )}
                                     {!isFullDay && !isMorning && !isEvening && (
