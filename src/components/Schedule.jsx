@@ -118,15 +118,19 @@ export default function Schedule({ theme }) {
   const rootRef = useRef(null);
   const calendarCardRef = useRef(null);
   const calendarTitleRef = useRef(null);
+  const calendarExpandRef = useRef(null);
   const calendarBounceRafRef = useRef(null);
   const springAnimMapRef = useRef(new Map());
   const smartFadeTimeoutRef = useRef(null);
+  const collapseScrollRafRef = useRef(null);
   const selectedSmartIdRef = useRef(null);
   const fadingSmartIdRef = useRef(null);
   const selectedSlotRef = useRef(null);
   const showModalRef = useRef(false);
   const recommendationsRef = useRef([]);
   const smartRecRefs = useRef({});
+  const didAutoRetryMockRef = useRef(false);
+  const didAutoRetryErrorRef = useRef(false);
 
   useEffect(() => { selectedSmartIdRef.current = selectedSmartId; }, [selectedSmartId]);
   useEffect(() => { fadingSmartIdRef.current = fadingSmartId; }, [fadingSmartId]);
@@ -328,6 +332,67 @@ export default function Schedule({ theme }) {
     e?.stopPropagation?.();
     playToggleRipple(e?.currentTarget);
     if (isCalendarExpanded) {
+      if (collapseScrollRafRef.current) {
+        cancelAnimationFrame(collapseScrollRafRef.current);
+        collapseScrollRafRef.current = null;
+      }
+      const scroller = rootRef.current;
+      const wrapEl = calendarExpandRef.current;
+      if (scroller && wrapEl) {
+        const start = scroller.scrollTop;
+        const wrapH = wrapEl.getBoundingClientRect().height;
+        const maxBefore = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+        const target = Math.max(0, Math.min(start, maxBefore - wrapH));
+
+        if (Math.abs(start - target) > 1) {
+          const durationMs = 220;
+          const ax = 0.22, ay = 1, bx = 0.36, by = 1;
+          const cx = 3 * ax;
+          const bx2 = 3 * (bx - ax) - cx;
+          const ax2 = 1 - cx - bx2;
+          const cy = 3 * ay;
+          const by2 = 3 * (by - ay) - cy;
+          const ay2 = 1 - cy - by2;
+
+          const sampleCurveX = (t) => ((ax2 * t + bx2) * t + cx) * t;
+          const sampleCurveY = (t) => ((ay2 * t + by2) * t + cy) * t;
+          const sampleCurveDerivativeX = (t) => (3 * ax2 * t + 2 * bx2) * t + cx;
+          const solveCurveX = (x) => {
+            let t2 = x;
+            for (let i = 0; i < 8; i++) {
+              const x2 = sampleCurveX(t2) - x;
+              if (Math.abs(x2) < 1e-6) return t2;
+              const d2 = sampleCurveDerivativeX(t2);
+              if (Math.abs(d2) < 1e-6) break;
+              t2 = t2 - x2 / d2;
+            }
+            let t0 = 0, t1 = 1;
+            t2 = x;
+            while (t0 < t1) {
+              const x2 = sampleCurveX(t2);
+              if (Math.abs(x2 - x) < 1e-6) return t2;
+              if (x > x2) t0 = t2;
+              else t1 = t2;
+              t2 = (t1 + t0) / 2;
+            }
+            return t2;
+          };
+          const ease = (p) => sampleCurveY(solveCurveX(p));
+
+          const startT = performance.now();
+          const tick = (t) => {
+            const p = Math.min(1, (t - startT) / durationMs);
+            const k = ease(p);
+            scroller.scrollTop = start + (target - start) * k;
+            if (p < 1) {
+              collapseScrollRafRef.current = requestAnimationFrame(tick);
+            } else {
+              collapseScrollRafRef.current = null;
+            }
+          };
+          collapseScrollRafRef.current = requestAnimationFrame(tick);
+        }
+      }
       setIsCalendarCollapsing(true);
       window.setTimeout(() => setIsCalendarCollapsing(false), 220);
     } else {
@@ -689,6 +754,29 @@ export default function Schedule({ theme }) {
     const timer = setInterval(() => fetchData(true), 3 * 60 * 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    if (!isMock) didAutoRetryMockRef.current = false;
+  }, [isMock]);
+
+  useEffect(() => {
+    if (import.meta.env.DEV) return;
+    if (!isMock || loading || error) return;
+    if (didAutoRetryMockRef.current) return;
+    didAutoRetryMockRef.current = true;
+    setCountdown(3);
+  }, [isMock, loading, error]);
+
+  useEffect(() => {
+    if (!error) didAutoRetryErrorRef.current = false;
+  }, [error]);
+
+  useEffect(() => {
+    if (!error || loading) return;
+    if (didAutoRetryErrorRef.current) return;
+    didAutoRetryErrorRef.current = true;
+    setCountdown(3);
+  }, [error, loading]);
 
   useEffect(() => {
     return () => {
@@ -1082,7 +1170,7 @@ export default function Schedule({ theme }) {
 
   return (
     <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
-      <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
+      <div className="pt-[14px] pb-0 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
             <svg width="46" height="42" viewBox="0 0 46 42" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1100,7 +1188,7 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div ref={rootRef} className="px-5 pt-3.5 pb-32 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
+      <div ref={rootRef} className="px-5 pt-0 pb-0 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
         <div className="flex flex-col items-center justify-start spring-scale-in mb-3.5">
           <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
             <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
@@ -1116,8 +1204,17 @@ export default function Schedule({ theme }) {
         {isMock && !loading && (
           <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex items-center gap-2">
             <span className="text-red-400 text-xs flex-1">
-              ⚠️ 获取真实日程失败，当前显示为演示数据。请检查网络或后端代理配置。
+              ⚠️ 获取真实日程失败，当前显示为演示数据{!import.meta.env.DEV && countdown > 0 ? `，${countdown}s 后自动重试` : ''}。
             </span>
+            {!import.meta.env.DEV && (
+              <button
+                onClick={() => setCountdown(3)}
+                disabled={countdown > 0}
+                className="px-3 py-1 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs disabled:opacity-60"
+              >
+                {countdown > 0 ? `重试 (${countdown}s)` : '重试'}
+              </button>
+            )}
           </div>
         )}
 
@@ -1128,13 +1225,13 @@ export default function Schedule({ theme }) {
               onClick={() => setCountdown(3)}
               className="px-8 py-2 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs"
             >
-              {countdown > 0 ? `自动刷新 (${countdown}s)` : '重新加载'}
+              {countdown > 0 ? `自动重试 (${countdown}s)` : '重试'}
             </button>
           </div>
         )}
 
         {!loading && !error && (
-          <div key={contentKey} className="pb-10 overflow-visible">
+          <div key={contentKey} className="pb-0 overflow-visible">
             <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
               <img
                 src="/assets/找我耍.svg"
@@ -1187,7 +1284,7 @@ export default function Schedule({ theme }) {
                   </div>
                 </div>
 
-                <div className={["overflow-hidden transition-[max-height,opacity] ease-out",
+                <div ref={calendarExpandRef} className={["overflow-hidden transition-[max-height,opacity] ease-out",
                   !isCalendarExpanded && isCalendarCollapsing ? "collapse-gentle" : "",
                   isCalendarExpanded ? "duration-500" : "duration-150",
                   isCalendarExpanded ? "max-h-[2200px] opacity-100" : "max-h-0 opacity-0"
