@@ -123,6 +123,7 @@ export default function Schedule({ theme }) {
   const springAnimMapRef = useRef(new Map());
   const smartFadeTimeoutRef = useRef(null);
   const collapseScrollRafRef = useRef(null);
+  const collapseDelayTimeoutRef = useRef(null);
   const selectedSmartIdRef = useRef(null);
   const fadingSmartIdRef = useRef(null);
   const selectedSlotRef = useRef(null);
@@ -330,7 +331,11 @@ export default function Schedule({ theme }) {
 
   const handleToggleCalendar = (e) => {
     e?.stopPropagation?.();
-    playToggleRipple(e?.currentTarget);
+    const toggleEl = e?.currentTarget;
+    if (collapseDelayTimeoutRef.current) {
+      clearTimeout(collapseDelayTimeoutRef.current);
+      collapseDelayTimeoutRef.current = null;
+    }
     if (isCalendarExpanded) {
       if (collapseScrollRafRef.current) {
         cancelAnimationFrame(collapseScrollRafRef.current);
@@ -393,12 +398,19 @@ export default function Schedule({ theme }) {
           collapseScrollRafRef.current = requestAnimationFrame(tick);
         }
       }
-      setIsCalendarCollapsing(true);
-      window.setTimeout(() => setIsCalendarCollapsing(false), 220);
+      collapseDelayTimeoutRef.current = window.setTimeout(() => {
+        playToggleRipple(toggleEl);
+        setIsCalendarCollapsing(true);
+        window.setTimeout(() => setIsCalendarCollapsing(false), 220);
+        setIsCalendarExpanded(false);
+        collapseDelayTimeoutRef.current = null;
+      }, 150);
+      return;
     } else {
+      playToggleRipple(toggleEl);
       setIsCalendarCollapsing(false);
     }
-    setIsCalendarExpanded(v => !v);
+    setIsCalendarExpanded(true);
   };
 
   const triggerCalendarCardBounce = () => {
@@ -783,6 +795,14 @@ export default function Schedule({ theme }) {
       if (pressTimeoutRef.current) {
         clearTimeout(pressTimeoutRef.current);
         pressTimeoutRef.current = null;
+      }
+      if (collapseScrollRafRef.current) {
+        cancelAnimationFrame(collapseScrollRafRef.current);
+        collapseScrollRafRef.current = null;
+      }
+      if (collapseDelayTimeoutRef.current) {
+        clearTimeout(collapseDelayTimeoutRef.current);
+        collapseDelayTimeoutRef.current = null;
       }
     };
   }, []);
