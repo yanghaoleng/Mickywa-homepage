@@ -1211,7 +1211,7 @@ export default function Schedule({ theme }) {
       <div ref={rootRef} className="px-5 pt-0 pb-0 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
         <div className="flex flex-col items-center justify-start spring-scale-in mb-3.5">
           <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
-            <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
+            <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg pt-[8px] pb-[8px]" />
           </div>
         </div>
         {loading && (
@@ -1252,7 +1252,7 @@ export default function Schedule({ theme }) {
 
         {!loading && !error && (
           <div key={contentKey} className="pb-0 overflow-visible">
-            <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
+            <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset] mt-2">
               <img
                 src="/assets/找我耍.svg"
                 alt="找我耍"
