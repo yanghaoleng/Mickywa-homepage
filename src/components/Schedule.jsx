@@ -1531,12 +1531,20 @@ export default function Schedule({ theme }) {
           </div>
         )}
 
-        {isMock && !loading && (
+        {isMock && !loading && !dismissedMockNotice && (
           <div className="sticky bottom-2 z-[120]">
             <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex items-center gap-2">
               <span className="text-red-400 text-xs flex-1">
                 ⚠️ 获取真实日程失败，当前显示为演示数据{!import.meta.env.DEV && countdown > 0 ? `，${countdown}s 后自动重试` : ''}。
               </span>
+              <button
+                type="button"
+                aria-label="关闭提示"
+                onClick={() => setDismissedMockNotice(true)}
+                className="w-6 h-6 flex items-center justify-center rounded-full text-red-300 hover:text-red-100 hover:bg-red-500/20 transition-colors"
+              >
+                ×
+              </button>
               {!import.meta.env.DEV && (
                 <button
                   onClick={() => setCountdown(3)}
