@@ -1378,9 +1378,7 @@ export default function Schedule({ theme }) {
                               const showFocus = bookingType !== 'busy' && isSelected;
                               const slotBgClass = bookingType === 'busy'
                                 ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10"
-                                : isEvening
-                                  ? "bg-[#F6F1FF] text-[#5A3A9E] dark:bg-[#4E2F86] dark:text-[#F2ECFF] shadow-[inset_0_-10px_24px_rgba(122,92,191,0.32),inset_0_0_26px_rgba(255,255,255,0.72)] dark:shadow-[inset_0_-10px_24px_rgba(122,92,191,0.42),inset_0_0_26px_rgba(255,255,255,0.12)]"
-                                  : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]";
+                                : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]";
                               const primaryTextClass = bookingType === 'busy'
                                 ? "dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50"
                                 : isSelected
