@@ -220,6 +220,33 @@ body,
   75% { background-color: #FCF7BD; }
 }
 
+@keyframes animate-text {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+    filter: blur(4px);
+  }
+  16% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  84% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+    filter: blur(4px);
+  }
+}
+
+.animate-text {
+  animation: animate-text 7s ease-in-out infinite;
+}
+
 .animate-color-change {
   animation: color-change 2s ease-in-out infinite;
 }

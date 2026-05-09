@@ -19,18 +19,21 @@ function SmartRecButton({
   onActivate,
   onBlurFade,
   animationDelay,
-  setEl
+  animationMs,
+  setEl,
+  entering
 }) {
   const lineCls = [
     "smart-rec-item relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-[14px] pt-2 pb-1.5 min-h-[44px]",
     disabled ? "opacity-50" : "cursor-pointer",
-    selected ? "-translate-y-1.25" : ""
+    selected ? "-translate-y-1.25" : "",
+    entering ? "animate-text spring-scale-in" : "animate-text"
   ].join(' ');
 
   return (
     <div
-      className={[lineCls, "spring-scale-in"].join(' ')}
-      style={{ animationDelay: `${animationDelay}s` }}
+      className={lineCls}
+      style={{ animationDelay: `${animationDelay}s`, animationDuration: animationMs }}
       ref={setEl}
       role="button"
       tabIndex={disabled ? -1 : 0}
@@ -1226,6 +1229,9 @@ export default function Schedule({ theme }) {
                     const isDisabled = !!rec.disabled;
                     const isSelected = selectedSmartId && rec.id === selectedSmartId;
                     const recTitle = rec.title;
+                    const entering = idx < 3;
+                    const delayBase = entering ? 3 + idx * 2 : idx * 0.05;
+                    const animationMs = entering ? `${7 + idx * 2}s` : `${7}s`;
 
                     return (
                       <SmartRecButton
@@ -1237,7 +1243,9 @@ export default function Schedule({ theme }) {
                         selected={Boolean(isSelected)}
                         fading={rec.id === fadingSmartId}
                         pressed={pressedSlotId === rec.id}
-                        animationDelay={idx * 0.05}
+                        animationDelay={delayBase}
+                        animationMs={animationMs}
+                        entering={entering}
                         setEl={(el) => {
                           if (el) smartRecRefs.current[rec.id] = el;
                           else delete smartRecRefs.current[rec.id];
