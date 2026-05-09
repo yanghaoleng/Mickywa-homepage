@@ -492,35 +492,50 @@ export default function Schedule({ theme }) {
 
   const getAnyFreeSlot = (day) => {
     if (!day?.slots?.length) return null;
-    const free = day.slots.filter(s => s.status === 'free');
-    if (free.length === 0) return null;
-    const keys = new Set(free.map(s => s.key));
-    const allKeys = ['morning', 'noon', 'afternoon', 'evening'];
-    const isFull = allKeys.every(k => keys.has(k));
-    if (isFull) {
-      const slot = day.slots.find(s => s.key === 'morning') || free[0];
-      return { slot, label: '全天' };
-    }
+    const daytime = day.slots.find(s => s.key === 'daytime' && s.status === 'free');
     const evening = day.slots.find(s => s.key === 'evening' && s.status === 'free');
+    if (daytime && evening) return { slot: daytime, label: '全天' };
+    if (daytime) return { slot: daytime, label: '白天' };
     if (evening) return { slot: evening, label: '晚上' };
-    const daySlot = day.slots.find(s => ['morning', 'noon', 'afternoon'].includes(s.key) && s.status === 'free');
-    if (daySlot) return { slot: daySlot, label: '白天' };
-    return { slot: free[0], label: free[0].label };
+    return null;
   };
 
   const recommendations = useMemo(() => {
     const now = new Date();
     const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const activities = [
-      '去吃火锅',
-      '去逛同仁路',
-      '去喝一杯',
-      '去看电影',
-      '去玉林路散步',
-      '去吃烧烤',
-      '去泡咖啡馆',
-      '去春熙路逛街'
+    const daytimeActivities = [
+      '遛鸟',
+      '逛公园聊天',
+      '绿道散步/骑行',
+      '骑车兜风',
+      '逛街',
+      '压马路拍照',
+      '喝茶聊天',
+      '喝咖啡聊天',
+      '游泳',
+      '健身撸铁'
+    ];
+
+    const eveningActivities = [
+      '逛夜市',
+      '吃火锅',
+      '吃串串',
+      '烤肉/烧烤',
+      '川菜馆子',
+      '看电影',
+      'KTV唱歌',
+      '密室逃脱/剧本杀',
+      '桌游吧'
+    ];
+
+    const allDayActivities = [
+      '周边一日游',
+      '逛古镇',
+      '泡温泉',
+      '打Switch',
+      '密室逃脱/剧本杀',
+      '桌游吧'
     ];
 
     const isWeekend = (d) => {
@@ -540,159 +555,62 @@ export default function Schedule({ theme }) {
       return rel;
     };
 
-    const pickSlots = (day, prefer) => {
+    const pickSlotByKey = (day, key) => day?.slots?.find(s => s.key === key && s.status === 'free') || null;
+
+    const pickRecommendation = (day, type) => {
       if (!day?.slots?.length) return null;
-      const slot = prefer
-        ? day.slots.find(s => s.key === prefer && s.status === 'free')
-        : null;
-      if (slot) return { slot, label: slot.label };
-      return getAnyFreeSlot(day);
+      if (type === 'daytime') {
+        const slot = pickSlotByKey(day, 'daytime');
+        if (!slot) return null;
+        return { slot, label: '白天' };
+      }
+      if (type === 'evening') {
+        const slot = pickSlotByKey(day, 'evening');
+        if (!slot) return null;
+        return { slot, label: '晚上' };
+      }
+      const daytime = pickSlotByKey(day, 'daytime');
+      const evening = pickSlotByKey(day, 'evening');
+      if (daytime && evening) return { slot: daytime, label: '全天' };
+      if (daytime) return { slot: daytime, label: '白天' };
+      if (evening) return { slot: evening, label: '晚上' };
+      return null;
     };
 
-    const nextWorkday = schedule
+    const upcomingDays = schedule
       .filter(d => d?.date instanceof Date)
-      .filter(d => d.date >= base)
-      .filter(d => isWorkday(d))
-      .find(d => pickSlots(d, 'evening'));
+      .filter(d => d.date >= base);
 
-    const workdayRec = (() => {
-      if (!nextWorkday) return null;
-      const picked = pickSlots(nextWorkday, 'evening');
-      if (!picked) return null;
-      const dateText = `${relOrWeek(nextWorkday.date)}${picked.label === '全天' ? '' : picked.label}`;
-      return {
-        id: `rec-workday-${nextWorkday.key}`,
-        type: 'workday',
-        date: nextWorkday.date,
-        dateText,
-        dayKey: nextWorkday.key,
-        slotKey: picked.slot.key
-      };
-    })();
+    const daytimeDays = upcomingDays.filter(isWorkday).filter(d => pickRecommendation(d, 'daytime'));
+    const eveningDays = upcomingDays.filter(d => pickRecommendation(d, 'evening'));
+    const allDayDays = upcomingDays.filter(d => pickRecommendation(d, 'all'));
 
-    const weekendDays = schedule
-      .filter(d => d?.date instanceof Date)
-      .filter(d => d.date >= base)
-      .filter(d => isNormalWeekend(d))
-      .filter(d => pickSlots(d));
+    const buildCards = (days, label, pool, type) => {
+      if (!days.length) return [];
+      const chosen = days.slice(0, 2);
+      return chosen.map((day, index) => {
+        const picked = pickRecommendation(day, type);
+        if (!picked) return null;
+        const titleText = pool[index % pool.length];
+        return {
+          id: `rec-${type}-${day.key}`,
+          type,
+          date: day.date,
+          dateText: `${relOrWeek(day.date)}${picked.label === '全天' ? '' : picked.label}`,
+          dayKey: day.key,
+          slotKey: picked.slot.key,
+          title: `${label}${titleText}`
+        };
+      }).filter(Boolean);
+    };
 
-    const weekendRec = (() => {
-      if (weekendDays.length === 0) return null;
+    const list = [
+      ...buildCards(daytimeDays, '白天可以', daytimeActivities, 'daytime'),
+      ...buildCards(eveningDays, '晚上可以', eveningActivities, 'evening'),
+      ...buildCards(allDayDays, '一整天可以', allDayActivities, 'all')
+    ];
 
-      const sat = weekendDays.find(d => d.date.getDay() === 6);
-      const sun = weekendDays.find(d => d.date.getDay() === 0);
-      if (sat && sun) {
-        const sameWeekend = Math.abs((sun.date - sat.date) / 86400000) <= 1;
-        if (sameWeekend && weekPrefix(sat.date) === weekPrefix(sun.date)) {
-          const prefix = weekPrefix(sat.date);
-          const dateText = prefix ? `${prefix}六-日` : `${sat.date.getMonth() + 1}月${sat.date.getDate()}日-${sun.date.getDate()}日`;
-          const pickedSat = pickSlots(sat);
-          const pickedSun = pickSlots(sun);
-          const picked = pickedSat || pickedSun;
-          if (!picked) return null;
-          return {
-            id: `rec-weekend-${sat.key}`,
-            type: 'weekend',
-            date: sat.date,
-            dateText,
-            dayKey: (pickedSat ? sat.key : sun.key),
-            slotKey: picked.slot.key
-          };
-        }
-      }
-
-      const first = weekendDays[0];
-      const picked = pickSlots(first);
-      if (!picked) return null;
-      const prefix = weekPrefix(first.date);
-      const dateText = `${prefix ? `${prefix}${weekdayLabel(first.date)}` : relOrWeek(first.date)}${picked.label === '全天' ? '' : picked.label}`;
-      return {
-        id: `rec-weekend-${first.key}`,
-        type: 'weekend',
-        date: first.date,
-        dateText,
-        dayKey: first.key,
-        slotKey: picked.slot.key
-      };
-    })();
-
-    const holidayDays = schedule
-      .filter(d => d?.date instanceof Date)
-      .filter(d => d.date >= base)
-      .filter(d => isHoliday(d))
-      .filter(d => pickSlots(d));
-
-    const holidayRec = (() => {
-      if (holidayDays.length === 0) return null;
-      const first = holidayDays[0];
-      const name = first.holidayName;
-      const same = holidayDays.filter(d => d.holidayName === name);
-      const picked = pickSlots(first);
-      if (!picked) return null;
-      const dateText = same.length >= 2 ? `${name}前两天` : `${name}当天`;
-      return {
-        id: `rec-holiday-${first.key}`,
-        type: 'holiday',
-        date: first.date,
-        dateText,
-        dayKey: first.key,
-        slotKey: picked.slot.key
-      };
-    })();
-
-    const shouldAddHoliday = Boolean(workdayRec && weekendRec && holidayRec);
-
-    const shouldAddExtraWorkday = (() => {
-      if (!weekendRec) return false;
-      const diffDays = Math.round((weekendRec.date - base) / 86400000);
-      return diffDays >= 0 && diffDays <= 2;
-    })();
-
-    const extraWorkdayRec = (() => {
-      if (!shouldAddExtraWorkday || !weekendRec) return null;
-      const sat = weekendRec.date;
-      const sun = new Date(sat);
-      sun.setDate(sun.getDate() + (sat.getDay() === 6 ? 1 : 0));
-      const after = new Date(sun);
-      after.setDate(after.getDate() + 1);
-
-      const next = schedule
-        .filter(d => d?.date instanceof Date)
-        .filter(d => d.date >= after)
-        .filter(d => isWorkday(d))
-        .find(d => pickSlots(d, 'evening'));
-
-      if (!next) return null;
-      const picked = pickSlots(next, 'evening');
-      if (!picked) return null;
-      const dateText = `${relOrWeek(next.date)}${picked.label === '全天' ? '' : picked.label}`;
-      return {
-        id: `rec-workday-next-${next.key}`,
-        type: 'workday',
-        date: next.date,
-        dateText,
-        dayKey: next.key,
-        slotKey: picked.slot.key
-      };
-    })();
-
-    const list = [workdayRec, weekendRec];
-    if (shouldAddHoliday) {
-      list.push(holidayRec);
-    } else if (extraWorkdayRec && workdayRec && extraWorkdayRec.dayKey !== workdayRec.dayKey) {
-      list.push(extraWorkdayRec);
-    }
-
-    const normalized = list
-      .filter(Boolean)
-      .sort((a, b) => (a.date?.getTime?.() ?? 0) - (b.date?.getTime?.() ?? 0))
-      .slice(0, 3);
-
-    const shuffled = [...activities].sort(() => 0.5 - Math.random());
-    return normalized.map((r, idx) => ({
-      ...r,
-      title: `${r.dateText}可以${shuffled[idx % shuffled.length]}`
-    }));
+    return list.slice(0, 6);
   }, [recNonce, schedule]);
 
   useEffect(() => {
@@ -1211,30 +1129,13 @@ export default function Schedule({ theme }) {
       <div ref={rootRef} className="px-5 pt-0 pb-0 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
         <div className="flex flex-col items-center justify-start spring-scale-in mb-3.5">
           <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
-            <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg pt-[8px] pb-[8px]" />
+            <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg pt-[8px] pb-[8px] mb-2" />
           </div>
         </div>
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
             <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm">加载中...</span>
-          </div>
-        )}
-
-        {isMock && !loading && (
-          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex items-center gap-2">
-            <span className="text-red-400 text-xs flex-1">
-              ⚠️ 获取真实日程失败，当前显示为演示数据{!import.meta.env.DEV && countdown > 0 ? `，${countdown}s 后自动重试` : ''}。
-            </span>
-            {!import.meta.env.DEV && (
-              <button
-                onClick={() => setCountdown(3)}
-                disabled={countdown > 0}
-                className="px-3 py-1 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs disabled:opacity-60"
-              >
-                {countdown > 0 ? `重试 (${countdown}s)` : '重试'}
-              </button>
-            )}
           </div>
         )}
 
@@ -1386,10 +1287,13 @@ export default function Schedule({ theme }) {
                               
                               // 检查当天的可预约情况
                               const freeSlots = item.slots.filter(slot => slot.status === 'free');
+                              const daytimeSlot = item.slots.find(slot => slot.key === 'daytime');
+                              const eveningSlot = item.slots.find(slot => slot.key === 'evening');
+
                               let bookingStatus = '不空';
                               let bookingType = 'busy';
                               let isFullDay = false;
-                              let isMorning = false;
+                              let isDaytime = false;
                               let isEvening = false;
 
                               const isShiftWorkday = Boolean(item.holidayName && item.holidayName.includes('班'));
@@ -1397,17 +1301,20 @@ export default function Schedule({ theme }) {
                                 ? '补班'
                                 : (item.holidayName ? item.holidayName.slice(0, 2) : '');
                               
-                              if (freeSlots.length > 0) {
-                                const freeSlotKeys = freeSlots.map(slot => slot.key);
-                                if (freeSlotKeys.includes('morning') && freeSlotKeys.includes('noon') && freeSlotKeys.includes('afternoon') && freeSlotKeys.includes('evening')) {
+                              const hasDaytimeFree = daytimeSlot?.status === 'free';
+                              const hasEveningFree = eveningSlot?.status === 'free';
+                              const hasAnyFree = hasDaytimeFree || hasEveningFree;
+
+                              if (hasAnyFree) {
+                                if (hasDaytimeFree && hasEveningFree) {
                                   bookingStatus = '全天';
                                   bookingType = 'free';
                                   isFullDay = true;
-                                } else if (freeSlotKeys.includes('morning') || freeSlotKeys.includes('noon') || freeSlotKeys.includes('afternoon')) {
+                                } else if (hasDaytimeFree) {
                                   bookingStatus = '白天';
                                   bookingType = 'free';
-                                  isMorning = true;
-                                } else if (freeSlotKeys.includes('evening')) {
+                                  isDaytime = true;
+                                } else if (hasEveningFree) {
                                   bookingStatus = '晚上';
                                   bookingType = 'free';
                                   isEvening = true;
@@ -1419,17 +1326,14 @@ export default function Schedule({ theme }) {
                                            item.date.getFullYear() === new Date().getFullYear();
 
                               const isSelected = selectedSlot && selectedSlot.day.key === item.key;
-                              const fullDaySlot = isFullDay ? item.slots.find(slot => slot.status === 'free') : null;
+                              const fullDaySlot = isFullDay ? daytimeSlot : null;
                               const fullDaySlotIdx = fullDaySlot ? item.slots.indexOf(fullDaySlot) : null;
                               const fullDayUniqueKey = fullDaySlotIdx !== null ? `${item.key}-${fullDaySlotIdx}` : null;
 
-                              const daySlot = isMorning
-                                ? item.slots.find(slot => slot.status === 'free' && ['morning', 'noon', 'afternoon'].includes(slot.key))
-                                : null;
+                              const daySlot = isDaytime ? daytimeSlot : null;
                               const daySlotIdx = daySlot ? item.slots.indexOf(daySlot) : null;
                               const dayUniqueKey = daySlotIdx !== null ? `${item.key}-${daySlotIdx}` : null;
 
-                              const eveningSlot = isEvening ? item.slots.find(slot => slot.key === 'evening') : null;
                               const eveningSlotIdx = eveningSlot ? item.slots.indexOf(eveningSlot) : null;
                               const eveningUniqueKey = eveningSlotIdx !== null ? `${item.key}-${eveningSlotIdx}` : null;
                               const showFocus = bookingType !== 'busy' && isSelected;
@@ -1485,7 +1389,7 @@ export default function Schedule({ theme }) {
                                         </div>
                                       </div>
                                     )}
-                                    {!isFullDay && isMorning && (
+                                    {!isFullDay && isDaytime && (
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -1543,7 +1447,7 @@ export default function Schedule({ theme }) {
                                         </div>
                                       </div>
                                     )}
-                                    {!isFullDay && !isMorning && !isEvening && (
+                                    {!isFullDay && !isDaytime && !isEvening && (
                                       <div className="slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform relative dark:bg-[#FFFFFF]/4 bg-[#333333]/10 cursor-not-allowed">
                                         {isToday && (
                                           <span className="pointer-events-none absolute -top-1.5 -right-1.5 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
@@ -1577,6 +1481,25 @@ export default function Schedule({ theme }) {
             })()}
                 </div>
               </div>
+            </div>
+          </div>
+        )}
+
+        {isMock && !loading && (
+          <div className="sticky bottom-2 z-[120]">
+            <div className="p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex items-center gap-2">
+              <span className="text-red-400 text-xs flex-1">
+                ⚠️ 获取真实日程失败，当前显示为演示数据{!import.meta.env.DEV && countdown > 0 ? `，${countdown}s 后自动重试` : ''}。
+              </span>
+              {!import.meta.env.DEV && (
+                <button
+                  onClick={() => setCountdown(3)}
+                  disabled={countdown > 0}
+                  className="px-3 py-1 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs disabled:opacity-60"
+                >
+                  {countdown > 0 ? `重试 (${countdown}s)` : '重试'}
+                </button>
+              )}
             </div>
           </div>
         )}

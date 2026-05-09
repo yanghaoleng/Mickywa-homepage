@@ -160,10 +160,8 @@ function getDateRangeDays(days) {
 }
 
 export const TIME_SLOTS = [
-  { key: 'morning', label: '上午', start: '10:00', end: '12:00' },
-  { key: 'noon', label: '中午', start: '13:00', end: '15:00' },
-  { key: 'afternoon', label: '下午', start: '15:00', end: '18:00' },
-  { key: 'evening', label: '晚上', start: '17:00', end: '22:00' }
+  { key: 'daytime', label: '白天', start: '10:00', end: '18:00' },
+  { key: 'evening', label: '晚上', start: '18:00', end: '22:00' }
 ];
 // 检查冲突
 function isSlotBusy(day, slot, events) {
@@ -218,26 +216,32 @@ export function buildScheduleData(workEvents, holidayCnYears, months = 2) {
       return day.weekdayIdx >= 1 && day.weekdayIdx <= 5;
     })();
     
-    const slots = TIME_SLOTS.map(slot => {
-      // 切换逻辑：使用严格模式
-      let busy = isSlotBusy(day, slot, workEvents);
-      
-      // 工作日（含补班）默认只有白天不可约；晚上是否可约仅取决于个人日程。
-      if (isWorkday && slot.key !== 'evening') {
-        busy = true;
-      }
+    const daytimeSlot = TIME_SLOTS.find(item => item.key === 'daytime');
+     const eveningSlot = TIME_SLOTS.find(item => item.key === 'evening');
 
-      return {
-        key: slot.key,
-        label: slot.label,
-        start: slot.start,
-        end: slot.end,
-        // 严格模式下，displayTime 就是原始时间
-        displayTime: `${slot.start}～${slot.end}`, 
-        status: busy ? 'busy' : 'free',
-        isTight: false // 严格模式没有 tight 概念
-      };
-    });
+     const daytimeBusy = daytimeSlot ? isWorkday || isSlotBusy(day, daytimeSlot, workEvents) : true;
+     const eveningBusy = eveningSlot ? isSlotBusy(day, eveningSlot, workEvents) : true;
+
+     const slots = [
+       {
+         key: 'daytime',
+         label: '白天',
+         start: '10:00',
+         end: '18:00',
+         displayTime: '10:00～18:00',
+         status: daytimeBusy ? 'busy' : 'free',
+         isTight: false
+       },
+       {
+         key: 'evening',
+         label: '晚上',
+         start: '18:00',
+         end: '22:00',
+         displayTime: '18:00～22:00',
+         status: eveningBusy ? 'busy' : 'free',
+         isTight: false
+       }
+     ];
 
     return {
       date: day.dateObj, // 传给 UI/formatOrderText 使用
