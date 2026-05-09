@@ -540,6 +540,8 @@ export default function Schedule({ theme }) {
       '桌游吧'
     ];
 
+    const recommendations = [];
+
     const isWeekend = (d) => {
       const dow = d.getDay();
       return dow === 0 || dow === 6;
@@ -589,6 +591,7 @@ export default function Schedule({ theme }) {
         : slotGroup === 'evening'
           ? eveningActivities
           : holidayActivities;
+      const activity = activityPool[activityIndex % activityPool.length];
       const titlePrefix = type === 'holiday' ? '可以去' : '可以';
       return {
         id: `rec-${day.key}-${slotGroup}`,
@@ -597,7 +600,7 @@ export default function Schedule({ theme }) {
         type,
         slotGroup,
         slotKey: slot.key,
-        title: `${formatSlotText(day.date, slotGroup)}${titlePrefix}${activityPool[activityIndex % activityPool.length]}`,
+        title: `${formatSlotText(day.date, slotGroup)}${titlePrefix}${activity}`,
         dateText: formatSlotText(day.date, slotGroup),
         isAllDay: slotGroup === 'all'
       };
