@@ -541,6 +541,20 @@ export default function Schedule({ theme }) {
     ];
 
     const recommendations = [];
+    const activityRotationRef = useRef(0);
+    useEffect(() => {
+      const timeoutId = window.setTimeout(() => {
+        const intervalId = window.setInterval(() => {
+          activityRotationRef.current += 1;
+          setRecNonce(n => n + 1);
+        }, 2000);
+        timeoutId.intervalId = intervalId;
+      }, 3000);
+      return () => {
+        window.clearTimeout(timeoutId);
+        if (timeoutId.intervalId) window.clearInterval(timeoutId.intervalId);
+      };
+    }, []);
 
     const isWeekend = (d) => {
       const dow = d.getDay();
@@ -1381,7 +1395,9 @@ export default function Schedule({ theme }) {
                               const showFocus = bookingType !== 'busy' && isSelected;
                               const slotBgClass = bookingType === 'busy'
                                 ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10"
-                                : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]";
+                                : isEvening
+                                  ? "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[inset_0_-18px_28px_rgba(165,136,255,0.22),inset_0_0_0_1px_rgba(255,255,255,0.22)] dark:shadow-[inset_0_-18px_28px_rgba(165,136,255,0.34),inset_0_0_0_1px_rgba(255,255,255,0.12)]"
+                                  : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[inset_0_18px_28px_rgba(117,231,226,0.16),inset_0_0_0_1px_rgba(255,255,255,0.22)] dark:shadow-[inset_0_18px_28px_rgba(117,231,226,0.22),inset_0_0_0_1px_rgba(255,255,255,0.12)]";
                               const primaryTextClass = bookingType === 'busy'
                                 ? "dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50"
                                 : isSelected
