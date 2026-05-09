@@ -112,6 +112,7 @@ export default function Schedule({ theme }) {
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [isCalendarCollapsing, setIsCalendarCollapsing] = useState(false);
   const [recNonce, setRecNonce] = useState(0);
+  const rotationTimerRef = useRef({ start: null, interval: null });
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
@@ -501,7 +502,22 @@ export default function Schedule({ theme }) {
     return null;
   };
 
-  const recommendations = useMemo(() => {
+  useEffect(() => {
+      if (rotationTimerRef.current.start) window.clearTimeout(rotationTimerRef.current.start);
+      if (rotationTimerRef.current.interval) window.clearInterval(rotationTimerRef.current.interval);
+      rotationTimerRef.current.start = window.setTimeout(() => {
+        rotationTimerRef.current.interval = window.setInterval(() => {
+          setRecNonce(n => n + 1);
+        }, 2000);
+        setRecNonce(n => n + 1);
+      }, 3000);
+      return () => {
+        if (rotationTimerRef.current.start) window.clearTimeout(rotationTimerRef.current.start);
+        if (rotationTimerRef.current.interval) window.clearInterval(rotationTimerRef.current.interval);
+      };
+    }, []);
+
+    const recommendations = useMemo(() => {
     const now = new Date();
     const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const futureLimit = new Date(base.getTime() + 21 * 86400000);
@@ -541,20 +557,6 @@ export default function Schedule({ theme }) {
     ];
 
     const recommendations = [];
-    const activityRotationRef = useRef(0);
-    useEffect(() => {
-      const timeoutId = window.setTimeout(() => {
-        const intervalId = window.setInterval(() => {
-          activityRotationRef.current += 1;
-          setRecNonce(n => n + 1);
-        }, 2000);
-        timeoutId.intervalId = intervalId;
-      }, 3000);
-      return () => {
-        window.clearTimeout(timeoutId);
-        if (timeoutId.intervalId) window.clearInterval(timeoutId.intervalId);
-      };
-    }, []);
 
     const isWeekend = (d) => {
       const dow = d.getDay();
@@ -605,7 +607,7 @@ export default function Schedule({ theme }) {
         : slotGroup === 'evening'
           ? eveningActivities
           : holidayActivities;
-      const activity = activityPool[activityIndex % activityPool.length];
+      const activity = activityPool[(activityIndex + recNonce) % activityPool.length];
       const titlePrefix = type === 'holiday' ? '可以去' : '可以';
       return {
         id: `rec-${day.key}-${slotGroup}`,
