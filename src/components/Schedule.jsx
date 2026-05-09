@@ -11,29 +11,20 @@ const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
 function SmartRecButton({
   idx,
   recId,
-  title,
   disabled,
   selected,
   fading,
   pressed,
   onActivate,
   onBlurFade,
-  animationDelay,
-  animationMs,
   setEl,
-  entering
+  pulseKey,
+  children
 }) {
-  const lineCls = [
-    "smart-rec-item relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-[14px] pt-2 pb-1.5 min-h-[44px]",
-    disabled ? "opacity-50" : "cursor-pointer",
-    selected ? "-translate-y-1.25" : "",
-    entering ? "animate-text spring-scale-in" : "animate-text"
-  ].join(' ');
-
   return (
     <div
-      className={lineCls}
-      style={{ animationDelay: `${animationDelay}s`, animationDuration: animationMs }}
+      key={pulseKey}
+      className="smart-rec-item relative flex items-start gap-2 transition-all duration-300 transform rounded-[12px] px-[14px] pt-2 pb-1.5 min-h-[44px]"
       ref={setEl}
       role="button"
       tabIndex={disabled ? -1 : 0}
@@ -63,14 +54,9 @@ function SmartRecButton({
         />
       )}
       <div className={["relative z-10 min-w-0 flex-1", pressed ? "press-jump" : ""].join(' ')}>
-        <div
-          className={[
-            "text-[16px] font-medium leading-relaxed truncate whitespace-nowrap",
-            selected ? "text-[#3A3A3A]" : "text-[#083A8E] dark:text-[#D3F1FF]"
-          ].join(' ')}
-        >
+        <div className="text-[16px] font-medium leading-relaxed truncate whitespace-nowrap text-[#083A8E] dark:text-[#D3F1FF]">
           <span className="qh-bold-en qh-num">{idx + 1}.</span>
-          {title}
+          {children}
         </div>
       </div>
     </div>
@@ -547,16 +533,15 @@ export default function Schedule({ theme }) {
       '看电影',
       'KTV唱歌',
       '密室逃脱/剧本杀',
-      '桌游吧'
+      '桌游'
     ];
 
     const holidayActivities = [
       '逛古镇',
-      '泡温泉',
       '周边一日游',
       '打Switch',
       '密室逃脱/剧本杀',
-      '桌游吧'
+      '桌游'
     ];
 
     const recommendations = [];
@@ -1229,30 +1214,29 @@ export default function Schedule({ theme }) {
                     const isDisabled = !!rec.disabled;
                     const isSelected = selectedSmartId && rec.id === selectedSmartId;
                     const recTitle = rec.title;
-                    const entering = idx < 3;
-                    const delayBase = entering ? 3 + idx * 2 : idx * 0.05;
-                    const animationMs = entering ? `${7 + idx * 2}s` : `${7}s`;
+                    const pulseKey = `${rec.id}-${recNonce}`;
+                    const titleAnimate = idx < 3 ? recNonce % 3 === idx : false;
+                    const titleClass = titleAnimate ? 'spring-scale-in animate-text inline-block' : 'inline-block';
 
                     return (
                       <SmartRecButton
                         key={rec.id}
                         idx={idx}
                         recId={rec.id}
-                        title={recTitle}
                         disabled={isDisabled}
                         selected={Boolean(isSelected)}
                         fading={rec.id === fadingSmartId}
                         pressed={pressedSlotId === rec.id}
-                        animationDelay={delayBase}
-                        animationMs={animationMs}
-                        entering={entering}
+                        pulseKey={pulseKey}
                         setEl={(el) => {
                           if (el) smartRecRefs.current[rec.id] = el;
                           else delete smartRecRefs.current[rec.id];
                         }}
                         onActivate={() => handleRecommendationClick(rec)}
                         onBlurFade={fadeOutSmartFill}
-                      />
+                      >
+                        <span className={titleClass}>{recTitle}</span>
+                      </SmartRecButton>
                     );
                   })}
 
@@ -1404,10 +1388,10 @@ export default function Schedule({ theme }) {
                               const eveningUniqueKey = eveningSlotIdx !== null ? `${item.key}-${eveningSlotIdx}` : null;
                               const showFocus = bookingType !== 'busy' && isSelected;
                               const slotBgClass = bookingType === 'busy'
-                                ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10"
+                                ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 shadow-[inset_0_0_34px_rgba(255,255,255,0.10)] dark:shadow-[inset_0_0_34px_rgba(255,255,255,0.06)]"
                                 : isEvening
-                                  ? "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[inset_0_-18px_28px_rgba(165,136,255,0.22),inset_0_0_0_1px_rgba(255,255,255,0.22)] dark:shadow-[inset_0_-18px_28px_rgba(165,136,255,0.34),inset_0_0_0_1px_rgba(255,255,255,0.12)]"
-                                  : "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[inset_0_18px_28px_rgba(117,231,226,0.16),inset_0_0_0_1px_rgba(255,255,255,0.22)] dark:shadow-[inset_0_18px_28px_rgba(117,231,226,0.22),inset_0_0_0_1px_rgba(255,255,255,0.12)]";
+                                  ? "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#DDEAFF] dark:text-[#FFFFFF] shadow-[inset_0_0_34px_rgba(255,255,255,0.72),inset_0_-16px_26px_rgba(165,136,255,0.16)] dark:shadow-[inset_0_0_34px_rgba(255,255,255,0.42),inset_0_-16px_26px_rgba(165,136,255,0.24)]"
+                                  : "bg-[#DDF4FF] text-[#083A8E] dark:bg-[#DDF4FF] dark:text-[#FFFFFF] shadow-[inset_0_0_34px_rgba(255,255,255,0.82),inset_0_16px_24px_rgba(117,231,226,0.10)] dark:shadow-[inset_0_0_34px_rgba(255,255,255,0.52),inset_0_16px_24px_rgba(117,231,226,0.14)]";
                               const primaryTextClass = bookingType === 'busy'
                                 ? "dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50"
                                 : isSelected
