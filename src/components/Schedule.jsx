@@ -1216,7 +1216,8 @@ export default function Schedule({ theme }) {
                     const recTitle = rec.title;
                     const pulseKey = `${rec.id}-${recNonce}`;
                     const recText = recTitle.replace(/^今天可以去?/, '').replace(/^今天可以/, '').replace(/^可以去?/, '').replace(/^可以/, '');
-                    const titleTokens = recText.match(/[A-Za-z0-9]+|[ -]+|[^A-Za-z0-9 -]/g) || [recText];
+                    const titleTokens = recText.match(/[A-Za-z0-9]+|[^A-Za-z0-9]/g)?.filter(Boolean) || [recText];
+                    const activeTokenIndex = recNonce % Math.max(1, titleTokens.length);
 
                     return (
                       <SmartRecButton
@@ -1239,8 +1240,8 @@ export default function Schedule({ theme }) {
                           {titleTokens.map((token, tokenIndex) => (
                             <span
                               key={`${pulseKey}-${token}-${tokenIndex}`}
-                              className="spring-scale-in inline-block"
-                              style={{ animationDelay: `${tokenIndex * 0.12}s` }}
+                              className={tokenIndex === activeTokenIndex ? 'spring-scale-in inline-block' : 'inline-block'}
+                              style={tokenIndex === activeTokenIndex ? { animationDelay: `${idx * 3}s` } : undefined}
                             >
                               {token}
                             </span>
