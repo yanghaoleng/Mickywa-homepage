@@ -54,7 +54,7 @@ function SmartRecButton({
         />
       )}
       <div className={["relative z-10 min-w-0 flex-1", pressed ? "press-jump" : ""].join(' ')}>
-        <div className="text-[16px] font-medium leading-relaxed truncate whitespace-nowrap text-[#083A8E] dark:text-[#D3F1FF]">
+        <div className="text-[16px] font-medium leading-relaxed truncate whitespace-nowrap text-[#083A8E] dark:text-[#FFFFFF]">
           <span className="qh-bold-en qh-num">{idx + 1}.</span>
           {children}
         </div>
@@ -1216,7 +1216,7 @@ export default function Schedule({ theme }) {
                     const recTitle = rec.title;
                     const pulseKey = `${rec.id}-${recNonce}`;
                     const titleAnimate = idx < 3 ? recNonce % 3 === idx : false;
-                    const titleClass = titleAnimate ? 'spring-scale-in animate-text inline-block' : 'inline-block';
+                    const titleClass = titleAnimate ? 'spring-scale-in' : '';
 
                     return (
                       <SmartRecButton
@@ -1235,7 +1235,17 @@ export default function Schedule({ theme }) {
                         onActivate={() => handleRecommendationClick(rec)}
                         onBlurFade={fadeOutSmartFill}
                       >
-                        <span className={titleClass}>{recTitle}</span>
+                        <span className="inline-block">
+                          {recTitle.split('').map((char, charIndex) => (
+                            <span
+                              key={`${pulseKey}-${char}-${charIndex}`}
+                              className={titleAnimate ? 'spring-scale-in inline-block' : 'inline-block'}
+                              style={titleAnimate ? { animationDelay: `${charIndex * 0.12}s` } : undefined}
+                            >
+                              {char}
+                            </span>
+                          ))}
+                        </span>
                       </SmartRecButton>
                     );
                   })}
@@ -1388,10 +1398,10 @@ export default function Schedule({ theme }) {
                               const eveningUniqueKey = eveningSlotIdx !== null ? `${item.key}-${eveningSlotIdx}` : null;
                               const showFocus = bookingType !== 'busy' && isSelected;
                               const slotBgClass = bookingType === 'busy'
-                                ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 shadow-[inset_0_0_34px_rgba(255,255,255,0.10)] dark:shadow-[inset_0_0_34px_rgba(255,255,255,0.06)]"
+                                ? "dark:bg-[#FFFFFF]/4 bg-[#333333]/10 shadow-[inset_0_0_34px_rgba(255,255,255,0.16)] dark:shadow-[inset_0_0_34px_rgba(255,255,255,0.08)]"
                                 : isEvening
-                                  ? "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#DDEAFF] dark:text-[#FFFFFF] shadow-[inset_0_0_34px_rgba(255,255,255,0.72),inset_0_-16px_26px_rgba(165,136,255,0.16)] dark:shadow-[inset_0_0_34px_rgba(255,255,255,0.42),inset_0_-16px_26px_rgba(165,136,255,0.24)]"
-                                  : "bg-[#DDF4FF] text-[#083A8E] dark:bg-[#DDF4FF] dark:text-[#FFFFFF] shadow-[inset_0_0_34px_rgba(255,255,255,0.82),inset_0_16px_24px_rgba(117,231,226,0.10)] dark:shadow-[inset_0_0_34px_rgba(255,255,255,0.52),inset_0_16px_24px_rgba(117,231,226,0.14)]";
+                                  ? "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#DDEAFF] dark:text-[#FFFFFF] shadow-[inset_0_0_34px_rgba(255,255,255,0.76),inset_0_-16px_26px_rgba(165,136,255,0.16)] dark:shadow-[inset_0_0_34px_rgba(255,255,255,0.46),inset_0_-16px_26px_rgba(165,136,255,0.24)]"
+                                  : "bg-[#EAF8FF] text-[#083A8E] dark:bg-[#DDEEFF] dark:text-[#FFFFFF] shadow-[inset_0_0_34px_rgba(255,255,255,0.88),inset_0_16px_24px_rgba(117,231,226,0.08)] dark:shadow-[inset_0_0_34px_rgba(255,255,255,0.56),inset_0_16px_24px_rgba(117,231,226,0.10)]";
                               const primaryTextClass = bookingType === 'busy'
                                 ? "dark:text-[#FFFFFF]/60 text-[#3A3A3A]/50"
                                 : isSelected
