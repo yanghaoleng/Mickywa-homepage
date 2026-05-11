@@ -214,10 +214,10 @@ body,
 }
 
 @keyframes color-change {
-  0%, 100% { background-color: #D3F1FF; }
-  25% { background-color: #CFEDD9; }
-  50% { background-color: #FFDDDD; }
-  75% { background-color: #FCF7BD; }
+  0%, 100% { background-color: #D9ECFF; }
+  25% { background-color: #CFE0FF; }
+  50% { background-color: #E1D7FF; }
+  75% { background-color: #D7CFFF; }
 }
 
 @keyframes animate-text {
