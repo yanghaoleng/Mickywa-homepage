@@ -303,17 +303,20 @@ async function fallbackFetch(url) {
   }
 }
 
-const CACHE_KEY = 'mickywa_schedule_cache_v1';
-const CACHE_TTL = 3 * 60 * 1000;
-
-const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v1_';
-const HOLIDAY_CN_CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+const CACHE_KEY = 'mickywa_schedule_cache_v2';
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v2_';
+const HOLIDAY_CN_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 async function fetchHolidayCnYear(year) {
   const url = `${HOLIDAY_CN_BASE_URL}/${year}.json`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`holiday-cn fetch failed: ${res.status}`);
-  return await res.json();
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`holiday-cn fetch failed: ${res.status}`);
+    return await res.json();
+  } catch (_) {
+    return { days: [] };
+  }
 }
 
 async function getHolidayCnYearWithCache(year) {
@@ -423,6 +426,9 @@ export async function getCalendarsWithCache({ forceMock = false } = {}) {
     if (cachedStr) {
       const cached = JSON.parse(cachedStr);
       if (cached && cached.timestamp && now - cached.timestamp < CACHE_TTL) {
+        return hydrateDates(cached.data);
+      }
+      if (cached && cached.data) {
         return hydrateDates(cached.data);
       }
     }
