@@ -54,7 +54,7 @@ function SmartRecButton({
         />
       )}
       <div className={["relative z-10 min-w-0 flex-1", pressed ? "press-jump" : ""].join(' ')}>
-        <div className="text-[16px] font-medium leading-relaxed truncate whitespace-nowrap text-[#083A8E] dark:text-[#FFFFFF]">
+        <div className={['text-[16px] font-medium leading-relaxed truncate whitespace-nowrap', selected ? 'text-[#083A8E] dark:text-[#083A8E]' : 'text-[#083A8E] dark:text-[#FFFFFF]'].join(' ')}>
           <span className="qh-bold-en qh-num">{idx + 1}.</span>
           {children}
         </div>
