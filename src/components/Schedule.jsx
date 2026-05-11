@@ -1215,8 +1215,8 @@ export default function Schedule({ theme }) {
                     const isSelected = selectedSmartId && rec.id === selectedSmartId;
                     const recTitle = rec.title;
                     const pulseKey = `${rec.id}-${recNonce}`;
-                    const titleAnimate = idx < 3 ? recNonce % 3 === idx : false;
-                    const titleClass = titleAnimate ? 'spring-scale-in' : '';
+                    const recText = recTitle.replace(/^今天可以去?/, '').replace(/^今天可以/, '').replace(/^可以去?/, '').replace(/^可以/, '');
+                    const titleTokens = recText.match(/[A-Za-z0-9]+|[ -]+|[^A-Za-z0-9 -]/g) || [recText];
 
                     return (
                       <SmartRecButton
@@ -1236,13 +1236,13 @@ export default function Schedule({ theme }) {
                         onBlurFade={fadeOutSmartFill}
                       >
                         <span className="inline-block">
-                          {recTitle.split('').map((char, charIndex) => (
+                          {titleTokens.map((token, tokenIndex) => (
                             <span
-                              key={`${pulseKey}-${char}-${charIndex}`}
-                              className={titleAnimate ? 'spring-scale-in inline-block' : 'inline-block'}
-                              style={titleAnimate ? { animationDelay: `${charIndex * 0.12}s` } : undefined}
+                              key={`${pulseKey}-${token}-${tokenIndex}`}
+                              className="spring-scale-in inline-block"
+                              style={{ animationDelay: `${tokenIndex * 0.12}s` }}
                             >
-                              {char}
+                              {token}
                             </span>
                           ))}
                         </span>
