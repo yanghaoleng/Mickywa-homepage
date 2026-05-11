@@ -1216,7 +1216,7 @@ export default function Schedule({ theme }) {
                     const recTitle = rec.title;
                     const pulseKey = `${rec.id}-${recNonce}`;
                     const recText = recTitle.replace(/^今天可以去?/, '').replace(/^今天可以/, '').replace(/^可以去?/, '').replace(/^可以/, '');
-                    const titleTokens = recText.match(/[A-Za-z0-9]+|[^A-Za-z0-9]/g)?.filter(Boolean) || [recText];
+                    const titleTokens = recText.match(/(?:[A-Za-z0-9]+|[\u4e00-\u9fa5])+/g)?.filter(Boolean) || [recText];
                     const activeTokenIndex = recNonce % Math.max(1, titleTokens.length);
 
                     return (
