@@ -2,6 +2,15 @@
 
 这是一个个人网站方案，使用 React + Vite + Tailwind CSS 构建。可以展示个人日程和社交账号基本信息，包含一些个人偏好的小细节，欢迎延伸修改。
 
+## 仓库与推送信息
+
+- GitHub 仓库：`https://github.com/yanghaoleng/Mickywa-homepage.git`
+- SSH 仓库：`git@github.com:yanghaoleng/Mickywa-homepage.git`
+- 默认远程名：`origin`
+- 本地 Git 用户：`yanghaoleng <yanghaoleng@users.noreply.github.com>`
+- 推送命令：`git push origin master`
+- 如果 SSH 推送失败，优先检查本机 SSH key 是否已绑定到 GitHub，或者切换为 HTTPS 远程并使用 token 推送
+
 ## 功能特点
 
 - **日程展示**：以月历形式展示个人日程安排
