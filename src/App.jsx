@@ -3,7 +3,7 @@ import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import useTheme from './hooks/useTheme'
 
-const API_BASE = import.meta.env.VITE_CALENDAR_API_BASE || 'http://localhost:3000'
+const API_BASE = import.meta.env.VITE_CALENDAR_API_BASE || ''
 const CALENDAR_JSON_URL = `${API_BASE.replace(/\/$/, '')}/api/calendar?type=work&format=json`
 
 function Schedule({ theme }) {
