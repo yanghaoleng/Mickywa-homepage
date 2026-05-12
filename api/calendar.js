@@ -164,8 +164,11 @@ export default async function handler(req, res) {
   }
 
   const upstreamMap = {
-    work: getEnv('WORK_CAL_URL'),
-    holiday: getEnv('HOLIDAY_CAL_URL'),
+    work: getEnv(
+      'WORK_CAL_URL',
+      'https://p213-caldav.icloud.com.cn/published/2/MTY5NDg3MTEzOTE2OTQ4N5k-tqjsWyylfFENPuKvr4kCrEPhpo4LCnnzMME290vRvHnxk_OlHsDp1-MTwmnU8ZLtkXUWm8mXulM4Zo6QCp8'
+    ),
+    holiday: getEnv('HOLIDAY_CAL_URL', 'https://calendars.icloud.com/holidays/cn_zh.ics/'),
   }
 
   const targetUrl = upstreamMap[type]
