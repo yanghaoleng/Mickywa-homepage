@@ -759,7 +759,7 @@ export default function Schedule({ theme }) {
       const idx = seqByBucket[bucket]++;
       const activity = pool.length ? pool[idx % pool.length] : '';
       const dayText = r.slotLabel === '全天' ? `${r.dateText}一整天` : r.dateText;
-      const prefix = `${dayText}更适合`;
+      const prefix = `${dayText}可以`;
       return {
         ...r,
         bucket,
