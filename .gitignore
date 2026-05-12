@@ -54,3 +54,6 @@ Thumbs.db
 
 # Vercel
 .vercel/
+
+# Local function config
+.vefaas/

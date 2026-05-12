@@ -1,0 +1,6 @@
+function_id: 63pcgt69
+name: miky-index-calendar
+region: cn-beijing
+runtime: native-node20/v1
+command: caddy run --config DefaultCaddyFile --adapter caddyfile
+application_id: cc3e51021b97

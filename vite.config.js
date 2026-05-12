@@ -6,7 +6,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      // 本地开发代理 iCloud 日历，解决 CORS 问题
       '/api/work-calendar': {
         target: 'https://outlook.live.com',
         changeOrigin: true,
@@ -20,6 +19,10 @@ export default defineConfig({
         target: 'https://calendars.icloud.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/holiday-calendar/, '/holidays/cn_zh.ics/'),
+      },
+      '/api/calendar': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
       },
     },
   },
