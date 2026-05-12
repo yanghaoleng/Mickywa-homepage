@@ -308,6 +308,38 @@ const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v2_';
 const HOLIDAY_CN_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
+function fetchTextWithTimeout(url, { timeoutMs = 6500 } = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  return fetch(url, { signal: controller.signal })
+    .then(async (res) => {
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      return { text, headers: res.headers };
+    })
+    .finally(() => clearTimeout(timeoutId));
+}
+
+async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } = {}) {
+  const t = forceRefresh ? `&t=${Date.now()}` : '';
+  const url = `/api/calendar?type=work&format=ics&provider=${encodeURIComponent(provider)}${t}`;
+  const { text, headers } = await fetchTextWithTimeout(url, { timeoutMs: provider === 'icloud' ? 15000 : 10000 });
+
+  const fetchedAtMsRaw = headers?.get?.('x-calendar-fetched-at') || headers?.get?.('X-Calendar-Fetched-At') || '';
+  const fetchedAtMs = Number(fetchedAtMsRaw);
+  const upstream = headers?.get?.('x-calendar-upstream') || headers?.get?.('X-Calendar-Upstream') || '';
+
+  return {
+    text,
+    provider,
+    fetchedAtMs: Number.isFinite(fetchedAtMs) ? fetchedAtMs : null,
+    upstream,
+  };
+}
+
 async function fetchHolidayCnYear(year) {
   const url = `${HOLIDAY_CN_BASE_URL}/${year}.json`;
   try {
@@ -412,7 +444,7 @@ function getMockSchedule() {
   return { workEvents: [], holidayEvents: [], schedule };
 }
 
-export async function getCalendarsWithCache({ forceMock = false } = {}) {
+export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false } = {}) {
   const now = Date.now();
 
   if (forceMock) {
@@ -421,35 +453,52 @@ export async function getCalendarsWithCache({ forceMock = false } = {}) {
     return mockData;
   }
 
-  try {
-    const cachedStr = localStorage.getItem(CACHE_KEY);
-    if (cachedStr) {
-      const cached = JSON.parse(cachedStr);
-      if (cached && cached.timestamp && now - cached.timestamp < CACHE_TTL) {
-        return hydrateDates(cached.data);
+  if (!forceRefresh) {
+    try {
+      const cachedStr = localStorage.getItem(CACHE_KEY);
+      if (cachedStr) {
+        const cached = JSON.parse(cachedStr);
+        if (cached && cached.timestamp && now - cached.timestamp < CACHE_TTL) {
+          return hydrateDates(cached.data);
+        }
+        if (cached && cached.data) {
+          return hydrateDates(cached.data);
+        }
       }
-      if (cached && cached.data) {
-        return hydrateDates(cached.data);
-      }
+    } catch (e) {
+      console.error('Cache read fail:', e);
     }
-  } catch (e) {
-    console.error('Cache read fail:', e);
   }
 
   try {
-    // Pass 'work' and 'holiday' types to enable Vercel API routing
     const today = getShanghaiTodayComponents();
     const years = [today.y, today.y + 1];
 
-    const [workText, holidayCnYears] = await Promise.all([
-      fetchICS(WORK_CAL_URL, 'work'),
-      Promise.all(years.map(y => getHolidayCnYearWithCache(y)))
+    const [holidayCnYears, cloudResult] = await Promise.all([
+      Promise.all(years.map(y => getHolidayCnYearWithCache(y))),
+      fetchWorkCalendarFromProvider('cloud', { forceRefresh })
     ]);
 
-    const workEvents = parseICS(workText);
+    const cloudLagMs = cloudResult.fetchedAtMs ? now - cloudResult.fetchedAtMs : 0;
+    const shouldFallbackToIcloud = cloudResult.fetchedAtMs ? cloudLagMs > 5 * 60 * 1000 : false;
+
+    const workResult = shouldFallbackToIcloud
+      ? await fetchWorkCalendarFromProvider('icloud', { forceRefresh })
+      : cloudResult;
+
+    const workEvents = parseICS(workResult.text);
     const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
 
-    const data = { workEvents, holidayCnYears, schedule, isMock: false };
+    const data = {
+      workEvents,
+      holidayCnYears,
+      schedule,
+      isMock: false,
+      calendarSource: workResult.provider,
+      calendarUpstream: workResult.upstream,
+      calendarFetchedAtMs: workResult.fetchedAtMs,
+      calendarReason: shouldFallbackToIcloud ? '云函数数据延迟超过5分钟，已切换 iCloud' : '',
+    };
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
     } catch (e) {
@@ -457,11 +506,43 @@ export async function getCalendarsWithCache({ forceMock = false } = {}) {
     }
     return data;
   } catch (e) {
-    console.error('Fetch fail:', e);
-    const mockData = getMockSchedule();
-    // Mark as mock so UI can show a warning
-    mockData.isMock = true;
-    return mockData;
+    try {
+      const today = getShanghaiTodayComponents();
+      const years = [today.y, today.y + 1];
+
+      const [holidayCnYears, icloudResult] = await Promise.all([
+        Promise.all(years.map(y => getHolidayCnYearWithCache(y))),
+        fetchWorkCalendarFromProvider('icloud', { forceRefresh })
+      ]);
+
+      const workEvents = parseICS(icloudResult.text);
+      const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
+
+      const data = {
+        workEvents,
+        holidayCnYears,
+        schedule,
+        isMock: false,
+        calendarSource: 'icloud',
+        calendarUpstream: icloudResult.upstream,
+        calendarFetchedAtMs: icloudResult.fetchedAtMs,
+        calendarReason: '云函数获取失败，已切换 iCloud',
+      };
+
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
+      } catch (_) {}
+
+      return data;
+    } catch (icloudError) {
+      console.error('Fetch fail:', e);
+      const mockData = getMockSchedule();
+      mockData.isMock = true;
+      mockData.calendarSource = 'mock';
+      mockData.calendarReason = '云函数与 iCloud 均获取失败';
+      mockData.calendarError = String(icloudError?.message || icloudError || '');
+      return mockData;
+    }
   }
 }
 

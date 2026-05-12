@@ -163,6 +163,17 @@ export default async function handler(req, res) {
     return jsonResponse(res, 400, { error: 'Missing or invalid type parameter' })
   }
 
+  const provider = String(req.query?.provider || '').toLowerCase() || 'cloud'
+
+  const normalizeWebcalUrl = (input) => {
+    const value = String(input || '').trim()
+    if (!value) return ''
+    if (value.startsWith('webcal://')) {
+      return `https://${value.slice('webcal://'.length)}`
+    }
+    return value
+  }
+
   const upstreamMap = {
     work: getEnv(
       'WORK_CAL_URL',
@@ -171,7 +182,15 @@ export default async function handler(req, res) {
     holiday: getEnv('HOLIDAY_CAL_URL', 'https://calendars.icloud.com/holidays/cn_zh.ics/'),
   }
 
-  const targetUrl = upstreamMap[type]
+  const icloudDefaults = {
+    work: 'https://p213-caldav.icloud.com.cn/published/2/MTY5NDg3MTEzOTE2OTQ4N5k-tqjsWyylfFENPuKvr4kCrEPhpo4LCnnzMME290vRvHnxk_OlHsDp1-MTwmnU8ZLtkXUWm8mXulM4Zo6QCp8',
+    holiday: 'https://calendars.icloud.com/holidays/cn_zh.ics/',
+  }
+
+  const targetUrl =
+    provider === 'icloud'
+      ? icloudDefaults[type]
+      : normalizeWebcalUrl(upstreamMap[type])
   if (!targetUrl) {
     return jsonResponse(res, 500, { error: 'Calendar source is not configured' })
   }
@@ -186,11 +205,15 @@ export default async function handler(req, res) {
     const events = parseICS(text).slice(0, limit)
     const etag = `W/\"${Buffer.from(JSON.stringify({ type, limit, count: events.length, size: text.length })).toString('base64url')}\"`
     const ifNoneMatch = readRequestHeader(req, 'if-none-match')
+    const fetchedAtMs = Date.now()
+    const fetchedAt = new Date(fetchedAtMs).toISOString()
 
     res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}, stale-while-revalidate=${staleSeconds}`)
     res.setHeader('ETag', etag)
     res.setHeader('X-Calendar-Source', type)
     res.setHeader('X-Calendar-Upstream', targetUrl)
+    res.setHeader('X-Calendar-Provider', provider)
+    res.setHeader('X-Calendar-Fetched-At', String(fetchedAtMs))
 
     if (ifNoneMatch && ifNoneMatch === etag) {
       res.statusCode = 304
@@ -198,7 +221,7 @@ export default async function handler(req, res) {
       return
     }
 
-    if (format === 'ics' || format === 'text') {
+    if (format === 'ics' || format === 'text' || !format) {
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/calendar; charset=utf-8')
       res.end(text)
@@ -207,8 +230,10 @@ export default async function handler(req, res) {
 
     return jsonResponse(res, 200, {
       source: type,
+      provider,
       upstream: targetUrl,
-      fetchedAt: new Date().toISOString(),
+      fetchedAt,
+      fetchedAtMs,
       count: events.length,
       events,
     })
@@ -217,6 +242,7 @@ export default async function handler(req, res) {
     return jsonResponse(res, 500, {
       error: 'Failed to fetch calendar',
       source: type,
+      provider,
     })
   }
 }

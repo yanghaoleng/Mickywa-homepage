@@ -79,6 +79,8 @@ export default function Schedule({ theme }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [isMock, setIsMock] = useState(false);
+  const [calendarSource, setCalendarSource] = useState('cloud');
+  const [calendarReason, setCalendarReason] = useState('');
   
   const [showBackToday, setShowBackToday] = useState(false);
   
@@ -662,7 +664,7 @@ export default function Schedule({ theme }) {
       setError(false);
     }
     try {
-      const res = await getCalendarsWithCache({ forceMock: import.meta.env.DEV });
+      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh: !isAuto });
       const now = new Date();
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const endExclusive = new Date(startOfToday);
@@ -676,6 +678,8 @@ export default function Schedule({ theme }) {
       setSchedule(nextDays);
       setRecNonce(n => n + 1);
       setIsMock(!!res.isMock);
+      setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
+      setCalendarReason(res.calendarReason || '');
       setLoading(false);
       setError(false);
     } catch (e) {
@@ -1480,6 +1484,28 @@ export default function Schedule({ theme }) {
       {toast && (
         <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#3A3A3A]/80 text-[#FCF7BD] px-6 py-3 rounded-lg text-sm z-[200] fade-in">
           {toast.message}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-6 z-[180] w-full max-w-[440px] px-5 pointer-events-none">
+          <div className="pointer-events-auto bg-[#3A3A3A]/80 dark:bg-[#3A3A3A]/80 text-[#FFFFFF] rounded-full px-4 py-2 flex items-center justify-between gap-3">
+            <div className="text-[12px] leading-none truncate">
+              {calendarSource === 'mock'
+                ? `当前展示：模拟数据${calendarReason ? `（${calendarReason}）` : ''}`
+                : calendarSource === 'icloud'
+                  ? `当前展示：iCloud 日历${calendarReason ? `（${calendarReason}）` : ''}`
+                  : `当前展示：云函数日历${calendarReason ? `（${calendarReason}）` : ''}`}
+            </div>
+            {calendarSource === 'mock' && (
+              <button
+                className="text-[12px] leading-none text-[#FCF7BD] whitespace-nowrap"
+                onClick={() => setCountdown(3)}
+              >
+                {countdown > 0 ? `自动刷新 (${countdown}s)` : '重新获取'}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
