@@ -160,9 +160,7 @@ function getDateRangeDays(days) {
 }
 
 export const TIME_SLOTS = [
-  { key: 'morning', label: '上午', start: '10:00', end: '12:00' },
-  { key: 'noon', label: '中午', start: '13:00', end: '15:00' },
-  { key: 'afternoon', label: '下午', start: '15:00', end: '18:00' },
+  { key: 'daytime', label: '白天', start: '10:00', end: '18:00' },
   { key: 'evening', label: '晚上', start: '18:00', end: '22:00' }
 ];
 // 检查冲突
@@ -435,7 +433,7 @@ function getMockSchedule() {
   return { workEvents: [], holidayEvents: [], schedule };
 }
 
-export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false } = {}) {
+export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false, provider } = {}) {
   const now = Date.now();
 
   if (forceMock) {
@@ -450,10 +448,14 @@ export async function getCalendarsWithCache({ forceMock = false, forceRefresh = 
       if (cachedStr) {
         const cached = JSON.parse(cachedStr);
         if (cached && cached.timestamp && now - cached.timestamp < CACHE_TTL) {
-          return hydrateDates(cached.data);
+          if (!provider || cached?.data?.calendarSource === provider) {
+            return hydrateDates(cached.data);
+          }
         }
         if (cached && cached.data) {
-          return hydrateDates(cached.data);
+          if (!provider || cached?.data?.calendarSource === provider) {
+            return hydrateDates(cached.data);
+          }
         }
       }
     } catch (e) {
@@ -462,6 +464,70 @@ export async function getCalendarsWithCache({ forceMock = false, forceRefresh = 
   }
 
   try {
+    if (provider === 'cloud' || provider === 'icloud') {
+      const today = getShanghaiTodayComponents();
+      const years = [today.y, today.y + 1];
+
+      try {
+        const [holidayCnYears, workResult] = await Promise.all([
+          Promise.all(years.map(y => getHolidayCnYearWithCache(y))),
+          fetchWorkCalendarFromProvider(provider, { forceRefresh })
+        ]);
+
+        const workEvents = parseICS(workResult.text);
+        const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
+
+        const data = {
+          workEvents,
+          holidayCnYears,
+          schedule,
+          isMock: false,
+          calendarSource: workResult.provider,
+          calendarUpstream: workResult.upstream,
+          calendarFetchedAtMs: workResult.fetchedAtMs,
+          calendarReason: '',
+        };
+        try {
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
+        } catch (_) {}
+        return data;
+      } catch (e) {
+        const fallback = provider === 'cloud' ? 'icloud' : 'cloud';
+        try {
+          const [holidayCnYears, workResult] = await Promise.all([
+            Promise.all(years.map(y => getHolidayCnYearWithCache(y))),
+            fetchWorkCalendarFromProvider(fallback, { forceRefresh })
+          ]);
+
+          const workEvents = parseICS(workResult.text);
+          const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
+
+          const data = {
+            workEvents,
+            holidayCnYears,
+            schedule,
+            isMock: false,
+            calendarSource: workResult.provider,
+            calendarUpstream: workResult.upstream,
+            calendarFetchedAtMs: workResult.fetchedAtMs,
+            calendarReason: `指定来源获取失败，已切换 ${fallback === 'icloud' ? 'iCloud' : '云函数'}`,
+          };
+          try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
+          } catch (_) {}
+          return data;
+        } catch (fallbackError) {
+          console.error('Fetch fail:', e);
+          const mockData = getMockSchedule();
+          mockData.isMock = true;
+          mockData.calendarSource = 'mock';
+          mockData.calendarReason = '云函数与 iCloud 均获取失败';
+          mockData.calendarError = String(fallbackError?.message || fallbackError || '');
+          return mockData;
+        }
+      }
+    }
+
     const today = getShanghaiTodayComponents();
     const years = [today.y, today.y + 1];
 

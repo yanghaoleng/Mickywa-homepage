@@ -81,6 +81,8 @@ export default function Schedule({ theme }) {
   const [isMock, setIsMock] = useState(false);
   const [calendarSource, setCalendarSource] = useState('cloud');
   const [calendarReason, setCalendarReason] = useState('');
+  const [showBottomBar, setShowBottomBar] = useState(true);
+  const [preferredCalendarProvider, setPreferredCalendarProvider] = useState(null);
   
   const [showBackToday, setShowBackToday] = useState(false);
   
@@ -421,15 +423,15 @@ export default function Schedule({ theme }) {
     const free = day.slots.filter(s => s.status === 'free');
     if (free.length === 0) return null;
     const keys = new Set(free.map(s => s.key));
-    const allKeys = ['morning', 'noon', 'afternoon', 'evening'];
+    const allKeys = ['daytime', 'evening'];
     const isFull = allKeys.every(k => keys.has(k));
     if (isFull) {
-      const slot = day.slots.find(s => s.key === 'morning') || free[0];
+      const slot = day.slots.find(s => s.key === 'daytime') || free[0];
       return { slot, label: '全天' };
     }
     const evening = day.slots.find(s => s.key === 'evening' && s.status === 'free');
     if (evening) return { slot: evening, label: '晚上' };
-    const daySlot = day.slots.find(s => ['morning', 'noon', 'afternoon'].includes(s.key) && s.status === 'free');
+    const daySlot = day.slots.find(s => s.key === 'daytime' && s.status === 'free');
     if (daySlot) return { slot: daySlot, label: '白天' };
     return { slot: free[0], label: free[0].label };
   };
@@ -658,13 +660,14 @@ export default function Schedule({ theme }) {
     });
   };
 
-  const fetchData = async (isAuto = false) => {
-    if (!isAuto) {
+  const fetchData = async ({ isAuto = false, provider, silent = false } = {}) => {
+    if (!isAuto && !silent) {
       setLoading(true);
       setError(false);
     }
     try {
-      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh: !isAuto });
+      const providerToUse = provider ?? preferredCalendarProvider ?? undefined;
+      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh: !isAuto, provider: providerToUse });
       const now = new Date();
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const endExclusive = new Date(startOfToday);
@@ -680,18 +683,27 @@ export default function Schedule({ theme }) {
       setIsMock(!!res.isMock);
       setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
       setCalendarReason(res.calendarReason || '');
-      setLoading(false);
-      setError(false);
+      if (!res?.isMock && (provider || preferredCalendarProvider)) {
+        if (res.calendarSource === 'cloud' || res.calendarSource === 'icloud') {
+          setPreferredCalendarProvider(res.calendarSource);
+        }
+      }
+      if (!isAuto && !silent) setLoading(false);
+      if (!silent) setError(false);
     } catch (e) {
       console.error(e);
-      setLoading(false);
-      setError(true);
+      if (!isAuto && !silent) {
+        setLoading(false);
+        setError(true);
+      } else {
+        setToast({ message: '切换来源失败，请稍后重试', type: 'error' });
+      }
     }
   };
 
   useEffect(() => {
     fetchData();
-    const timer = setInterval(() => fetchData(true), 3 * 60 * 1000);
+    const timer = setInterval(() => fetchData({ isAuto: true }), 3 * 60 * 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -720,6 +732,17 @@ export default function Schedule({ theme }) {
       return () => clearInterval(timer);
     }
   }, [countdown]);
+
+  const toggleCalendarProvider = () => {
+    const next =
+      calendarSource === 'icloud'
+        ? 'cloud'
+        : calendarSource === 'cloud'
+          ? 'icloud'
+          : 'cloud';
+    setPreferredCalendarProvider(next);
+    fetchData({ provider: next, silent: true });
+  };
 
   // Update booking text when form or slot changes
   useEffect(() => {
@@ -1287,7 +1310,7 @@ export default function Schedule({ theme }) {
                               let bookingStatus = '不空';
                               let bookingType = 'busy';
                               let isFullDay = false;
-                              let isMorning = false;
+                              let isDaytime = false;
                               let isEvening = false;
 
                               const isShiftWorkday = Boolean(item.holidayName && item.holidayName.includes('班'));
@@ -1297,14 +1320,14 @@ export default function Schedule({ theme }) {
                               
                               if (freeSlots.length > 0) {
                                 const freeSlotKeys = freeSlots.map(slot => slot.key);
-                                if (freeSlotKeys.includes('morning') && freeSlotKeys.includes('noon') && freeSlotKeys.includes('afternoon') && freeSlotKeys.includes('evening')) {
+                                if (freeSlotKeys.includes('daytime') && freeSlotKeys.includes('evening')) {
                                   bookingStatus = '全天';
                                   bookingType = 'free';
                                   isFullDay = true;
-                                } else if (freeSlotKeys.includes('morning') || freeSlotKeys.includes('noon') || freeSlotKeys.includes('afternoon')) {
+                                } else if (freeSlotKeys.includes('daytime')) {
                                   bookingStatus = '白天';
                                   bookingType = 'free';
-                                  isMorning = true;
+                                  isDaytime = true;
                                 } else if (freeSlotKeys.includes('evening')) {
                                   bookingStatus = '晚上';
                                   bookingType = 'free';
@@ -1321,8 +1344,8 @@ export default function Schedule({ theme }) {
                               const fullDaySlotIdx = fullDaySlot ? item.slots.indexOf(fullDaySlot) : null;
                               const fullDayUniqueKey = fullDaySlotIdx !== null ? `${item.key}-${fullDaySlotIdx}` : null;
 
-                              const daySlot = isMorning
-                                ? item.slots.find(slot => slot.status === 'free' && ['morning', 'noon', 'afternoon'].includes(slot.key))
+                              const daySlot = isDaytime
+                                ? item.slots.find(slot => slot.status === 'free' && slot.key === 'daytime')
                                 : null;
                               const daySlotIdx = daySlot ? item.slots.indexOf(daySlot) : null;
                               const dayUniqueKey = daySlotIdx !== null ? `${item.key}-${daySlotIdx}` : null;
@@ -1383,7 +1406,7 @@ export default function Schedule({ theme }) {
                                         </div>
                                       </div>
                                     )}
-                                    {!isFullDay && isMorning && (
+                                    {!isFullDay && isDaytime && (
                                       <div 
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -1392,10 +1415,10 @@ export default function Schedule({ theme }) {
                                           if (daySlot && daySlotIdx !== null) onSlotTap(item, daySlot, daySlotIdx);
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
-                                          "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
+                                          "bg-[#CFFAF2] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
-                                        <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
+                                        <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change-day transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
                                         {isToday && (
                                           <span className="pointer-events-none absolute -top-1.5 -right-1.5 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
                                             今
@@ -1421,10 +1444,10 @@ export default function Schedule({ theme }) {
                                           if (eveningSlot && eveningSlotIdx !== null) onSlotTap(item, eveningSlot, eveningSlotIdx);
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
-                                          "bg-[#D3F1FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
+                                          "bg-[#E6D9FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
-                                        <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
+                                        <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change-evening transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
                                         {isToday && (
                                           <span className="pointer-events-none absolute -top-1.5 -right-1.5 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
                                             今
@@ -1441,7 +1464,7 @@ export default function Schedule({ theme }) {
                                         </div>
                                       </div>
                                     )}
-                                    {!isFullDay && !isMorning && !isEvening && (
+                                    {!isFullDay && !isDaytime && !isEvening && (
                                       <div className="slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-300 transform relative dark:bg-[#FFFFFF]/4 bg-[#333333]/10 cursor-not-allowed">
                                         {isToday && (
                                           <span className="pointer-events-none absolute -top-1.5 -right-1.5 z-20 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-[#3A3A3A] bg-[#FFDDDD] rounded-[10px] rotate-6 shadow-[0_0_24px_0_rgba(255,255,255,0.65)_inset]">
@@ -1487,24 +1510,66 @@ export default function Schedule({ theme }) {
         </div>
       )}
 
-      {!loading && !error && (
+      {!loading && !error && showBottomBar && (
         <div className="fixed left-1/2 -translate-x-1/2 bottom-6 z-[180] w-full max-w-[440px] px-5 pointer-events-none">
-          <div className="pointer-events-auto bg-[#3A3A3A]/80 dark:bg-[#3A3A3A]/80 text-[#FFFFFF] rounded-full px-4 py-2 flex items-center justify-between gap-3">
-            <div className="text-[12px] leading-none truncate">
-              {calendarSource === 'mock'
-                ? `当前展示：模拟数据${calendarReason ? `（${calendarReason}）` : ''}`
-                : calendarSource === 'icloud'
-                  ? `当前展示：iCloud 日历${calendarReason ? `（${calendarReason}）` : ''}`
-                  : `当前展示：云函数日历${calendarReason ? `（${calendarReason}）` : ''}`}
+          <div className="bottom-bar pointer-events-auto bg-[#3A3A3A]/55 dark:bg-[#3A3A3A]/55 text-[#FFFFFF]/55 rounded-full px-4 py-2 flex items-center justify-between gap-3 backdrop-blur-sm">
+            <div
+              className="min-w-0 text-[12px] leading-none truncate"
+              title={calendarReason || ''}
+            >
+              {calendarSource === 'icloud'
+                ? '来源：iCloud'
+                : calendarSource === 'cloud'
+                  ? '来源：云函数'
+                  : '来源：模拟'}
             </div>
-            {calendarSource === 'mock' && (
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
-                className="text-[12px] leading-none text-[#FCF7BD] whitespace-nowrap"
-                onClick={() => setCountdown(3)}
+                type="button"
+                className="p-1 rounded-full hover:bg-[#FFFFFF]/10 active:bg-[#FFFFFF]/15 text-[#FFFFFF]/55 hover:text-[#FFFFFF]/70"
+                aria-label="切换来源"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleCalendarProvider();
+                }}
               >
-                {countdown > 0 ? `自动刷新 (${countdown}s)` : '重新获取'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M20 7h-5m5 0-2-2m2 2-2 2M4 17h5m-5 0 2-2m-2 2 2 2"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M7 7a8 8 0 0 1 13 3m-3 7a8 8 0 0 1-13-3"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity="0.65"
+                  />
+                </svg>
               </button>
-            )}
+              <button
+                type="button"
+                className="p-1 rounded-full hover:bg-[#FFFFFF]/10 active:bg-[#FFFFFF]/15 text-[#FFFFFF]/55 hover:text-[#FFFFFF]/70"
+                aria-label="关闭状态条"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowBottomBar(false);
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M7 7l10 10M17 7 7 17"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       )}

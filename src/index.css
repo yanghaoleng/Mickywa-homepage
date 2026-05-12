@@ -220,6 +220,20 @@ body,
   75% { background-color: #D7CFFF; }
 }
 
+@keyframes color-change-day {
+  0%, 100% { background-color: #D1FAF5; }
+  25% { background-color: #C7F7F0; }
+  50% { background-color: #CFF3FF; }
+  75% { background-color: #C9FFE9; }
+}
+
+@keyframes color-change-evening {
+  0%, 100% { background-color: #EBDDFF; }
+  25% { background-color: #E2D2FF; }
+  50% { background-color: #DCCBFF; }
+  75% { background-color: #EAD6FF; }
+}
+
 @keyframes animate-text {
   0% {
     opacity: 0;
@@ -249,4 +263,12 @@ body,
 
 .animate-color-change {
   animation: color-change 2s ease-in-out infinite;
+}
+
+.animate-color-change-day {
+  animation: color-change-day 2s ease-in-out infinite;
+}
+
+.animate-color-change-evening {
+  animation: color-change-evening 2s ease-in-out infinite;
 }
