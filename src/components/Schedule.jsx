@@ -2,44 +2,48 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { getCalendarsWithCache } from '../utils/ical';
 import { formatRelativeDate } from '../utils/time';
 import { estimateDuration, estimatePrice, formatDuration } from '../config/estimateConfig';
+import smartActivitiesMd from '../config/smartActivities.md?raw';
 
-const ENTERTAINMENT_ACTIVITIES_BY_TIME = {
-  daytime: [
-    '遛鸟',
-    '逛公园',
-    '绿道散步/骑行',
-    '骑车兜风',
-    '逛街',
-    '压马路拍照',
-    '喝茶',
-    '喝咖啡',
-    '游泳',
-    '健身撸铁'
-  ],
-  evening: [
-    '逛夜市（抚琴夜市、大源夜市）',
-    '吃火锅',
-    '吃串串',
-    '烤肉/烧烤',
-    '川菜馆子',
-    '看电影',
-    'KTV唱歌',
-    '密室逃脱/剧本杀',
-    '桌游吧',
-    '逛芳草，玉林西路',
-    '逛镋钯街',
-    '逛世豪'
-  ],
-  allday: [
-    '周边一日游',
-    '逛古镇',
-    '泡温泉',
-    '打Switch',
-    '密室逃脱/剧本杀',
-    '桌游吧',
-    '逛菜市场做饭'
-  ]
+const parseActivitiesByTime = (md) => {
+  const res = { daytime: [], evening: [], allday: [] };
+  if (!md) return res;
+
+  const headingToKey = (h) => {
+    const s = String(h || '').trim();
+    if (s === '白天') return 'daytime';
+    if (s === '晚上') return 'evening';
+    if (s === '全天' || s === '一整天') return 'allday';
+    return null;
+  };
+
+  let currentKey = null;
+  md.split(/\r?\n/).forEach(line => {
+    const h = /^\s*##\s+(.+?)\s*$/.exec(line);
+    if (h) {
+      currentKey = headingToKey(h[1]);
+      return;
+    }
+    const b = /^\s*[-*]\s+(.+?)\s*$/.exec(line);
+    if (!b || !currentKey) return;
+    const item = b[1].trim();
+    if (!item) return;
+    res[currentKey].push(item);
+  });
+
+  const uniq = (arr) => Array.from(new Set(arr.map(s => String(s || '').trim()).filter(Boolean)));
+  res.daytime = uniq(res.daytime);
+  res.evening = uniq(res.evening);
+  res.allday = uniq(res.allday);
+
+  const all = uniq([...res.daytime, ...res.evening, ...res.allday]);
+  if (!res.daytime.length) res.daytime = all;
+  if (!res.evening.length) res.evening = all;
+  if (!res.allday.length) res.allday = all;
+
+  return res;
 };
+
+const ENTERTAINMENT_ACTIVITIES_BY_TIME = parseActivitiesByTime(smartActivitiesMd);
 
 // Options configuration
 const LENGTH_OPTIONS = ['本甲', '短甲', '中长', '长甲', '延长', '待定'];
