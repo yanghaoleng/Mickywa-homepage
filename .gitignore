@@ -51,6 +51,9 @@ Thumbs.db
 # Agent files
 .agent/
 .minimax/
+.agents/
+.trae/
+skills-lock.json
 
 # Vercel
 .vercel/

@@ -3,15 +3,141 @@ import { getCalendarsWithCache } from '../utils/ical';
 import { formatRelativeDate } from '../utils/time';
 import { estimateDuration, estimatePrice, formatDuration } from '../config/estimateConfig';
 
+const ENTERTAINMENT_ACTIVITIES_BY_TIME = {
+  daytime: [
+    '遛鸟',
+    '逛公园',
+    '绿道散步/骑行',
+    '骑车兜风',
+    '逛街',
+    '压马路拍照',
+    '喝茶',
+    '喝咖啡',
+    '游泳',
+    '健身撸铁'
+  ],
+  evening: [
+    '逛夜市（抚琴夜市、大源夜市）',
+    '吃火锅',
+    '吃串串',
+    '烤肉/烧烤',
+    '川菜馆子',
+    '看电影',
+    'KTV唱歌',
+    '密室逃脱/剧本杀',
+    '桌游吧',
+    '逛芳草，玉林西路',
+    '逛镋钯街',
+    '逛世豪'
+  ],
+  allday: [
+    '周边一日游',
+    '逛古镇',
+    '泡温泉',
+    '打Switch',
+    '密室逃脱/剧本杀',
+    '桌游吧',
+    '逛菜市场做饭'
+  ]
+};
+
 // Options configuration
 const LENGTH_OPTIONS = ['本甲', '短甲', '中长', '长甲', '延长', '待定'];
 const STYLE_OPTIONS = ['纯色', '跳色', '法式', '猫眼', '渐变', '设计', '待定'];
 const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
 
+function BottomUpLettersSwap({ text, active }) {
+  const [displayText, setDisplayText] = useState(text ?? '');
+  const [queuedText, setQueuedText] = useState(null);
+  const containerRef = useRef(null);
+  const tokenRef = useRef(0);
+
+  useEffect(() => {
+    if (!active) {
+      setDisplayText(text ?? '');
+      setQueuedText(null);
+      return;
+    }
+    if ((text ?? '') !== displayText) setQueuedText(text ?? '');
+  }, [active, text, displayText]);
+
+  useEffect(() => {
+    if (!active) return;
+    if (queuedText === null) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const spans = Array.from(container.querySelectorAll('[data-abt-char]'));
+    const n = spans.length;
+    const token = ++tokenRef.current;
+
+    spans.forEach((span, i) => {
+      span.getAnimations?.().forEach(a => a.cancel());
+      span.animate(
+        [
+          { opacity: 1, transform: 'translateY(0px)' },
+          { opacity: 0, transform: 'translateY(-14px)' }
+        ],
+        {
+          duration: 280,
+          delay: i * 28,
+          easing: 'cubic-bezier(0.7, 0, 0.84, 0)',
+          fill: 'forwards'
+        }
+      );
+    });
+
+    const exitTotal = n ? 280 + (n - 1) * 28 : 0;
+    const t = setTimeout(() => {
+      if (tokenRef.current !== token) return;
+      setDisplayText(queuedText);
+      setQueuedText(null);
+    }, exitTotal + 35);
+
+    return () => clearTimeout(t);
+  }, [active, queuedText]);
+
+  useEffect(() => {
+    if (!active) return;
+    const container = containerRef.current;
+    if (!container) return;
+    const spans = Array.from(container.querySelectorAll('[data-abt-char]'));
+
+    spans.forEach((span, i) => {
+      span.getAnimations?.().forEach(a => a.cancel());
+      span.animate(
+        [
+          { opacity: 0, transform: 'translateY(46px)' },
+          { opacity: 1, transform: 'translateY(0px)' }
+        ],
+        {
+          duration: 400,
+          delay: i * 88,
+          easing: 'cubic-bezier(0.18, 1, 0.32, 1)',
+          fill: 'forwards'
+        }
+      );
+    });
+  }, [active, displayText]);
+
+  if (!active) return <span>{text}</span>;
+
+  return (
+    <span ref={containerRef} className="abt-container">
+      {Array.from(displayText || '').map((ch, i) => (
+        <span key={`${i}-${ch}`} data-abt-char className="abt-char">
+          {ch === ' ' ? '\u00A0' : ch}
+        </span>
+      ))}
+    </span>
+  );
+}
+
 function SmartRecButton({
   idx,
   recId,
   title,
+  titleNode,
   disabled,
   selected,
   fading,
@@ -67,7 +193,7 @@ function SmartRecButton({
           ].join(' ')}
         >
           <span className="qh-bold-en qh-num">{idx + 1}.</span>
-          {title}
+          {titleNode ?? title}
         </div>
       </div>
     </div>
@@ -115,6 +241,8 @@ export default function Schedule({ theme }) {
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
   const [isCalendarCollapsing, setIsCalendarCollapsing] = useState(false);
   const [recNonce, setRecNonce] = useState(0);
+  const [smartActivityById, setSmartActivityById] = useState({});
+  const [smartAnimEnabledById, setSmartAnimEnabledById] = useState({});
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
@@ -132,6 +260,7 @@ export default function Schedule({ theme }) {
   const recommendationsRef = useRef([]);
   const smartRecRefs = useRef({});
   const mockToastShownRef = useRef(false);
+  const smartSwapTimersRef = useRef({ timeouts: [], intervals: [] });
 
   useEffect(() => { selectedSmartIdRef.current = selectedSmartId; }, [selectedSmartId]);
   useEffect(() => { fadingSmartIdRef.current = fadingSmartId; }, [fadingSmartId]);
@@ -440,17 +569,6 @@ export default function Schedule({ theme }) {
     const now = new Date();
     const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const activities = [
-      '去吃火锅',
-      '去逛同仁路',
-      '去喝一杯',
-      '去看电影',
-      '去玉林路散步',
-      '去吃烧烤',
-      '去泡咖啡馆',
-      '去春熙路逛街'
-    ];
-
     const isWeekend = (d) => {
       const dow = d.getDay();
       return dow === 0 || dow === 6;
@@ -494,7 +612,8 @@ export default function Schedule({ theme }) {
         date: nextWorkday.date,
         dateText,
         dayKey: nextWorkday.key,
-        slotKey: picked.slot.key
+        slotKey: picked.slot.key,
+        slotLabel: picked.label
       };
     })();
 
@@ -513,18 +632,20 @@ export default function Schedule({ theme }) {
         const sameWeekend = Math.abs((sun.date - sat.date) / 86400000) <= 1;
         if (sameWeekend && weekPrefix(sat.date) === weekPrefix(sun.date)) {
           const prefix = weekPrefix(sat.date);
-          const dateText = prefix ? `${prefix}六-日` : `${sat.date.getMonth() + 1}月${sat.date.getDate()}日-${sun.date.getDate()}日`;
+          const baseDateText = prefix ? `${prefix}六-日` : `${sat.date.getMonth() + 1}月${sat.date.getDate()}日-${sun.date.getDate()}日`;
           const pickedSat = pickSlots(sat);
           const pickedSun = pickSlots(sun);
           const picked = pickedSat || pickedSun;
           if (!picked) return null;
+          const dateText = `${baseDateText}${picked.label === '全天' ? '' : picked.label}`;
           return {
             id: `rec-weekend-${sat.key}`,
             type: 'weekend',
             date: sat.date,
             dateText,
             dayKey: (pickedSat ? sat.key : sun.key),
-            slotKey: picked.slot.key
+            slotKey: picked.slot.key,
+            slotLabel: picked.label
           };
         }
       }
@@ -540,7 +661,8 @@ export default function Schedule({ theme }) {
         date: first.date,
         dateText,
         dayKey: first.key,
-        slotKey: picked.slot.key
+        slotKey: picked.slot.key,
+        slotLabel: picked.label
       };
     })();
 
@@ -557,14 +679,15 @@ export default function Schedule({ theme }) {
       const same = holidayDays.filter(d => d.holidayName === name);
       const picked = pickSlots(first);
       if (!picked) return null;
-      const dateText = same.length >= 2 ? `${name}前两天` : `${name}当天`;
+      const dateText = `${same.length >= 2 ? `${name}前两天` : `${name}当天`}${picked.label === '全天' ? '' : picked.label}`;
       return {
         id: `rec-holiday-${first.key}`,
         type: 'holiday',
         date: first.date,
         dateText,
         dayKey: first.key,
-        slotKey: picked.slot.key
+        slotKey: picked.slot.key,
+        slotLabel: picked.label
       };
     })();
 
@@ -600,7 +723,8 @@ export default function Schedule({ theme }) {
         date: next.date,
         dateText,
         dayKey: next.key,
-        slotKey: picked.slot.key
+        slotKey: picked.slot.key,
+        slotLabel: picked.label
       };
     })();
 
@@ -616,15 +740,130 @@ export default function Schedule({ theme }) {
       .sort((a, b) => (a.date?.getTime?.() ?? 0) - (b.date?.getTime?.() ?? 0))
       .slice(0, 3);
 
-    const shuffled = [...activities].sort(() => 0.5 - Math.random());
-    return normalized.map((r, idx) => ({
-      ...r,
-      title: `${r.dateText}可以${shuffled[idx % shuffled.length]}`
-    }));
+    const pickBucket = (slotLabel) => {
+      if (slotLabel === '白天') return 'daytime';
+      if (slotLabel === '晚上') return 'evening';
+      return 'allday';
+    };
+
+    const shuffledByTime = {
+      daytime: [...ENTERTAINMENT_ACTIVITIES_BY_TIME.daytime].sort(() => 0.5 - Math.random()),
+      evening: [...ENTERTAINMENT_ACTIVITIES_BY_TIME.evening].sort(() => 0.5 - Math.random()),
+      allday: [...ENTERTAINMENT_ACTIVITIES_BY_TIME.allday].sort(() => 0.5 - Math.random())
+    };
+
+    const seqByBucket = { daytime: 0, evening: 0, allday: 0 };
+    return normalized.map((r) => {
+      const bucket = pickBucket(r.slotLabel);
+      const pool = shuffledByTime[bucket] || [];
+      const idx = seqByBucket[bucket]++;
+      const activity = pool.length ? pool[idx % pool.length] : '';
+      const dayText = r.slotLabel === '全天' ? `${r.dateText}一整天` : r.dateText;
+      const prefix = `${dayText}更适合`;
+      return {
+        ...r,
+        bucket,
+        prefix,
+        activity,
+        title: `${prefix}${activity}`
+      };
+    });
   }, [recNonce, schedule]);
 
   useEffect(() => {
     recommendationsRef.current = recommendations.filter(r => !r?.disabled);
+  }, [recommendations]);
+
+  useEffect(() => {
+    const activeRecs = recommendations.filter(r => !r?.disabled);
+
+    setSmartActivityById(prev => {
+      const next = { ...prev };
+      activeRecs.forEach(rec => {
+        if (typeof next[rec.id] !== 'string') {
+          next[rec.id] = rec.activity ?? '';
+        }
+      });
+      Object.keys(next).forEach(id => {
+        if (!activeRecs.some(r => r.id === id)) delete next[id];
+      });
+      return next;
+    });
+
+    setSmartAnimEnabledById(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(id => {
+        if (!activeRecs.some(r => r.id === id)) delete next[id];
+      });
+      return next;
+    });
+  }, [recommendations]);
+
+  useEffect(() => {
+    const timers = smartSwapTimersRef.current;
+    timers.timeouts.forEach(t => clearTimeout(t));
+    timers.intervals.forEach(i => clearInterval(i));
+    timers.timeouts = [];
+    timers.intervals = [];
+
+    const targetIds = recommendations
+      .filter(r => !r?.disabled)
+      .slice(0, 2)
+      .map(r => r.id);
+
+    const pools = {
+      daytime: ENTERTAINMENT_ACTIVITIES_BY_TIME.daytime,
+      evening: ENTERTAINMENT_ACTIVITIES_BY_TIME.evening,
+      allday: ENTERTAINMENT_ACTIVITIES_BY_TIME.allday
+    };
+    const bucketById = new Map(recommendations.map(r => [r.id, r.bucket || 'allday']));
+
+    const pickNext = (id, current) => {
+      const bucket = bucketById.get(id) || 'allday';
+      const pool = pools[bucket] || pools.allday;
+      if (pool.length <= 1) return current;
+      let next = current;
+      let guard = 0;
+      while (next === current && guard < 12) {
+        next = pool[Math.floor(Math.random() * pool.length)];
+        guard += 1;
+      }
+      return next;
+    };
+
+    const swapOnce = (id) => {
+      setSmartActivityById(prev => {
+        const current = prev[id] ?? '';
+        const nextText = pickNext(id, current);
+        if (nextText === current) return prev;
+        return { ...prev, [id]: nextText };
+      });
+    };
+
+    const start = (id, { immediateSwap }) => {
+      setSmartAnimEnabledById(prev => ({ ...prev, [id]: true }));
+      if (immediateSwap) {
+        const t = setTimeout(() => swapOnce(id), 80);
+        timers.timeouts.push(t);
+      }
+      const interval = setInterval(() => swapOnce(id), 6000);
+      timers.intervals.push(interval);
+    };
+
+    if (targetIds[0]) {
+      timers.timeouts.push(setTimeout(() => start(targetIds[0], { immediateSwap: false }), 4000));
+    }
+    if (targetIds[1]) {
+      timers.timeouts.push(setTimeout(() => start(targetIds[1], { immediateSwap: true }), 8000));
+    }
+
+    return () => {
+      const t2 = smartSwapTimersRef.current;
+      t2.timeouts.forEach(t => clearTimeout(t));
+      t2.intervals.forEach(i => clearInterval(i));
+      t2.timeouts = [];
+      t2.intervals = [];
+    };
   }, [recommendations]);
 
   const fadeOutSmartFill = (id) => {
@@ -1120,7 +1359,7 @@ export default function Schedule({ theme }) {
 
   return (
     <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
-      <div className="pt-4 pb-4 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
+      <div className="pt-4 pb-1 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
             <svg width="46" height="42" viewBox="0 0 46 42" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1138,8 +1377,8 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div ref={rootRef} className="px-5 pt-3.5 pb-32 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
-        <div className="flex flex-col items-center justify-start spring-scale-in mb-3.5">
+      <div ref={rootRef} className="px-5 pt-1 pb-32 flex-1 overflow-y-auto overflow-x-visible overscroll-contain">
+        <div className="flex flex-col items-center justify-start spring-scale-in mb-5">
           <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
             <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
           </div>
@@ -1195,6 +1434,15 @@ export default function Schedule({ theme }) {
                         idx={idx}
                         recId={rec.id}
                         title={rec.title}
+                        titleNode={rec.prefix ? (
+                          <span className="min-w-0 truncate whitespace-nowrap">
+                            <span className="min-w-0">{rec.prefix}</span>
+                            <BottomUpLettersSwap
+                              text={smartActivityById[rec.id] ?? rec.activity ?? ''}
+                              active={Boolean(smartAnimEnabledById[rec.id])}
+                            />
+                          </span>
+                        ) : undefined}
                         disabled={isDisabled}
                         selected={Boolean(isSelected)}
                         fading={rec.id === fadingSmartId}
@@ -1415,7 +1663,7 @@ export default function Schedule({ theme }) {
                                           if (daySlot && daySlotIdx !== null) onSlotTap(item, daySlot, daySlotIdx);
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
-                                          "bg-[#CFFAF2] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
+                                          "bg-[#C9F6FF] text-[#083A8E] dark:bg-[#085C8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
                                         <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change-day transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>
@@ -1444,7 +1692,7 @@ export default function Schedule({ theme }) {
                                           if (eveningSlot && eveningSlotIdx !== null) onSlotTap(item, eveningSlot, eveningSlotIdx);
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
-                                          "bg-[#E6D9FF] text-[#083A8E] dark:bg-[#083A8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
+                                          "bg-[#E1DCFF] text-[#083A8E] dark:bg-[#2A338E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
                                           showFocus ? "!opacity-100 -translate-y-1.25" : ""
                                         ].join(' ')}>
                                         <div className={["absolute inset-0 rounded-[12px] pointer-events-none animate-color-change-evening transition-opacity ease-out", showFocus ? "opacity-100 duration-0" : "opacity-0 duration-[1000ms]"].join(' ')}></div>

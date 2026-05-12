@@ -272,3 +272,13 @@ body,
 .animate-color-change-evening {
   animation: color-change-evening 2s ease-in-out infinite;
 }
+
+.abt-container {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.abt-char {
+  display: inline-block;
+  will-change: transform, opacity;
+}
