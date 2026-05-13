@@ -988,14 +988,79 @@ export default function Schedule({ theme }) {
     });
   };
 
-  const fetchData = async ({ isAuto = false, provider, silent = false } = {}) => {
-    if (!isAuto && !silent) {
+  const fetchData = async ({ isAuto = false, provider, silent = false, backgroundOnly = false } = {}) => {
+    const providerToUse = provider ?? preferredCalendarProvider ?? undefined;
+    
+    // 先尝试同步读取缓存，快速显示
+    let hasCache = false;
+    if (!backgroundOnly) {
+      try {
+        const cachedStr = localStorage.getItem('mickywa_schedule_cache_v2');
+        if (cachedStr) {
+          const cached = JSON.parse(cachedStr);
+          if (cached && cached.data) {
+            if (!provider || cached?.data?.calendarSource === provider) {
+              // 直接使用缓存，不等待后台刷新
+              const hydrateCachedData = (data) => {
+                if (!data || !data.schedule) return data;
+                data.schedule.forEach(day => {
+                  if (typeof day.date === 'string') {
+                    day.date = new Date(day.date);
+                  }
+                });
+                return data;
+              };
+              
+              const res = hydrateCachedData(cached.data);
+              const now = new Date();
+              const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              const endExclusive = new Date(startOfToday);
+              endExclusive.setDate(endExclusive.getDate() + 22);
+
+              const nextDays = (res.schedule || [])
+                .filter(day => day?.date instanceof Date || typeof day.date === 'string')
+                .map(day => {
+                  if (typeof day.date === 'string') {
+                    day.date = new Date(day.date);
+                  }
+                  return day;
+                })
+                .filter(day => day.date >= startOfToday && day.date < endExclusive)
+                .sort((a, b) => a.date - b.date);
+
+              setSchedule(nextDays);
+              setRecNonce(n => n + 1);
+              setIsMock(!!res.isMock);
+              setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
+              setCalendarReason(res.calendarReason || '');
+              if (!res?.isMock && (provider || preferredCalendarProvider)) {
+                if (res.calendarSource === 'cloud' || res.calendarSource === 'icloud') {
+                  setPreferredCalendarProvider(res.calendarSource);
+                }
+              }
+              hasCache = true;
+            }
+          }
+        }
+      } catch (e) {
+        // 缓存读取失败，继续
+      }
+    }
+    
+    // 只有没有缓存时才显示 loading
+    if (!isAuto && !silent && !hasCache && !backgroundOnly) {
       setLoading(true);
       setError(false);
     }
+    
     try {
-      const providerToUse = provider ?? preferredCalendarProvider ?? undefined;
-      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh: !isAuto, provider: providerToUse });
+      // 后台刷新数据，forceRefresh 只有手动刷新时才设为 true
+      const res = await getCalendarsWithCache({ 
+        forceMock: false, 
+        forceRefresh: !isAuto && !hasCache, // 只有没缓存的手动刷新才强制刷新
+        provider: providerToUse 
+      });
+      
       const now = new Date();
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       const endExclusive = new Date(startOfToday);
@@ -1016,13 +1081,15 @@ export default function Schedule({ theme }) {
           setPreferredCalendarProvider(res.calendarSource);
         }
       }
-      if (!isAuto && !silent) setLoading(false);
+      if (!isAuto && !silent && !hasCache) setLoading(false);
       if (!silent) setError(false);
     } catch (e) {
       console.error(e);
-      if (!isAuto && !silent) {
+      if (!isAuto && !silent && !hasCache) {
         setLoading(false);
         setError(true);
+      } else if (!isAuto && !silent) {
+        // 有缓存但刷新失败，不显示 error 状态
       } else {
         setToast({ message: '切换来源失败，请稍后重试', type: 'error' });
       }

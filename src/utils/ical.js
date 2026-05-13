@@ -297,7 +297,7 @@ const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v2_';
 const HOLIDAY_CN_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-function fetchTextWithTimeout(url, { timeoutMs = 6500 } = {}) {
+function fetchTextWithTimeout(url, { timeoutMs = 12000 } = {}) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -315,7 +315,7 @@ function fetchTextWithTimeout(url, { timeoutMs = 6500 } = {}) {
 async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } = {}) {
   const t = forceRefresh ? `&t=${Date.now()}` : '';
   const url = `/api/calendar?type=work&format=ics&provider=${encodeURIComponent(provider)}${t}`;
-  const { text, headers } = await fetchTextWithTimeout(url, { timeoutMs: provider === 'icloud' ? 15000 : 10000 });
+  const { text, headers } = await fetchTextWithTimeout(url, { timeoutMs: provider === 'icloud' ? 20000 : 15000 });
 
   const fetchedAtMsRaw = headers?.get?.('x-calendar-fetched-at') || headers?.get?.('X-Calendar-Fetched-At') || '';
   const fetchedAtMs = Number(fetchedAtMsRaw);
@@ -433,37 +433,11 @@ function getMockSchedule() {
   return { workEvents: [], holidayEvents: [], schedule };
 }
 
-export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false, provider } = {}) {
-  const now = Date.now();
-
-  if (forceMock) {
-    const mockData = getMockSchedule();
-    mockData.isMock = true;
-    return mockData;
-  }
-
-  if (!forceRefresh) {
-    try {
-      const cachedStr = localStorage.getItem(CACHE_KEY);
-      if (cachedStr) {
-        const cached = JSON.parse(cachedStr);
-        if (cached && cached.timestamp && now - cached.timestamp < CACHE_TTL) {
-          if (!provider || cached?.data?.calendarSource === provider) {
-            return hydrateDates(cached.data);
-          }
-        }
-        if (cached && cached.data) {
-          if (!provider || cached?.data?.calendarSource === provider) {
-            return hydrateDates(cached.data);
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Cache read fail:', e);
-    }
-  }
-
+// 后台刷新函数，不阻塞返回
+async function refreshInBackground({ forceRefresh, provider }) {
   try {
+    const now = Date.now();
+
     if (provider === 'cloud' || provider === 'icloud') {
       const today = getShanghaiTodayComponents();
       const years = [today.y, today.y + 1];
@@ -587,7 +561,7 @@ export async function getCalendarsWithCache({ forceMock = false, forceRefresh = 
       };
 
       try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
       } catch (_) {}
 
       return data;
@@ -601,6 +575,47 @@ export async function getCalendarsWithCache({ forceMock = false, forceRefresh = 
       return mockData;
     }
   }
+}
+
+export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false, provider } = {}) {
+  const now = Date.now();
+
+  if (forceMock) {
+    const mockData = getMockSchedule();
+    mockData.isMock = true;
+    return mockData;
+  }
+
+  // 先尝试读取缓存
+  let cachedData = null;
+  try {
+    const cachedStr = localStorage.getItem(CACHE_KEY);
+    if (cachedStr) {
+      const cached = JSON.parse(cachedStr);
+      if (cached && cached.data) {
+        if (!provider || cached?.data?.calendarSource === provider) {
+          cachedData = hydrateDates(cached.data);
+          // 如果缓存没过期，直接返回缓存，后台刷新
+          if (cached.timestamp && now - cached.timestamp < CACHE_TTL) {
+            // 后台刷新，不阻塞
+            refreshInBackground({ forceRefresh, provider }).catch(() => {});
+            return cachedData;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.error('Cache read fail:', e);
+  }
+
+  // 如果有缓存但已过期，先返回缓存，后台刷新
+  if (cachedData) {
+    refreshInBackground({ forceRefresh: true, provider }).catch(() => {});
+    return cachedData;
+  }
+
+  // 没有缓存，阻塞获取
+  return await refreshInBackground({ forceRefresh, provider });
 }
 
 function hydrateDates(data) {
