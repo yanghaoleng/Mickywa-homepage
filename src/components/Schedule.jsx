@@ -211,8 +211,10 @@ export default function Schedule({ theme }) {
   const [isMock, setIsMock] = useState(false);
   const [calendarSource, setCalendarSource] = useState('cloud');
   const [calendarReason, setCalendarReason] = useState('');
-  const [showBottomBar, setShowBottomBar] = useState(true);
+  const [showBottomBar, setShowBottomBar] = useState(false);
   const [preferredCalendarProvider, setPreferredCalendarProvider] = useState(null);
+  const prevCalendarSourceRef = useRef(calendarSource);
+  const bottomBarTimerRef = useRef(null);
   
   const [showBackToday, setShowBackToday] = useState(false);
   
@@ -956,8 +958,28 @@ export default function Schedule({ theme }) {
         clearTimeout(pressTimeoutRef.current);
         pressTimeoutRef.current = null;
       }
+      if (bottomBarTimerRef.current) {
+        clearTimeout(bottomBarTimerRef.current);
+        bottomBarTimerRef.current = null;
+      }
     };
   }, []);
+
+  // 监听日历来源变化
+  useEffect(() => {
+    if (prevCalendarSourceRef.current !== calendarSource) {
+      prevCalendarSourceRef.current = calendarSource;
+      setShowBottomBar(true);
+      
+      if (bottomBarTimerRef.current) {
+        clearTimeout(bottomBarTimerRef.current);
+      }
+      bottomBarTimerRef.current = setTimeout(() => {
+        setShowBottomBar(false);
+        bottomBarTimerRef.current = null;
+      }, 5000);
+    }
+  }, [calendarSource]);
 
   // 倒计时逻辑
   useEffect(() => {
@@ -984,6 +1006,10 @@ export default function Schedule({ theme }) {
           ? 'icloud'
           : 'cloud';
     setPreferredCalendarProvider(next);
+    if (bottomBarTimerRef.current) {
+      clearTimeout(bottomBarTimerRef.current);
+      bottomBarTimerRef.current = null;
+    }
     fetchData({ provider: next, silent: true });
   };
 
@@ -1810,6 +1836,10 @@ export default function Schedule({ theme }) {
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowBottomBar(false);
+                  if (bottomBarTimerRef.current) {
+                    clearTimeout(bottomBarTimerRef.current);
+                    bottomBarTimerRef.current = null;
+                  }
                 }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
