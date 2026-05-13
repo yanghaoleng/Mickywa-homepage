@@ -2139,10 +2139,9 @@ export default function Schedule({ theme }) {
       {/* Half Modal Overlay */}
       {showHalfModal && (
         <div 
-          className={["fixed inset-0 z-[190] bg-black/30 transition-opacity duration-300",
+          className={["fixed inset-0 z-[190] transition-opacity duration-300",
             isHalfModalClosing ? "opacity-0 pointer-events-none" : "opacity-100"
           ].join(' ')}
-          onClick={closeHalfModal}
         >
           <div 
             ref={halfModalRef}
@@ -2161,10 +2160,6 @@ export default function Schedule({ theme }) {
                 ? (isDesktopModal ? 'scaleOutModal 0.25s ease-out forwards' : 'none') 
                 : (isDesktopModal ? 'scaleInModal 0.3s ease-out forwards' : 'slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards')
             }}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={!isDesktopModal ? handleHalfModalTouchStart : undefined}
-            onTouchMove={!isDesktopModal ? handleHalfModalTouchMove : undefined}
-            onTouchEnd={!isDesktopModal ? handleHalfModalTouchEnd : undefined}
           >
             {/* Drag Handle */}
             <div className="flex justify-center pt-3 pb-2">
