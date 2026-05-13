@@ -137,6 +137,44 @@ function BottomUpLettersSwap({ text, active }) {
   );
 }
 
+function FadeTextSwap({ text }) {
+  const [displayText, setDisplayText] = useState(text ?? '');
+  const [isAnimating, setIsAnimating] = useState(false);
+  const containerRef = useRef(null);
+  const tokenRef = useRef(0);
+
+  useEffect(() => {
+    if ((text ?? '') !== displayText) {
+      setIsAnimating(true);
+      const container = containerRef.current;
+      if (container) {
+        container.style.opacity = '0';
+        container.style.transform = 'translateY(-8px)';
+      }
+      
+      const token = ++tokenRef.current;
+      setTimeout(() => {
+        if (tokenRef.current !== token) return;
+        setDisplayText(text ?? '');
+        if (container) {
+          container.style.opacity = '1';
+          container.style.transform = 'translateY(0)';
+        }
+        setTimeout(() => setIsAnimating(false), 300);
+      }, 250);
+    }
+  }, [text, displayText]);
+
+  return (
+    <span 
+      ref={containerRef}
+      className="transition-all duration-300 ease-out"
+    >
+      {displayText}
+    </span>
+  );
+}
+
 function SmartRecButton({
   idx,
   recId,
@@ -268,10 +306,35 @@ export default function Schedule({ theme }) {
   const mockToastShownRef = useRef(false);
   const smartSwapTimersRef = useRef({ timeouts: [], intervals: [] });
 
+  const [showBookingBar, setShowBookingBar] = useState(false);
+  const [showHalfModal, setShowHalfModal] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState('');
+  const [bookingNote, setBookingNote] = useState('');
+  const [halfModalScrollY, setHalfModalScrollY] = useState(0);
+  const halfModalRef = useRef(null);
+  const touchStartYRef = useRef(0);
+
+  // 新增：跟踪当前焦点区域和日历中选中的可预约日期索引
+  const [focusArea, setFocusArea] = useState('smart'); // 'smart' 或 'calendar'
+  const calendarItemRefs = useRef({});
+  const [calendarItemKeys, setCalendarItemKeys] = useState([]);
+
   useEffect(() => { selectedSmartIdRef.current = selectedSmartId; }, [selectedSmartId]);
   useEffect(() => { fadingSmartIdRef.current = fadingSmartId; }, [fadingSmartId]);
   useEffect(() => { selectedSlotRef.current = selectedSlot; }, [selectedSlot]);
   useEffect(() => { showModalRef.current = showModal; }, [showModal]);
+
+  // 收集所有可预约的日期键
+  useEffect(() => {
+    const keys = [];
+    schedule.forEach(day => {
+      const freeSlots = day.slots.filter(slot => slot.status === 'free');
+      if (freeSlots.length > 0) {
+        keys.push(day.key);
+      }
+    });
+    setCalendarItemKeys(keys);
+  }, [schedule]);
 
   const triggerSlotPress = (slotId) => {
     if (!slotId) return;
@@ -896,6 +959,23 @@ export default function Schedule({ theme }) {
     }
     setSelectedSmartId(rec.id);
     triggerSlotPress(rec.id);
+    
+    // Set the selected slot from the recommendation
+    const day = schedule.find(d => d.key === rec.dayKey);
+    if (day) {
+      const slot = day.slots.find(s => s.key === rec.slotKey);
+      if (slot) {
+        const slotIdx = day.slots.indexOf(slot);
+        setSelectedSlot({
+          day,
+          slot,
+          slotIdx,
+          uniqueKey: `${day.key}-${slotIdx}`
+        });
+        setShowBookingBar(true);
+      }
+    }
+    
     requestAnimationFrame(() => {
       const el = smartRecRefs.current?.[rec.id];
       if (el) {
@@ -1072,6 +1152,7 @@ export default function Schedule({ theme }) {
     // Toggle selection if clicking the same slot
     if (selectedSlot && selectedSlot.uniqueKey === uniqueKey) {
       setSelectedSlot(null);
+      setShowBookingBar(false);
       return;
     }
 
@@ -1081,6 +1162,7 @@ export default function Schedule({ theme }) {
       slotIdx,
       uniqueKey
     });
+    setShowBookingBar(true);
   };
 
   const handleBookClick = (e) => {
@@ -1114,43 +1196,83 @@ export default function Schedule({ theme }) {
     return () => window.removeEventListener('click', handleGlobalClick);
   }, []);
 
-  useEffect(() => {
-    const isEditableTarget = (t) => {
-      const el = t instanceof HTMLElement ? t : null;
-      if (!el) return false;
-      if (el.isContentEditable) return true;
-      const tag = el.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
-      return Boolean(el.closest('[contenteditable="true"]'));
-    };
+  // 新增：选择日历中指定索引的可预约日期
+  const selectCalendarItemByIndex = (index) => {
+    if (!calendarItemKeys.length) return;
+    const normalizedIndex = ((index % calendarItemKeys.length) + calendarItemKeys.length) % calendarItemKeys.length;
+    const key = calendarItemKeys[normalizedIndex];
+    if (!key) return;
 
-    const selectSmartByIndex = (nextIndex) => {
-      const list = recommendationsRef.current || [];
-      if (!list.length) return;
-      const i = ((nextIndex % list.length) + list.length) % list.length;
-      const rec = list[i];
-      if (!rec?.id) return;
-      if (fadingSmartIdRef.current === rec.id && smartFadeTimeoutRef.current) {
-        clearTimeout(smartFadeTimeoutRef.current);
-        smartFadeTimeoutRef.current = null;
-        setFadingSmartId(null);
+    // 找到该日期并选中它
+    const day = schedule.find(d => d.key === key);
+    if (!day) return;
+
+    // 获取第一个可预约的时间段
+    const freeSlot = getAnyFreeSlot(day);
+    if (!freeSlot) return;
+
+    const slotIdx = day.slots.indexOf(freeSlot.slot);
+    
+    // 选中该时间段
+    onSlotTap(day, freeSlot.slot, slotIdx);
+
+    // 滚动到该日期并聚焦
+    requestAnimationFrame(() => {
+      const el = calendarItemRefs.current?.[key];
+      if (el) {
+        el.scrollIntoView?.({ block: 'nearest' });
+        el.focus?.({ preventScroll: true });
       }
-      setSelectedSmartId(rec.id);
-      triggerSlotPress(rec.id);
-      requestAnimationFrame(() => {
-        const el = smartRecRefs.current?.[rec.id];
-        if (el) {
-          try { el.focus({ preventScroll: true }); } catch { el.focus?.(); }
-          el.scrollIntoView?.({ block: 'nearest' });
-        }
-      });
-    };
+    });
+  };
 
+  // 新增：找到当前在日历中选中的日期索引
+  const getCurrentCalendarIndex = () => {
+    if (!selectedSlot) return -1;
+    return calendarItemKeys.indexOf(selectedSlot.day.key);
+  };
+
+  // 新增：选择智能推荐中的指定索引
+  const selectSmartByIndex = (nextIndex) => {
+    const list = recommendationsRef.current || [];
+    if (!list.length) return;
+    const i = ((nextIndex % list.length) + list.length) % list.length;
+    const rec = list[i];
+    if (!rec?.id) return;
+    if (fadingSmartIdRef.current === rec.id && smartFadeTimeoutRef.current) {
+      clearTimeout(smartFadeTimeoutRef.current);
+      smartFadeTimeoutRef.current = null;
+      setFadingSmartId(null);
+    }
+    setSelectedSmartId(rec.id);
+    triggerSlotPress(rec.id);
+    requestAnimationFrame(() => {
+      const el = smartRecRefs.current?.[rec.id];
+      if (el) {
+        try { el.focus({ preventScroll: true }); } catch { el.focus?.(); }
+        el.scrollIntoView?.({ block: 'nearest' });
+      }
+    });
+  };
+
+  // 检查是否是可编辑的目标
+  const isEditableTarget = (t) => {
+    const el = t instanceof HTMLElement ? t : null;
+    if (!el) return false;
+    if (el.isContentEditable) return true;
+    const tag = el.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    return Boolean(el.closest('[contenteditable="true"]'));
+  };
+
+  useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (showModalRef.current) return;
 
       const key = e.key;
+      
+      // ESC 键处理
       if (key === 'Escape') {
         const active = document.activeElement;
         const inScope = active === document.body || active === document.documentElement || (rootRef.current && active instanceof HTMLElement && rootRef.current.contains(active));
@@ -1177,38 +1299,120 @@ export default function Schedule({ theme }) {
             active.blur?.();
           }
         }
+        setFocusArea('smart');
         return;
       }
 
       const isTab = key === 'Tab';
       const isPrev = (isTab && e.shiftKey) || key === 'ArrowLeft' || key === 'ArrowUp';
       const isNext = (isTab && !e.shiftKey) || key === 'ArrowRight' || key === 'ArrowDown';
-      if (!isPrev && !isNext) return;
+      
+      if (!isPrev && !isNext && key !== 'Enter' && key !== ' ') return;
 
       const active = document.activeElement;
       const inScope = active === document.body || active === document.documentElement || (rootRef.current && active instanceof HTMLElement && rootRef.current.contains(active));
       if (!inScope) return;
       if (isEditableTarget(e.target)) return;
 
-      const list = recommendationsRef.current || [];
-      if (!list.length) return;
-
       e.preventDefault();
       e.stopPropagation();
 
-      const currentId = selectedSmartIdRef.current;
-      const currentIndex = currentId ? list.findIndex(r => r?.id === currentId) : -1;
-      if (currentIndex === -1) {
-        selectSmartByIndex(0);
+      // Enter 或 Space 键处理
+      if (key === 'Enter' || key === ' ') {
+        if (focusArea === 'smart' && selectedSmartIdRef.current) {
+          // 在智能推荐区域，触发推荐点击
+          const currentRec = recommendationsRef.current.find(r => r.id === selectedSmartIdRef.current);
+          if (currentRec) {
+            handleRecommendationClick(currentRec);
+          }
+        } else if (focusArea === 'calendar' && selectedSlot) {
+          // 在日历区域，打开预约模态框
+          openModal();
+        }
         return;
       }
 
-      selectSmartByIndex(isNext ? currentIndex + 1 : currentIndex - 1);
+      // 方向键处理
+      if (focusArea === 'smart') {
+        // 当前在智能推荐区域
+        const list = recommendationsRef.current || [];
+        if (!list.length) return;
+
+        const currentId = selectedSmartIdRef.current;
+        const currentIndex = currentId ? list.findIndex(r => r?.id === currentId) : -1;
+        
+        if (isNext) {
+          if (currentIndex === -1) {
+            // 第一次，选择第一个推荐
+            selectSmartByIndex(0);
+          } else if (currentIndex === list.length - 1) {
+            // 已经是最后一个推荐，向下移动到日历
+            setFocusArea('calendar');
+            if (!isCalendarExpanded) {
+              setIsCalendarCollapsing(false);
+              setIsCalendarExpanded(true);
+            }
+            // 选择第一个可预约的日期
+            if (calendarItemKeys.length > 0) {
+              selectCalendarItemByIndex(0);
+            }
+          } else {
+            // 选择下一个推荐
+            selectSmartByIndex(currentIndex + 1);
+          }
+        } else {
+          // 向上移动，在智能推荐区域内循环
+          if (currentIndex === -1) {
+            selectSmartByIndex(0);
+          } else {
+            selectSmartByIndex(currentIndex - 1);
+          }
+        }
+      } else {
+        // 当前在日历区域
+        if (!calendarItemKeys.length) return;
+        
+        const currentIndex = getCurrentCalendarIndex();
+        
+        if (isPrev && currentIndex === 0) {
+          // 在日历的第一个位置向上移动，回到智能推荐区域
+          setFocusArea('smart');
+          setSelectedSlot(null);
+          // 选择最后一个智能推荐
+          const list = recommendationsRef.current || [];
+          if (list.length > 0) {
+            selectSmartByIndex(list.length - 1);
+          }
+        } else if (key === 'ArrowLeft') {
+          // 向左移动
+          selectCalendarItemByIndex(currentIndex !== -1 ? currentIndex - 1 : 0);
+        } else if (key === 'ArrowRight') {
+          // 向右移动
+          selectCalendarItemByIndex(currentIndex !== -1 ? currentIndex + 1 : 0);
+        } else if (key === 'ArrowUp') {
+          // 向上移动（7天前）
+          selectCalendarItemByIndex(currentIndex !== -1 ? currentIndex - 7 : 0);
+        } else if (key === 'ArrowDown') {
+          // 向下移动（7天后）
+          selectCalendarItemByIndex(currentIndex !== -1 ? currentIndex + 7 : 0);
+        } else if (isTab && e.shiftKey) {
+          // Shift+Tab，回到智能推荐区域
+          setFocusArea('smart');
+          setSelectedSlot(null);
+          const list = recommendationsRef.current || [];
+          if (list.length > 0) {
+            selectSmartByIndex(list.length - 1);
+          }
+        } else if (isTab) {
+          // Tab，在日历区域内循环
+          selectCalendarItemByIndex(currentIndex !== -1 ? currentIndex + 1 : 0);
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [focusArea, isCalendarExpanded, selectedSlot, calendarItemKeys, schedule]);
 
   const openModal = () => {
     setShowModal(true);
@@ -1218,6 +1422,50 @@ export default function Schedule({ theme }) {
 
   const hideModal = () => {
     setShowModal(false);
+  };
+
+  const openHalfModal = () => {
+    setShowHalfModal(true);
+  };
+
+  const closeHalfModal = () => {
+    setShowHalfModal(false);
+  };
+
+  const copyBookingText = async () => {
+    const text = `你好，羊石坨坨，我想要在${selectedSlot?.slot?.label || ''}跟你去${selectedActivity || '玩'}。${bookingNote ? '\n' + bookingNote : ''}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('已复制');
+      closeHalfModal();
+    } catch (err) {
+      showToast('复制失败，请手动复制');
+    }
+  };
+
+  const handleHalfModalTouchStart = (e) => {
+    touchStartYRef.current = e.touches?.[0]?.clientY || 0;
+  };
+
+  const handleHalfModalTouchMove = (e) => {
+    if (!halfModalRef.current) return;
+    const currentY = e.touches?.[0]?.clientY || 0;
+    const diff = currentY - touchStartYRef.current;
+    if (diff > 0) {
+      setHalfModalScrollY(diff);
+      halfModalRef.current.style.transform = `translateY(${diff}px)`;
+    }
+  };
+
+  const handleHalfModalTouchEnd = () => {
+    if (halfModalScrollY > 100) {
+      closeHalfModal();
+    } else {
+      setHalfModalScrollY(0);
+      if (halfModalRef.current) {
+        halfModalRef.current.style.transform = '';
+      }
+    }
   };
 
   const handleMarkClick = (e) => {
@@ -1653,11 +1901,23 @@ export default function Schedule({ theme }) {
                                   <div>
                                     {isFullDay && (
                                       <div 
+                                        ref={el => {
+                                          if (el && bookingType !== 'busy') {
+                                            calendarItemRefs.current[item.key] = el;
+                                          }
+                                        }}
+                                        tabIndex={bookingType !== 'busy' ? 0 : -1}
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           playMonthSlotPress(fullDayUniqueKey, e.currentTarget);
                                           triggerSlotPress(fullDayUniqueKey);
                                           if (fullDaySlot && fullDaySlotIdx !== null) onSlotTap(item, fullDaySlot, fullDaySlotIdx);
+                                          setFocusArea('calendar');
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (bookingType !== 'busy') {
+                                            // 让全局键盘事件处理
+                                          }
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
                                           bookingType === 'busy' 
@@ -1686,11 +1946,23 @@ export default function Schedule({ theme }) {
                                     )}
                                     {!isFullDay && isDaytime && (
                                       <div 
+                                        ref={el => {
+                                          if (el && bookingType !== 'busy') {
+                                            calendarItemRefs.current[item.key] = el;
+                                          }
+                                        }}
+                                        tabIndex={bookingType !== 'busy' ? 0 : -1}
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           playMonthSlotPress(dayUniqueKey, e.currentTarget);
                                           triggerSlotPress(dayUniqueKey);
                                           if (daySlot && daySlotIdx !== null) onSlotTap(item, daySlot, daySlotIdx);
+                                          setFocusArea('calendar');
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (bookingType !== 'busy') {
+                                            // 让全局键盘事件处理
+                                          }
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
                                           "bg-[#C9F6FF] text-[#083A8E] dark:bg-[#085C8E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
@@ -1715,11 +1987,23 @@ export default function Schedule({ theme }) {
                                     )}
                                     {!isFullDay && isEvening && (
                                       <div 
+                                        ref={el => {
+                                          if (el && bookingType !== 'busy') {
+                                            calendarItemRefs.current[item.key] = el;
+                                          }
+                                        }}
+                                        tabIndex={bookingType !== 'busy' ? 0 : -1}
                                         onClick={(e) => {
                                           e.stopPropagation();
                                           playMonthSlotPress(eveningUniqueKey, e.currentTarget);
                                           triggerSlotPress(eveningUniqueKey);
                                           if (eveningSlot && eveningSlotIdx !== null) onSlotTap(item, eveningSlot, eveningSlotIdx);
+                                          setFocusArea('calendar');
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (bookingType !== 'busy') {
+                                            // 让全局键盘事件处理
+                                          }
                                         }}
                                         className={["slot-item w-full h-full px-1.5 py-2 rounded-[12px] flex flex-col items-start justify-center gap-1 transition-all duration-0 ease-out transform cursor-pointer relative",
                                           "bg-[#E1DCFF] text-[#083A8E] dark:bg-[#2A338E] dark:text-[#FFFFFF] shadow-[0_0_32px_0_rgba(255,255,255,0.80)_inset] dark:shadow-[0_0_32px_0_rgba(255,255,255,0.20)_inset]",
@@ -1783,11 +2067,148 @@ export default function Schedule({ theme }) {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#3A3A3A]/80 text-[#FCF7BD] px-6 py-3 rounded-lg text-sm z-[200] fade-in">
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#FFFFFF] text-[#3A3A3A] px-6 py-3 rounded-lg text-sm z-[200] fade-in-out shadow-lg">
           {toast.message}
         </div>
       )}
 
+      {/* Booking Action Bar */}
+      {showBookingBar && selectedSlot && (
+        <div 
+          className="fixed left-1/2 -translate-x-1/2 bottom-6 z-[180] w-full max-w-[440px] px-5 pointer-events-none"
+          style={{
+            animation: 'slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+          }}
+        >
+          <div 
+            className="bottom-bar pointer-events-auto bg-[#FCF7BD] dark:bg-[#3A3A3A] rounded-[16px] px-4 py-3 flex items-center justify-between gap-3 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="min-w-0 flex-1">
+              <div className="text-[14px] font-medium text-[#3A3A3A] dark:text-[#FFFFFF] truncate">
+                {selectedSlot.day.date.getMonth() + 1}月{selectedSlot.day.date.getDate()}日 {selectedSlot.slot.label}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                className="px-3 py-1.5 rounded-[10px] text-[12px] font-medium text-[#083A8E] dark:text-[#D3F1FF] bg-[#D3F1FF] dark:bg-[#083A8E]/30 hover:opacity-80 active:scale-95 transition-all"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openHalfModal();
+                }}
+              >
+                展开
+              </button>
+              <button
+                type="button"
+                className="px-3 py-1.5 rounded-[10px] text-[12px] font-medium text-[#FFFFFF] bg-[#083A8E] dark:bg-[#083A8E] hover:opacity-80 active:scale-95 transition-all"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  copyBookingText();
+                }}
+              >
+                复制
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Half Modal Overlay */}
+      {showHalfModal && (
+        <div 
+          className="fixed inset-0 z-[190] bg-black/30"
+          onClick={closeHalfModal}
+          style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
+        >
+          <div 
+            ref={halfModalRef}
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-[#FCF7BD] dark:bg-[#3A3A3A] rounded-t-[24px] overflow-hidden"
+            style={{ 
+              maxHeight: 'calc(100vh - 44px)',
+              animation: 'slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleHalfModalTouchStart}
+            onTouchMove={handleHalfModalTouchMove}
+            onTouchEnd={handleHalfModalTouchEnd}
+          >
+            {/* Drag Handle */}
+            <div className="flex justify-center pt-3 pb-2">
+              <div className="w-10 h-1 bg-[#3A3A3A]/20 dark:bg-[#FFFFFF]/20 rounded-full" />
+            </div>
+            
+            {/* Title */}
+            <div className="px-5 pb-4">
+              <h2 className="text-lg font-semibold text-[#3A3A3A] dark:text-[#FFFFFF]">
+                  {selectedSlot?.day.date.getMonth() + 1}月{selectedSlot?.day.date.getDate()}日 {selectedSlot?.slot.label} 
+                  <BottomUpLettersSwap text={selectedActivity} active={true} />
+                </h2>
+            </div>
+            
+            {/* Content */}
+            <div className="px-5 pb-8">
+              {/* Activity Selection */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-[#3A3A3A]/70 dark:text-[#FFFFFF]/70 mb-3">选择游玩项目</h3>
+                <div className="flex flex-col gap-2">
+                  {ENTERTAINMENT_ACTIVITIES_BY_TIME.daytime.slice(0, 5).map((activity, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className={[
+                        "px-4 py-3 rounded-[12px] text-[14px] font-medium transition-all active:scale-95 relative overflow-hidden",
+                        selectedActivity === activity 
+                          ? "text-[#3A3A3A] dark:text-[#FFFFFF]" 
+                          : "bg-[#E5E5E5] dark:bg-[#444444] text-[#3A3A3A] dark:text-[#FFFFFF]"
+                      ].join(' ')}
+                      onClick={() => setSelectedActivity(activity)}
+                    >
+                      {selectedActivity === activity && (
+                        <div className="absolute inset-0 animate-color-change rounded-[12px]" />
+                      )}
+                      <span className="relative z-10">{activity}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Booking Note */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-[#3A3A3A]/70 dark:text-[#FFFFFF]/70 mb-3">预约文案</h3>
+                <textarea
+                  className="w-full px-4 py-3 rounded-[12px] text-[14px] text-[#3A3A3A] dark:text-[#FFFFFF] bg-[#FFFFFF] dark:bg-[#333333] border border-[#3A3A3A]/10 dark:border-[#FFFFFF]/10 resize-none focus:outline-none focus:border-[#083A8E] dark:focus:border-[#D3F1FF] transition-colors"
+                  rows={4}
+                  placeholder={`你好，羊石坨坨，我想要在${selectedSlot?.slot?.label || '晚上'}跟你去${selectedActivity || '玩'}。`}
+                  value={bookingNote}
+                  onChange={(e) => setBookingNote(e.target.value)}
+                />
+              </div>
+              
+              {/* Bottom Buttons */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="flex-1 px-4 py-3 rounded-[12px] text-[14px] font-medium text-[#3A3A3A] dark:text-[#FFFFFF] bg-[#3A3A3A]/10 dark:bg-[#FFFFFF]/10 hover:opacity-80 active:scale-95 transition-all"
+                  onClick={closeHalfModal}
+                >
+                  收起
+                </button>
+                <button
+                  type="button"
+                  className="flex-1 px-4 py-3 rounded-[12px] text-[14px] font-medium text-[#FFFFFF] bg-[#083A8E] dark:bg-[#083A8E] hover:opacity-80 active:scale-95 transition-all"
+                  onClick={copyBookingText}
+                >
+                  复制
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Existing Bottom Bar for Calendar Source */}
       {!loading && !error && showBottomBar && (
         <div className="fixed left-1/2 -translate-x-1/2 bottom-6 z-[180] w-full max-w-[440px] px-5 pointer-events-none">
           <div className="bottom-bar pointer-events-auto bg-[#3A3A3A]/55 dark:bg-[#3A3A3A]/55 text-[#FFFFFF]/55 rounded-full px-4 py-2 flex items-center justify-between gap-3 backdrop-blur-sm">
