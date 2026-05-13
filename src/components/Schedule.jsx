@@ -2092,23 +2092,13 @@ export default function Schedule({ theme }) {
             <div className="flex items-center gap-2 shrink-0">
               <button
                 type="button"
-                className="px-3 py-1.5 rounded-[10px] text-[12px] font-medium text-[#083A8E] dark:text-[#D3F1FF] bg-[#D3F1FF] dark:bg-[#083A8E]/30 hover:opacity-80 active:scale-95 transition-all"
+                className="px-3 py-1.5 rounded-[10px] text-[12px] font-medium text-[#3A3A3A] dark:text-[#FFFFFF] bg-[#E5E5E5] dark:bg-[#444444] hover:opacity-80 active:scale-95 transition-all"
                 onClick={(e) => {
                   e.stopPropagation();
                   openHalfModal();
                 }}
               >
-                展开
-              </button>
-              <button
-                type="button"
-                className="px-3 py-1.5 rounded-[10px] text-[12px] font-medium text-[#FFFFFF] bg-[#083A8E] dark:bg-[#083A8E] hover:opacity-80 active:scale-95 transition-all"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  copyBookingText();
-                }}
-              >
-                复制
+                下一步
               </button>
             </div>
           </div>
@@ -2160,7 +2150,7 @@ export default function Schedule({ theme }) {
                       className={[
                         "px-4 py-3 rounded-[12px] text-[14px] font-medium transition-all active:scale-95 relative overflow-hidden",
                         selectedActivity === activity 
-                          ? "text-[#3A3A3A] dark:text-[#FFFFFF]" 
+                          ? "text-[#083A8E] dark:text-[#D3F1FF]" 
                           : "bg-[#E5E5E5] dark:bg-[#444444] text-[#3A3A3A] dark:text-[#FFFFFF]"
                       ].join(' ')}
                       onClick={() => setSelectedActivity(activity)}
