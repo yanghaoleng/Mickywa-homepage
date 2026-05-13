@@ -308,6 +308,7 @@ export default function Schedule({ theme }) {
 
   const [showBookingBar, setShowBookingBar] = useState(false);
   const [showHalfModal, setShowHalfModal] = useState(false);
+  const [isHalfModalClosing, setIsHalfModalClosing] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState('');
   const [bookingNote, setBookingNote] = useState('');
   const [halfModalScrollY, setHalfModalScrollY] = useState(0);
@@ -1429,7 +1430,11 @@ export default function Schedule({ theme }) {
   };
 
   const closeHalfModal = () => {
-    setShowHalfModal(false);
+    setIsHalfModalClosing(true);
+    setTimeout(() => {
+      setShowHalfModal(false);
+      setIsHalfModalClosing(false);
+    }, 300);
   };
 
   const copyBookingText = async () => {
@@ -2108,16 +2113,19 @@ export default function Schedule({ theme }) {
       {/* Half Modal Overlay */}
       {showHalfModal && (
         <div 
-          className="fixed inset-0 z-[190] bg-black/30"
+          className={["fixed inset-0 z-[190] bg-black/30 transition-opacity duration-300",
+            isHalfModalClosing ? "opacity-0 pointer-events-none" : "opacity-100"
+          ].join(' ')}
           onClick={closeHalfModal}
-          style={{ animation: 'fadeIn 0.2s ease-out forwards' }}
         >
           <div 
             ref={halfModalRef}
-            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-[#FCF7BD] dark:bg-[#3A3A3A] rounded-t-[24px] overflow-hidden"
+            className={["absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-[#FFFFFF] dark:bg-[#3A3A3A] rounded-t-[24px] overflow-hidden shadow-xl transition-transform duration-300 ease-out",
+              isHalfModalClosing ? "translate-y-full" : "translate-y-0"
+            ].join(' ')}
             style={{ 
               maxHeight: 'calc(100vh - 44px)',
-              animation: 'slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+              animation: isHalfModalClosing ? 'none' : 'slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
             }}
             onClick={(e) => e.stopPropagation()}
             onTouchStart={handleHalfModalTouchStart}
