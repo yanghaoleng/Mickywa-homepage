@@ -1356,8 +1356,8 @@ export default function Schedule({ theme }) {
             handleRecommendationClick(currentRec);
           }
         } else if (focusArea === 'calendar' && selectedSlot) {
-          // 在日历区域，打开预约模态框
-          openModal();
+          // 在日历区域，打开预约半弹窗
+          openHalfModal();
         }
         return;
       }
@@ -2190,7 +2190,7 @@ export default function Schedule({ theme }) {
                       className={[
                         "px-4 py-3 rounded-[12px] text-[14px] font-medium transition-all active:scale-95 relative overflow-hidden",
                         selectedActivity === activity 
-                          ? "text-[#083A8E] dark:text-[#D3F1FF]" 
+                          ? "text-[#083A8E] dark:text-[#083A8E]" 
                           : "bg-[#E5E5E5] dark:bg-[#444444] text-[#3A3A3A] dark:text-[#FFFFFF]"
                       ].join(' ')}
                       onClick={() => setSelectedActivity(activity)}
