@@ -309,6 +309,8 @@ export default function Schedule({ theme }) {
   const [showBookingBar, setShowBookingBar] = useState(false);
   const [showHalfModal, setShowHalfModal] = useState(false);
   const [isHalfModalClosing, setIsHalfModalClosing] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+  const [isDesktopModal, setIsDesktopModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState('');
   const [bookingNote, setBookingNote] = useState('');
   const [halfModalScrollY, setHalfModalScrollY] = useState(0);
@@ -1267,12 +1269,39 @@ export default function Schedule({ theme }) {
   };
 
   useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      setIsDesktopModal(window.innerWidth > 414);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (showModalRef.current) return;
 
       const key = e.key;
       
+      // 半弹窗键盘事件处理
+      if (showHalfModal) {
+        if (key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          closeHalfModal();
+          return;
+        }
+        if (key === 'Enter' && !isEditableTarget(e.target)) {
+          e.preventDefault();
+          e.stopPropagation();
+          copyBookingText();
+          return;
+        }
+      }
+
       // ESC 键处理
       if (key === 'Escape') {
         const active = document.activeElement;
@@ -2086,8 +2115,11 @@ export default function Schedule({ theme }) {
           }}
         >
           <div 
-            className="bottom-bar pointer-events-auto bg-[#FCF7BD] dark:bg-[#3A3A3A] rounded-[16px] px-4 py-3 flex items-center justify-between gap-3 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
+            className="bottom-bar pointer-events-auto bg-[#FFFFFF] dark:bg-[#3A3A3A] rounded-[16px] px-4 py-3 flex items-center justify-between gap-3 shadow-lg cursor-pointer hover:opacity-90 active:scale-98 transition-all"
+            onClick={(e) => {
+              e.stopPropagation();
+              openHalfModal();
+            }}
           >
             <div className="min-w-0 flex-1">
               <div className="text-[14px] font-medium text-[#3A3A3A] dark:text-[#FFFFFF] truncate">
@@ -2095,16 +2127,10 @@ export default function Schedule({ theme }) {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                type="button"
-                className="px-3 py-1.5 rounded-[10px] text-[12px] font-medium text-[#3A3A3A] dark:text-[#FFFFFF] bg-[#E5E5E5] dark:bg-[#444444] hover:opacity-80 active:scale-95 transition-all"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openHalfModal();
-                }}
-              >
-                下一步
-              </button>
+              <span className="text-[12px] font-medium text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60">展开</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60">
+                <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </div>
           </div>
         </div>
@@ -2120,17 +2146,23 @@ export default function Schedule({ theme }) {
         >
           <div 
             ref={halfModalRef}
-            className={["absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] bg-[#FFFFFF] dark:bg-[#3A3A3A] rounded-t-[24px] overflow-hidden shadow-xl transition-transform duration-300 ease-out",
-              isHalfModalClosing ? "translate-y-full" : "translate-y-0"
+            className={[
+              "bg-[#FFFFFF] dark:bg-[#3A3A3A] rounded-[24px] overflow-hidden shadow-xl transition-all duration-300 ease-out",
+              isDesktopModal 
+                ? "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[400px] max-h-[80vh]" 
+                : "absolute bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[440px] rounded-t-[24px]",
+              isHalfModalClosing 
+                ? (isDesktopModal ? "opacity-0 scale-95" : "translate-y-full") 
+                : (isDesktopModal ? "opacity-100 scale-100" : "translate-y-0")
             ].join(' ')}
             style={{ 
-              maxHeight: 'calc(100vh - 44px)',
-              animation: isHalfModalClosing ? 'none' : 'slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+              maxHeight: isDesktopModal ? '80vh' : 'calc(100vh - 44px)',
+              animation: isHalfModalClosing ? 'none' : (isDesktopModal ? 'scaleInModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' : 'slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards')
             }}
             onClick={(e) => e.stopPropagation()}
-            onTouchStart={handleHalfModalTouchStart}
-            onTouchMove={handleHalfModalTouchMove}
-            onTouchEnd={handleHalfModalTouchEnd}
+            onTouchStart={!isDesktopModal ? handleHalfModalTouchStart : undefined}
+            onTouchMove={!isDesktopModal ? handleHalfModalTouchMove : undefined}
+            onTouchEnd={!isDesktopModal ? handleHalfModalTouchEnd : undefined}
           >
             {/* Drag Handle */}
             <div className="flex justify-center pt-3 pb-2">
