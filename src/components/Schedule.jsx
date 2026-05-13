@@ -1349,15 +1349,15 @@ export default function Schedule({ theme }) {
 
       // Enter 或 Space 键处理
       if (key === 'Enter' || key === ' ') {
-        if (focusArea === 'smart' && selectedSmartIdRef.current) {
+        if (selectedSlotRef.current && !showHalfModal) {
+          // 有选中但半弹窗未打开时，打开半弹窗
+          openHalfModal();
+        } else if (focusArea === 'smart' && selectedSmartIdRef.current) {
           // 在智能推荐区域，触发推荐点击
           const currentRec = recommendationsRef.current.find(r => r.id === selectedSmartIdRef.current);
           if (currentRec) {
             handleRecommendationClick(currentRec);
           }
-        } else if (focusArea === 'calendar' && selectedSlot) {
-          // 在日历区域，打开预约半弹窗
-          openHalfModal();
         }
         return;
       }
@@ -2157,7 +2157,9 @@ export default function Schedule({ theme }) {
             ].join(' ')}
             style={{ 
               maxHeight: isDesktopModal ? '80vh' : 'calc(100vh - 44px)',
-              animation: isHalfModalClosing ? 'none' : (isDesktopModal ? 'scaleInModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards' : 'slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards')
+              animation: isHalfModalClosing 
+                ? (isDesktopModal ? 'scaleOutModal 0.25s ease-out forwards' : 'none') 
+                : (isDesktopModal ? 'scaleInModal 0.3s ease-out forwards' : 'slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards')
             }}
             onClick={(e) => e.stopPropagation()}
             onTouchStart={!isDesktopModal ? handleHalfModalTouchStart : undefined}
