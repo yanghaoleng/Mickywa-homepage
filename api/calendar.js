@@ -133,12 +133,15 @@ function validateType(type) {
 }
 
 async function fetchUpstreamICS(url) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 4500)
   const response = await fetch(url, {
     redirect: 'follow',
     headers: {
       Accept: 'text/calendar,text/plain;q=0.9,*/*;q=0.8',
     },
-  })
+    signal: controller.signal,
+  }).finally(() => clearTimeout(timeoutId))
 
   if (!response.ok) {
     throw new Error(`Upstream fetch failed: ${response.status}`)

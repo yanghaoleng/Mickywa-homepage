@@ -251,6 +251,9 @@ export default function Schedule({ theme }) {
   const [calendarReason, setCalendarReason] = useState('');
   const baseContentReadyAtRef = useRef(typeof performance !== 'undefined' ? performance.now() : Date.now());
   const [cloudFetchDeltaMs, setCloudFetchDeltaMs] = useState(null);
+  const [slowFetch, setSlowFetch] = useState(false);
+  const fetchSeqRef = useRef(0);
+  const fetchTimeoutRef = useRef(null);
   
   const [showBackToday, setShowBackToday] = useState(false);
   
@@ -986,7 +989,8 @@ export default function Schedule({ theme }) {
     });
   };
 
-  const fetchData = async ({ isAuto = false, silent = false, backgroundOnly = false } = {}) => {
+  const fetchData = async ({ isAuto = false, silent = false, backgroundOnly = false, forceRefresh = false } = {}) => {
+    const seq = ++fetchSeqRef.current;
     const maybeRecordCloudFetch = (data) => {
       if (!data || data.isMock) return;
       if ((data.calendarSource || 'cloud') !== 'cloud') return;
@@ -995,6 +999,16 @@ export default function Schedule({ theme }) {
       const delta = performance.now() - baseContentReadyAtRef.current;
       setCloudFetchDeltaMs(delta);
     };
+
+    if (!isAuto && !silent && !backgroundOnly) {
+      setSlowFetch(false);
+      if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
+      fetchTimeoutRef.current = setTimeout(() => {
+        if (fetchSeqRef.current !== seq) return;
+        setSlowFetch(true);
+        setCountdown(c => (c > 0 ? c : 3));
+      }, 5000);
+    }
     
     // 先尝试同步读取缓存，快速显示
     let hasCache = false;
@@ -1054,10 +1068,8 @@ export default function Schedule({ theme }) {
     
     try {
       // 后台刷新数据，forceRefresh 只有手动刷新时才设为 true
-      const res = await getCalendarsWithCache({ 
-        forceMock: false, 
-        forceRefresh: false
-      });
+      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh });
+      if (fetchSeqRef.current !== seq) return;
       
       const now = new Date();
       const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -1077,6 +1089,13 @@ export default function Schedule({ theme }) {
       maybeRecordCloudFetch(res);
       if (!isAuto && !silent && !hasCache) setLoading(false);
       if (!silent) setError(false);
+      if (fetchSeqRef.current === seq) {
+        if (fetchTimeoutRef.current) {
+          clearTimeout(fetchTimeoutRef.current);
+          fetchTimeoutRef.current = null;
+        }
+        setSlowFetch(false);
+      }
     } catch (e) {
       console.error(e);
       if (!isAuto && !silent && !hasCache) {
@@ -1086,6 +1105,12 @@ export default function Schedule({ theme }) {
         // 有缓存但刷新失败，不显示 error 状态
       } else {
         setToast({ message: '刷新失败，请稍后重试', type: 'error' });
+      }
+      if (fetchSeqRef.current === seq) {
+        if (fetchTimeoutRef.current) {
+          clearTimeout(fetchTimeoutRef.current);
+          fetchTimeoutRef.current = null;
+        }
       }
     }
   };
@@ -1109,6 +1134,10 @@ export default function Schedule({ theme }) {
         clearTimeout(pressTimeoutRef.current);
         pressTimeoutRef.current = null;
       }
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+        fetchTimeoutRef.current = null;
+      }
     };
   }, []);
 
@@ -1119,7 +1148,7 @@ export default function Schedule({ theme }) {
         setCountdown(prev => {
           if (prev <= 1) {
             clearInterval(timer);
-            fetchData();
+            fetchData({ forceRefresh: true });
             return 0;
           }
           return prev - 1;
@@ -1733,6 +1762,24 @@ export default function Schedule({ theme }) {
           <div className="h-80 flex flex-col items-center justify-center">
             <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
             <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm">加载中...</span>
+            {slowFetch && (
+              <div className="mt-6 flex flex-col items-center gap-3">
+                <span className="dark:text-[#FFFFFF]/55 text-[#3A3A3A]/55 text-xs">
+                  {countdown > 0 ? `云函数拉取超过 5 秒，${countdown}s 后自动重试` : '云函数拉取超过 5 秒，请手动刷新'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCountdown(0);
+                    setSlowFetch(false);
+                    fetchData({ forceRefresh: true });
+                  }}
+                  className="px-8 py-2 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs"
+                >
+                  立即刷新
+                </button>
+              </div>
+            )}
           </div>
         )}
 

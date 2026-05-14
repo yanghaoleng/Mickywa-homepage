@@ -312,11 +312,26 @@ function fetchTextWithTimeout(url, { timeoutMs = 12000 } = {}) {
     .finally(() => clearTimeout(timeoutId));
 }
 
+function fetchJsonWithTimeout(url, { timeoutMs = 12000 } = {}) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  return fetch(url, { signal: controller.signal })
+    .then(async (res) => {
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
+      }
+      return json;
+    })
+    .finally(() => clearTimeout(timeoutId));
+}
+
 async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } = {}) {
   const safeProvider = provider === 'cloud' ? 'cloud' : 'cloud';
   const t = forceRefresh ? `&t=${Date.now()}` : '';
   const url = `/api/calendar?type=work&format=ics&provider=${encodeURIComponent(safeProvider)}${t}`;
-  const { text, headers } = await fetchTextWithTimeout(url, { timeoutMs: 12000 });
+  const { text, headers } = await fetchTextWithTimeout(url, { timeoutMs: 5000 });
 
   const fetchedAtMsRaw = headers?.get?.('x-calendar-fetched-at') || headers?.get?.('X-Calendar-Fetched-At') || '';
   const fetchedAtMs = Number(fetchedAtMsRaw);
@@ -333,9 +348,7 @@ async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } 
 async function fetchHolidayCnYear(year) {
   const url = `${HOLIDAY_CN_BASE_URL}/${year}.json`;
   try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`holiday-cn fetch failed: ${res.status}`);
-    return await res.json();
+    return await fetchJsonWithTimeout(url, { timeoutMs: 5000 });
   } catch (_) {
     return { days: [] };
   }
@@ -441,10 +454,16 @@ async function refreshInBackground({ forceRefresh } = {}) {
     const today = getShanghaiTodayComponents();
     const years = [today.y, today.y + 1];
 
-    const [holidayCnYears, workResult] = await Promise.all([
-      Promise.all(years.map(y => getHolidayCnYearWithCache(y))),
-      fetchWorkCalendarFromProvider('cloud', { forceRefresh })
-    ]);
+    const holidayCnYearsPromise = Promise.all(years.map(y => getHolidayCnYearWithCache(y)));
+
+    let workResult;
+    try {
+      workResult = await fetchWorkCalendarFromProvider('cloud', { forceRefresh });
+    } catch (e) {
+      workResult = await fetchWorkCalendarFromProvider('cloud', { forceRefresh: true });
+    }
+
+    const holidayCnYears = await holidayCnYearsPromise;
 
     const workEvents = parseICS(workResult.text);
     const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
