@@ -163,7 +163,7 @@ export default async function handler(req, res) {
     return jsonResponse(res, 400, { error: 'Missing or invalid type parameter' })
   }
 
-  const provider = String(req.query?.provider || '').toLowerCase() || 'cloud'
+  const provider = 'cloud'
 
   const normalizeWebcalUrl = (input) => {
     const value = String(input || '').trim()
@@ -182,15 +182,7 @@ export default async function handler(req, res) {
     holiday: getEnv('HOLIDAY_CAL_URL', 'https://calendars.icloud.com/holidays/cn_zh.ics/'),
   }
 
-  const icloudDefaults = {
-    work: 'https://p213-caldav.icloud.com.cn/published/2/MTY5NDg3MTEzOTE2OTQ4N5k-tqjsWyylfFENPuKvr4kCrEPhpo4LCnnzMME290vRvHnxk_OlHsDp1-MTwmnU8ZLtkXUWm8mXulM4Zo6QCp8',
-    holiday: 'https://calendars.icloud.com/holidays/cn_zh.ics/',
-  }
-
-  const targetUrl =
-    provider === 'icloud'
-      ? icloudDefaults[type]
-      : normalizeWebcalUrl(upstreamMap[type])
+  const targetUrl = normalizeWebcalUrl(upstreamMap[type])
   if (!targetUrl) {
     return jsonResponse(res, 500, { error: 'Calendar source is not configured' })
   }
@@ -212,7 +204,6 @@ export default async function handler(req, res) {
     res.setHeader('ETag', etag)
     res.setHeader('X-Calendar-Source', type)
     res.setHeader('X-Calendar-Upstream', targetUrl)
-    res.setHeader('X-Calendar-Provider', provider)
     res.setHeader('X-Calendar-Fetched-At', String(fetchedAtMs))
 
     if (ifNoneMatch && ifNoneMatch === etag) {
@@ -230,7 +221,6 @@ export default async function handler(req, res) {
 
     return jsonResponse(res, 200, {
       source: type,
-      provider,
       upstream: targetUrl,
       fetchedAt,
       fetchedAtMs,
@@ -242,7 +232,6 @@ export default async function handler(req, res) {
     return jsonResponse(res, 500, {
       error: 'Failed to fetch calendar',
       source: type,
-      provider,
     })
   }
 }

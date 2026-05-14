@@ -249,10 +249,8 @@ export default function Schedule({ theme }) {
   const [isMock, setIsMock] = useState(false);
   const [calendarSource, setCalendarSource] = useState('cloud');
   const [calendarReason, setCalendarReason] = useState('');
-  const [showBottomBar, setShowBottomBar] = useState(false);
-  const [preferredCalendarProvider, setPreferredCalendarProvider] = useState(null);
-  const prevCalendarSourceRef = useRef(calendarSource);
-  const bottomBarTimerRef = useRef(null);
+  const baseContentReadyAtRef = useRef(typeof performance !== 'undefined' ? performance.now() : Date.now());
+  const [cloudFetchDeltaMs, setCloudFetchDeltaMs] = useState(null);
   
   const [showBackToday, setShowBackToday] = useState(false);
   
@@ -988,8 +986,15 @@ export default function Schedule({ theme }) {
     });
   };
 
-  const fetchData = async ({ isAuto = false, provider, silent = false, backgroundOnly = false } = {}) => {
-    const providerToUse = provider ?? preferredCalendarProvider ?? undefined;
+  const fetchData = async ({ isAuto = false, silent = false, backgroundOnly = false } = {}) => {
+    const maybeRecordCloudFetch = (data) => {
+      if (!data || data.isMock) return;
+      if ((data.calendarSource || 'cloud') !== 'cloud') return;
+      if (cloudFetchDeltaMs !== null) return;
+      if (typeof baseContentReadyAtRef.current !== 'number') return;
+      const delta = performance.now() - baseContentReadyAtRef.current;
+      setCloudFetchDeltaMs(delta);
+    };
     
     // 先尝试同步读取缓存，快速显示
     let hasCache = false;
@@ -999,47 +1004,41 @@ export default function Schedule({ theme }) {
         if (cachedStr) {
           const cached = JSON.parse(cachedStr);
           if (cached && cached.data) {
-            if (!provider || cached?.data?.calendarSource === provider) {
-              // 直接使用缓存，不等待后台刷新
-              const hydrateCachedData = (data) => {
-                if (!data || !data.schedule) return data;
-                data.schedule.forEach(day => {
-                  if (typeof day.date === 'string') {
-                    day.date = new Date(day.date);
-                  }
-                });
-                return data;
-              };
-              
-              const res = hydrateCachedData(cached.data);
-              const now = new Date();
-              const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-              const endExclusive = new Date(startOfToday);
-              endExclusive.setDate(endExclusive.getDate() + 22);
-
-              const nextDays = (res.schedule || [])
-                .filter(day => day?.date instanceof Date || typeof day.date === 'string')
-                .map(day => {
-                  if (typeof day.date === 'string') {
-                    day.date = new Date(day.date);
-                  }
-                  return day;
-                })
-                .filter(day => day.date >= startOfToday && day.date < endExclusive)
-                .sort((a, b) => a.date - b.date);
-
-              setSchedule(nextDays);
-              setRecNonce(n => n + 1);
-              setIsMock(!!res.isMock);
-              setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
-              setCalendarReason(res.calendarReason || '');
-              if (!res?.isMock && (provider || preferredCalendarProvider)) {
-                if (res.calendarSource === 'cloud' || res.calendarSource === 'icloud') {
-                  setPreferredCalendarProvider(res.calendarSource);
+            // 直接使用缓存，不等待后台刷新
+            const hydrateCachedData = (data) => {
+              if (!data || !data.schedule) return data;
+              data.schedule.forEach(day => {
+                if (typeof day.date === 'string') {
+                  day.date = new Date(day.date);
                 }
-              }
-              hasCache = true;
-            }
+              });
+              return data;
+            };
+            
+            const res = hydrateCachedData(cached.data);
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const endExclusive = new Date(startOfToday);
+            endExclusive.setDate(endExclusive.getDate() + 22);
+
+            const nextDays = (res.schedule || [])
+              .filter(day => day?.date instanceof Date || typeof day.date === 'string')
+              .map(day => {
+                if (typeof day.date === 'string') {
+                  day.date = new Date(day.date);
+                }
+                return day;
+              })
+              .filter(day => day.date >= startOfToday && day.date < endExclusive)
+              .sort((a, b) => a.date - b.date);
+
+            setSchedule(nextDays);
+            setRecNonce(n => n + 1);
+            setIsMock(!!res.isMock);
+            setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
+            setCalendarReason(res.calendarReason || '');
+            maybeRecordCloudFetch(res);
+            hasCache = true;
           }
         }
       } catch (e) {
@@ -1057,8 +1056,7 @@ export default function Schedule({ theme }) {
       // 后台刷新数据，forceRefresh 只有手动刷新时才设为 true
       const res = await getCalendarsWithCache({ 
         forceMock: false, 
-        forceRefresh: !isAuto && !hasCache, // 只有没缓存的手动刷新才强制刷新
-        provider: providerToUse 
+        forceRefresh: false
       });
       
       const now = new Date();
@@ -1076,11 +1074,7 @@ export default function Schedule({ theme }) {
       setIsMock(!!res.isMock);
       setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
       setCalendarReason(res.calendarReason || '');
-      if (!res?.isMock && (provider || preferredCalendarProvider)) {
-        if (res.calendarSource === 'cloud' || res.calendarSource === 'icloud') {
-          setPreferredCalendarProvider(res.calendarSource);
-        }
-      }
+      maybeRecordCloudFetch(res);
       if (!isAuto && !silent && !hasCache) setLoading(false);
       if (!silent) setError(false);
     } catch (e) {
@@ -1091,10 +1085,17 @@ export default function Schedule({ theme }) {
       } else if (!isAuto && !silent) {
         // 有缓存但刷新失败，不显示 error 状态
       } else {
-        setToast({ message: '切换来源失败，请稍后重试', type: 'error' });
+        setToast({ message: '刷新失败，请稍后重试', type: 'error' });
       }
     }
   };
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => {
+      baseContentReadyAtRef.current = performance.now();
+    });
+    return () => cancelAnimationFrame(raf);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -1108,28 +1109,8 @@ export default function Schedule({ theme }) {
         clearTimeout(pressTimeoutRef.current);
         pressTimeoutRef.current = null;
       }
-      if (bottomBarTimerRef.current) {
-        clearTimeout(bottomBarTimerRef.current);
-        bottomBarTimerRef.current = null;
-      }
     };
   }, []);
-
-  // 监听日历来源变化
-  useEffect(() => {
-    if (prevCalendarSourceRef.current !== calendarSource) {
-      prevCalendarSourceRef.current = calendarSource;
-      setShowBottomBar(true);
-      
-      if (bottomBarTimerRef.current) {
-        clearTimeout(bottomBarTimerRef.current);
-      }
-      bottomBarTimerRef.current = setTimeout(() => {
-        setShowBottomBar(false);
-        bottomBarTimerRef.current = null;
-      }, 5000);
-    }
-  }, [calendarSource]);
 
   // 倒计时逻辑
   useEffect(() => {
@@ -1148,20 +1129,6 @@ export default function Schedule({ theme }) {
     }
   }, [countdown]);
 
-  const toggleCalendarProvider = () => {
-    const next =
-      calendarSource === 'icloud'
-        ? 'cloud'
-        : calendarSource === 'cloud'
-          ? 'icloud'
-          : 'cloud';
-    setPreferredCalendarProvider(next);
-    if (bottomBarTimerRef.current) {
-      clearTimeout(bottomBarTimerRef.current);
-      bottomBarTimerRef.current = null;
-    }
-    fetchData({ provider: next, silent: true });
-  };
 
   // Update booking text when form or slot changes
   useEffect(() => {
@@ -2302,71 +2269,12 @@ export default function Schedule({ theme }) {
         </div>
       )}
 
-      {/* Existing Bottom Bar for Calendar Source */}
-      {!loading && !error && showBottomBar && (
-        <div className="fixed left-1/2 -translate-x-1/2 bottom-6 z-[180] w-full max-w-[440px] px-5 pointer-events-none">
-          <div className="bottom-bar pointer-events-auto bg-[#3A3A3A]/55 dark:bg-[#3A3A3A]/55 text-[#FFFFFF]/55 rounded-full px-4 py-2 flex items-center justify-between gap-3 backdrop-blur-sm">
-            <div
-              className="min-w-0 text-[12px] leading-none truncate"
-              title={calendarReason || ''}
-            >
-              {calendarSource === 'icloud'
-                ? '来源：iCloud'
-                : calendarSource === 'cloud'
-                  ? '来源：云函数'
-                  : '来源：模拟'}
-            </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                className="p-1 rounded-full hover:bg-[#FFFFFF]/10 active:bg-[#FFFFFF]/15 text-[#FFFFFF]/55 hover:text-[#FFFFFF]/70"
-                aria-label="切换来源"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleCalendarProvider();
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M20 7h-5m5 0-2-2m2 2-2 2M4 17h5m-5 0 2-2m-2 2 2 2"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M7 7a8 8 0 0 1 13 3m-3 7a8 8 0 0 1-13-3"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    opacity="0.65"
-                  />
-                </svg>
-              </button>
-              <button
-                type="button"
-                className="p-1 rounded-full hover:bg-[#FFFFFF]/10 active:bg-[#FFFFFF]/15 text-[#FFFFFF]/55 hover:text-[#FFFFFF]/70"
-                aria-label="关闭状态条"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowBottomBar(false);
-                  if (bottomBarTimerRef.current) {
-                    clearTimeout(bottomBarTimerRef.current);
-                    bottomBarTimerRef.current = null;
-                  }
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                  <path
-                    d="M7 7l10 10M17 7 7 17"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </button>
-            </div>
+      {!loading && !error && (
+        <div className="fixed left-0 right-0 bottom-3 z-[160] px-4 pointer-events-none">
+          <div className="max-w-[440px] mx-auto text-center text-[11px] text-[#3A3A3A]/45 dark:text-[#FFFFFF]/45 leading-none">
+            {cloudFetchDeltaMs === null
+              ? '云函数拉取耗时：-- ms'
+              : `云函数拉取耗时：${cloudFetchDeltaMs.toFixed(3)} ms`}
           </div>
         </div>
       )}

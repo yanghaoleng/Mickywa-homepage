@@ -313,9 +313,10 @@ function fetchTextWithTimeout(url, { timeoutMs = 12000 } = {}) {
 }
 
 async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } = {}) {
+  const safeProvider = provider === 'cloud' ? 'cloud' : 'cloud';
   const t = forceRefresh ? `&t=${Date.now()}` : '';
-  const url = `/api/calendar?type=work&format=ics&provider=${encodeURIComponent(provider)}${t}`;
-  const { text, headers } = await fetchTextWithTimeout(url, { timeoutMs: provider === 'icloud' ? 20000 : 15000 });
+  const url = `/api/calendar?type=work&format=ics&provider=${encodeURIComponent(safeProvider)}${t}`;
+  const { text, headers } = await fetchTextWithTimeout(url, { timeoutMs: 12000 });
 
   const fetchedAtMsRaw = headers?.get?.('x-calendar-fetched-at') || headers?.get?.('X-Calendar-Fetched-At') || '';
   const fetchedAtMs = Number(fetchedAtMsRaw);
@@ -323,7 +324,7 @@ async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } 
 
   return {
     text,
-    provider,
+    provider: safeProvider,
     fetchedAtMs: Number.isFinite(fetchedAtMs) ? fetchedAtMs : null,
     upstream,
   };
@@ -434,88 +435,16 @@ function getMockSchedule() {
 }
 
 // 后台刷新函数，不阻塞返回
-async function refreshInBackground({ forceRefresh, provider }) {
+async function refreshInBackground({ forceRefresh } = {}) {
   try {
     const now = Date.now();
-
-    if (provider === 'cloud' || provider === 'icloud') {
-      const today = getShanghaiTodayComponents();
-      const years = [today.y, today.y + 1];
-
-      try {
-        const [holidayCnYears, workResult] = await Promise.all([
-          Promise.all(years.map(y => getHolidayCnYearWithCache(y))),
-          fetchWorkCalendarFromProvider(provider, { forceRefresh })
-        ]);
-
-        const workEvents = parseICS(workResult.text);
-        const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
-
-        const data = {
-          workEvents,
-          holidayCnYears,
-          schedule,
-          isMock: false,
-          calendarSource: workResult.provider,
-          calendarUpstream: workResult.upstream,
-          calendarFetchedAtMs: workResult.fetchedAtMs,
-          calendarReason: '',
-        };
-        try {
-          localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
-        } catch (_) {}
-        return data;
-      } catch (e) {
-        const fallback = provider === 'cloud' ? 'icloud' : 'cloud';
-        try {
-          const [holidayCnYears, workResult] = await Promise.all([
-            Promise.all(years.map(y => getHolidayCnYearWithCache(y))),
-            fetchWorkCalendarFromProvider(fallback, { forceRefresh })
-          ]);
-
-          const workEvents = parseICS(workResult.text);
-          const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
-
-          const data = {
-            workEvents,
-            holidayCnYears,
-            schedule,
-            isMock: false,
-            calendarSource: workResult.provider,
-            calendarUpstream: workResult.upstream,
-            calendarFetchedAtMs: workResult.fetchedAtMs,
-            calendarReason: `指定来源获取失败，已切换 ${fallback === 'icloud' ? 'iCloud' : '云函数'}`,
-          };
-          try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
-          } catch (_) {}
-          return data;
-        } catch (fallbackError) {
-          console.error('Fetch fail:', e);
-          const mockData = getMockSchedule();
-          mockData.isMock = true;
-          mockData.calendarSource = 'mock';
-          mockData.calendarReason = '云函数与 iCloud 均获取失败';
-          mockData.calendarError = String(fallbackError?.message || fallbackError || '');
-          return mockData;
-        }
-      }
-    }
-
     const today = getShanghaiTodayComponents();
     const years = [today.y, today.y + 1];
 
-    const [holidayCnYears, cloudResult] = await Promise.all([
+    const [holidayCnYears, workResult] = await Promise.all([
       Promise.all(years.map(y => getHolidayCnYearWithCache(y))),
       fetchWorkCalendarFromProvider('cloud', { forceRefresh })
     ]);
-
-    const cloudLagMs = cloudResult.fetchedAtMs ? now - cloudResult.fetchedAtMs : 0;
-    const shouldFallbackToIcloud = cloudResult.fetchedAtMs ? cloudLagMs > 5 * 60 * 1000 : false;
-
-    const workResult = shouldFallbackToIcloud
-      ? await fetchWorkCalendarFromProvider('icloud', { forceRefresh })
-      : cloudResult;
 
     const workEvents = parseICS(workResult.text);
     const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
@@ -528,56 +457,24 @@ async function refreshInBackground({ forceRefresh, provider }) {
       calendarSource: workResult.provider,
       calendarUpstream: workResult.upstream,
       calendarFetchedAtMs: workResult.fetchedAtMs,
-      calendarReason: shouldFallbackToIcloud ? '云函数数据延迟超过5分钟，已切换 iCloud' : '',
+      calendarReason: '',
     };
     try {
       localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data }));
-    } catch (e) {
-      console.error('Cache write fail:', e);
-    }
+    } catch (_) {}
     return data;
   } catch (e) {
-    try {
-      const today = getShanghaiTodayComponents();
-      const years = [today.y, today.y + 1];
-
-      const [holidayCnYears, icloudResult] = await Promise.all([
-        Promise.all(years.map(y => getHolidayCnYearWithCache(y))),
-        fetchWorkCalendarFromProvider('icloud', { forceRefresh })
-      ]);
-
-      const workEvents = parseICS(icloudResult.text);
-      const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
-
-      const data = {
-        workEvents,
-        holidayCnYears,
-        schedule,
-        isMock: false,
-        calendarSource: 'icloud',
-        calendarUpstream: icloudResult.upstream,
-        calendarFetchedAtMs: icloudResult.fetchedAtMs,
-        calendarReason: '云函数获取失败，已切换 iCloud',
-      };
-
-      try {
-        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), data }));
-      } catch (_) {}
-
-      return data;
-    } catch (icloudError) {
-      console.error('Fetch fail:', e);
-      const mockData = getMockSchedule();
-      mockData.isMock = true;
-      mockData.calendarSource = 'mock';
-      mockData.calendarReason = '云函数与 iCloud 均获取失败';
-      mockData.calendarError = String(icloudError?.message || icloudError || '');
-      return mockData;
-    }
+    console.error('Fetch fail:', e);
+    const mockData = getMockSchedule();
+    mockData.isMock = true;
+    mockData.calendarSource = 'mock';
+    mockData.calendarReason = '云函数获取失败';
+    mockData.calendarError = String(e?.message || e || '');
+    return mockData;
   }
 }
 
-export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false, provider } = {}) {
+export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false } = {}) {
   const now = Date.now();
 
   if (forceMock) {
@@ -593,14 +490,12 @@ export async function getCalendarsWithCache({ forceMock = false, forceRefresh = 
     if (cachedStr) {
       const cached = JSON.parse(cachedStr);
       if (cached && cached.data) {
-        if (!provider || cached?.data?.calendarSource === provider) {
-          cachedData = hydrateDates(cached.data);
-          // 如果缓存没过期，直接返回缓存，后台刷新
-          if (cached.timestamp && now - cached.timestamp < CACHE_TTL) {
-            // 后台刷新，不阻塞
-            refreshInBackground({ forceRefresh, provider }).catch(() => {});
-            return cachedData;
-          }
+        cachedData = hydrateDates(cached.data);
+        // 如果缓存没过期，直接返回缓存，后台刷新
+        if (cached.timestamp && now - cached.timestamp < CACHE_TTL) {
+          // 后台刷新，不阻塞
+          refreshInBackground({ forceRefresh }).catch(() => {});
+          return cachedData;
         }
       }
     }
@@ -610,12 +505,12 @@ export async function getCalendarsWithCache({ forceMock = false, forceRefresh = 
 
   // 如果有缓存但已过期，先返回缓存，后台刷新
   if (cachedData) {
-    refreshInBackground({ forceRefresh: true, provider }).catch(() => {});
+    refreshInBackground({ forceRefresh: true }).catch(() => {});
     return cachedData;
   }
 
   // 没有缓存，阻塞获取
-  return await refreshInBackground({ forceRefresh, provider });
+  return await refreshInBackground({ forceRefresh });
 }
 
 function hydrateDates(data) {
