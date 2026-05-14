@@ -49,6 +49,39 @@ function parseICalDateToTimestamp(str) {
 // 解析 .ics 文本为事件列表
 function parseICS(text) {
   if (!text) return [];
+
+  // 兼容 veFaaS 云函数返回的 JSON 结构：{ items: [{ summary, start, end }] }
+  const trimmed = String(text).trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const payload = JSON.parse(trimmed);
+      const items = Array.isArray(payload) ? payload : payload?.items;
+      if (Array.isArray(items)) {
+        return items
+          .map(item => {
+            const start = parseICalDateToTimestamp(item?.start);
+            let end = parseICalDateToTimestamp(item?.end);
+            if (start === null) return null;
+            if (end === null) end = start;
+            const duration = end - start;
+            const isDateOnly = String(item?.start || '').trim().length === 8;
+            const startShanghai = new Date(start + SHANGHAI_OFFSET_MS);
+            const isMidnightShanghai = startShanghai.getUTCHours() === 0 && startShanghai.getUTCMinutes() === 0;
+            const isAllDay = isDateOnly || (isMidnightShanghai && duration >= 24 * 60 * 60 * 1000);
+            return {
+              summary: item?.summary || '',
+              start,
+              end,
+              isAllDay
+            };
+          })
+          .filter(Boolean);
+      }
+    } catch (_) {
+      // 不是有效 JSON，则继续按 ICS 解析
+    }
+  }
+
   // 行续行处理
   const rawLines = text.split(/\r?\n/);
   const lines = [];
