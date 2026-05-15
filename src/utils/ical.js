@@ -6,6 +6,7 @@ const WORK_CAL_URL = import.meta.env.VITE_WORK_CAL_URL || '/api/calendar?type=wo
 const HOLIDAY_CAL_URL = import.meta.env.VITE_HOLIDAY_CAL_URL || '/api/calendar?type=holiday';
 
 const HOLIDAY_CN_BASE_URL = import.meta.env.VITE_HOLIDAY_CN_BASE_URL || 'https://fastly.jsdelivr.net/gh/NateScarlet/holiday-cn@master';
+const SCHEDULE_JSON_URL = import.meta.env.VITE_SCHEDULE_JSON_URL || '';
 
 const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
 
@@ -360,6 +361,29 @@ function fetchJsonWithTimeout(url, { timeoutMs = 12000 } = {}) {
     .finally(() => clearTimeout(timeoutId));
 }
 
+function appendCacheBuster(url, { enabled } = {}) {
+  const s = String(url || '').trim();
+  if (!s) return '';
+  if (!enabled) return s;
+  const u = new URL(s, window.location.origin);
+  u.searchParams.set('t', String(Date.now()));
+  return u.toString();
+}
+
+async function fetchScheduleJson({ forceRefresh = false } = {}) {
+  if (!SCHEDULE_JSON_URL) return null;
+  const url = appendCacheBuster(SCHEDULE_JSON_URL, { enabled: forceRefresh });
+  const data = await fetchJsonWithTimeout(url, { timeoutMs: 5000 });
+  if (!data || !Array.isArray(data.schedule)) return null;
+  const normalized = hydrateDates({
+    ...data,
+    isMock: false,
+    calendarSource: data.calendarSource || 'tos',
+    calendarReason: data.calendarReason || ''
+  });
+  return normalized;
+}
+
 async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } = {}) {
   const safeProvider = provider === 'cloud' ? 'cloud' : 'cloud';
   const t = forceRefresh ? `&t=${Date.now()}` : '';
@@ -484,6 +508,15 @@ function getMockSchedule() {
 async function refreshInBackground({ forceRefresh } = {}) {
   try {
     const now = Date.now();
+
+    const tosData = await fetchScheduleJson({ forceRefresh }).catch(() => null);
+    if (tosData) {
+      try {
+        localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data: tosData }));
+      } catch (_) {}
+      return tosData;
+    }
+
     const today = getShanghaiTodayComponents();
     const years = [today.y, today.y + 1];
 
