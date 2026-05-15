@@ -1012,9 +1012,35 @@ export default function Schedule({ theme }) {
         if (fetchSeqRef.current !== seq) return;
         setSlowFetch(true);
         if (!hasCache) {
-          setLoading(false);
-          setError(true);
-          setCalendarReason('5 秒内未拿到日历结果：云函数未响应，或上游 iCloud 日历请求超时。');
+          getCalendarsWithCache({ forceMock: true })
+            .then(mockRes => {
+              if (fetchSeqRef.current !== seq) return;
+
+              const now = new Date();
+              const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+              const endExclusive = new Date(startOfToday);
+              endExclusive.setDate(endExclusive.getDate() + 22);
+
+              const nextDays = (mockRes.schedule || [])
+                .filter(day => day?.date instanceof Date)
+                .filter(day => day.date >= startOfToday && day.date < endExclusive)
+                .sort((a, b) => a.date - b.date);
+
+              setSchedule(nextDays);
+              setRecNonce(n => n + 1);
+              setIsMock(true);
+              setCalendarSource('mock');
+              setCalendarReason('网络较慢，已先展示演示数据（仍会自动重试）。');
+              setLoading(false);
+              setError(false);
+              setToast({ message: '网络较慢，已先展示演示数据', type: 'error' });
+
+              if (fetchFailSafeRef.current) {
+                clearTimeout(fetchFailSafeRef.current);
+                fetchFailSafeRef.current = null;
+              }
+            })
+            .catch(() => {});
         }
         setCountdown(c => (c > 0 ? c : 3));
       }, 5000);
@@ -1062,6 +1088,20 @@ export default function Schedule({ theme }) {
             setCalendarReason(res.calendarReason || '');
             maybeRecordCloudFetch(res);
             hasCache = true;
+            if (!isAuto && !silent) {
+              setLoading(false);
+              setError(false);
+              setLoadingWatchdogError('');
+              setSlowFetch(false);
+            }
+            if (fetchTimeoutRef.current) {
+              clearTimeout(fetchTimeoutRef.current);
+              fetchTimeoutRef.current = null;
+            }
+            if (fetchFailSafeRef.current) {
+              clearTimeout(fetchFailSafeRef.current);
+              fetchFailSafeRef.current = null;
+            }
           }
         }
       } catch (e) {
@@ -1853,10 +1893,17 @@ export default function Schedule({ theme }) {
         )}
 
         {isMock && !loading && (
-          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex items-center gap-2">
+          <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg flex items-center gap-3">
             <span className="text-red-400 text-xs flex-1">
-              ⚠️ 获取真实日程失败，当前显示为演示数据。请检查网络或后端代理配置。
+              ⚠️ 当前显示为演示数据。{calendarReason ? `（${calendarReason}）` : '请检查网络或后端代理配置。'}
             </span>
+            <button
+              type="button"
+              onClick={() => fetchData({ forceRefresh: true })}
+              className="px-4 py-1.5 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs"
+            >
+              重试
+            </button>
           </div>
         )}
 
