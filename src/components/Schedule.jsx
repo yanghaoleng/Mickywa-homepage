@@ -252,9 +252,11 @@ export default function Schedule({ theme }) {
   const baseContentReadyAtRef = useRef(typeof performance !== 'undefined' ? performance.now() : Date.now());
   const [cloudFetchDeltaMs, setCloudFetchDeltaMs] = useState(null);
   const [slowFetch, setSlowFetch] = useState(false);
+  const [loadingWatchdogError, setLoadingWatchdogError] = useState('');
   const fetchSeqRef = useRef(0);
   const fetchTimeoutRef = useRef(null);
   const fetchFailSafeRef = useRef(null);
+  const loadingWatchdogRef = useRef(null);
   
   const [showBackToday, setShowBackToday] = useState(false);
   
@@ -1004,6 +1006,7 @@ export default function Schedule({ theme }) {
 
     if (!isAuto && !silent && !backgroundOnly) {
       setSlowFetch(false);
+      setLoadingWatchdogError('');
       if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
       fetchTimeoutRef.current = setTimeout(() => {
         if (fetchSeqRef.current !== seq) return;
@@ -1070,6 +1073,7 @@ export default function Schedule({ theme }) {
     if (!isAuto && !silent && !hasCache && !backgroundOnly) {
       setLoading(true);
       setError(false);
+      setLoadingWatchdogError('');
       if (fetchFailSafeRef.current) clearTimeout(fetchFailSafeRef.current);
       fetchFailSafeRef.current = setTimeout(() => {
         if (fetchSeqRef.current !== seq) return;
@@ -1113,6 +1117,10 @@ export default function Schedule({ theme }) {
           clearTimeout(fetchFailSafeRef.current);
           fetchFailSafeRef.current = null;
         }
+        if (loadingWatchdogRef.current) {
+          clearTimeout(loadingWatchdogRef.current);
+          loadingWatchdogRef.current = null;
+        }
         setSlowFetch(false);
       }
     } catch (e) {
@@ -1134,6 +1142,10 @@ export default function Schedule({ theme }) {
           clearTimeout(fetchFailSafeRef.current);
           fetchFailSafeRef.current = null;
         }
+        if (loadingWatchdogRef.current) {
+          clearTimeout(loadingWatchdogRef.current);
+          loadingWatchdogRef.current = null;
+        }
       }
     }
   };
@@ -1152,6 +1164,27 @@ export default function Schedule({ theme }) {
   }, []);
 
   useEffect(() => {
+    if (loading) {
+      if (loadingWatchdogRef.current) clearTimeout(loadingWatchdogRef.current);
+      loadingWatchdogRef.current = setTimeout(() => {
+        setSlowFetch(true);
+        setLoadingWatchdogError('5 秒内未拿到日历结果：云函数未响应，或上游 iCloud 日历请求超时。');
+      }, 5000);
+      return () => {
+        if (loadingWatchdogRef.current) {
+          clearTimeout(loadingWatchdogRef.current);
+          loadingWatchdogRef.current = null;
+        }
+      };
+    }
+    setLoadingWatchdogError('');
+    if (loadingWatchdogRef.current) {
+      clearTimeout(loadingWatchdogRef.current);
+      loadingWatchdogRef.current = null;
+    }
+  }, [loading]);
+
+  useEffect(() => {
     return () => {
       if (pressTimeoutRef.current) {
         clearTimeout(pressTimeoutRef.current);
@@ -1164,6 +1197,10 @@ export default function Schedule({ theme }) {
       if (fetchFailSafeRef.current) {
         clearTimeout(fetchFailSafeRef.current);
         fetchFailSafeRef.current = null;
+      }
+      if (loadingWatchdogRef.current) {
+        clearTimeout(loadingWatchdogRef.current);
+        loadingWatchdogRef.current = null;
       }
     };
   }, []);
@@ -1787,18 +1824,23 @@ export default function Schedule({ theme }) {
         </div>
         {loading && (
           <div className="h-80 flex flex-col items-center justify-center">
-            <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
-            <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm">加载中...</span>
-            {slowFetch && (
+            {!loadingWatchdogError && (
+              <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
+            )}
+            <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm text-center max-w-[280px]">
+              {loadingWatchdogError || '加载中...'}
+            </span>
+            {(slowFetch || loadingWatchdogError) && (
               <div className="mt-6 flex flex-col items-center gap-3">
                 <span className="dark:text-[#FFFFFF]/55 text-[#3A3A3A]/55 text-xs">
-                  {countdown > 0 ? `云函数拉取超过 5 秒，${countdown}s 后自动重试` : '云函数拉取超过 5 秒，请手动刷新'}
+                  {countdown > 0 ? `将在 ${countdown}s 后自动重试` : '请手动刷新或等待自动重试'}
                 </span>
                 <button
                   type="button"
                   onClick={() => {
                     setCountdown(0);
                     setSlowFetch(false);
+                    setLoadingWatchdogError('');
                     fetchData({ forceRefresh: true });
                   }}
                   className="px-8 py-2 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs"
