@@ -254,6 +254,7 @@ export default function Schedule({ theme }) {
   const [slowFetch, setSlowFetch] = useState(false);
   const fetchSeqRef = useRef(0);
   const fetchTimeoutRef = useRef(null);
+  const fetchFailSafeRef = useRef(null);
   
   const [showBackToday, setShowBackToday] = useState(false);
   
@@ -1064,6 +1065,15 @@ export default function Schedule({ theme }) {
     if (!isAuto && !silent && !hasCache && !backgroundOnly) {
       setLoading(true);
       setError(false);
+      if (fetchFailSafeRef.current) clearTimeout(fetchFailSafeRef.current);
+      fetchFailSafeRef.current = setTimeout(() => {
+        if (fetchSeqRef.current !== seq) return;
+        setLoading(false);
+        setError(true);
+        setSlowFetch(true);
+        setCalendarReason('请求超时，已停止等待云函数返回');
+        setCountdown(c => (c > 0 ? c : 3));
+      }, 12000);
     }
     
     try {
@@ -1094,6 +1104,10 @@ export default function Schedule({ theme }) {
           clearTimeout(fetchTimeoutRef.current);
           fetchTimeoutRef.current = null;
         }
+        if (fetchFailSafeRef.current) {
+          clearTimeout(fetchFailSafeRef.current);
+          fetchFailSafeRef.current = null;
+        }
         setSlowFetch(false);
       }
     } catch (e) {
@@ -1110,6 +1124,10 @@ export default function Schedule({ theme }) {
         if (fetchTimeoutRef.current) {
           clearTimeout(fetchTimeoutRef.current);
           fetchTimeoutRef.current = null;
+        }
+        if (fetchFailSafeRef.current) {
+          clearTimeout(fetchFailSafeRef.current);
+          fetchFailSafeRef.current = null;
         }
       }
     }
@@ -1137,6 +1155,10 @@ export default function Schedule({ theme }) {
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
         fetchTimeoutRef.current = null;
+      }
+      if (fetchFailSafeRef.current) {
+        clearTimeout(fetchFailSafeRef.current);
+        fetchFailSafeRef.current = null;
       }
     };
   }, []);
@@ -1794,6 +1816,11 @@ export default function Schedule({ theme }) {
         {error && (
           <div className="h-80 flex flex-col items-center justify-center">
             <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm mb-8">获取日程失败</span>
+            {calendarReason && (
+              <span className="dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50 text-xs mb-4 text-center max-w-[260px]">
+                {calendarReason}
+              </span>
+            )}
             <button 
               onClick={() => setCountdown(3)}
               className="px-8 py-2 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs"
