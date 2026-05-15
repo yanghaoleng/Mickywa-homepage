@@ -132,19 +132,49 @@ function validateType(type) {
   return ''
 }
 
+function normalizeFetchError(error, targetUrl, elapsedMs) {
+  const message = String(error?.message || error || 'Unknown upstream error')
+  const timeout = error?.name === 'AbortError'
+  const status = Number.isFinite(error?.statusCode) ? error.statusCode : null
+  const code = timeout
+    ? 'UPSTREAM_TIMEOUT'
+    : status
+      ? `UPSTREAM_HTTP_${status}`
+      : 'UPSTREAM_FETCH_ERROR'
+
+  return {
+    code,
+    message: timeout ? `Upstream request timed out after ${elapsedMs}ms` : message,
+    upstream: targetUrl,
+    status,
+    timeout,
+    elapsedMs,
+  }
+}
+
 async function fetchUpstreamICS(url) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 4500)
-  const response = await fetch(url, {
-    redirect: 'follow',
-    headers: {
-      Accept: 'text/calendar,text/plain;q=0.9,*/*;q=0.8',
-    },
-    signal: controller.signal,
-  }).finally(() => clearTimeout(timeoutId))
+  let response
+  try {
+    response = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        Accept: 'text/calendar,text/plain;q=0.9,*/*;q=0.8',
+      },
+      signal: controller.signal,
+    })
+  } catch (error) {
+    clearTimeout(timeoutId)
+    throw error
+  }
+  clearTimeout(timeoutId)
 
   if (!response.ok) {
-    throw new Error(`Upstream fetch failed: ${response.status}`)
+    const body = await response.text().catch(() => '')
+    const err = new Error(body || `Upstream fetch failed: ${response.status}`)
+    err.statusCode = response.status
+    throw err
   }
 
   return response.text()
@@ -194,6 +224,7 @@ export default async function handler(req, res) {
   const limit = Math.max(1, Math.min(DEFAULT_LIMIT, Number(req.query?.limit) || DEFAULT_LIMIT))
   const ttlSeconds = parseCacheSeconds(req.query?.ttl, parseCacheSeconds(getEnv('CALENDAR_CACHE_TTL_SECONDS'), DEFAULT_TTL_SECONDS))
   const staleSeconds = parseCacheSeconds(getEnv('CALENDAR_CACHE_STALE_SECONDS'), DEFAULT_STALE_SECONDS)
+  const startedAt = Date.now()
 
   try {
     const text = await fetchUpstreamICS(targetUrl)
@@ -231,10 +262,18 @@ export default async function handler(req, res) {
       events,
     })
   } catch (error) {
-    console.error('Fetch error:', error)
+    const details = normalizeFetchError(error, targetUrl, Math.max(0, Date.now() - startedAt))
+    console.error('Fetch error:', details)
     return jsonResponse(res, 500, {
       error: 'Failed to fetch calendar',
       source: type,
+      provider,
+      upstream: targetUrl,
+      details,
+    }, {
+      'X-Calendar-Source': type,
+      'X-Calendar-Upstream': targetUrl,
+      'X-Calendar-Error-Code': details.code,
     })
   }
 }
