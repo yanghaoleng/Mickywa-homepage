@@ -387,15 +387,29 @@ async function fetchScheduleJson({ forceRefresh = false } = {}) {
 async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } = {}) {
   const safeProvider = provider === 'cloud' ? 'cloud' : 'cloud';
   const t = forceRefresh ? `&t=${Date.now()}` : '';
-  const url = `/api/calendar?type=work&format=ics&provider=${encodeURIComponent(safeProvider)}${t}`;
-  const { text, headers } = await fetchTextWithTimeout(url, { timeoutMs: 5000 });
+  const url = `/api/calendar?type=work&format=json&provider=${encodeURIComponent(safeProvider)}${t}`;
+  const payload = await fetchJsonWithTimeout(url, { timeoutMs: 5000 });
+  const fetchedAtMs = Number(payload?.fetchedAtMs);
+  const upstream = String(payload?.upstream || '');
 
-  const fetchedAtMsRaw = headers?.get?.('x-calendar-fetched-at') || headers?.get?.('X-Calendar-Fetched-At') || '';
-  const fetchedAtMs = Number(fetchedAtMsRaw);
-  const upstream = headers?.get?.('x-calendar-upstream') || headers?.get?.('X-Calendar-Upstream') || '';
+  const events = Array.isArray(payload?.events)
+    ? payload.events
+        .map(e => {
+          const start = Number(e?.start);
+          const end = Number(e?.end);
+          if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
+          return {
+            summary: e?.summary || '',
+            start,
+            end,
+            isAllDay: Boolean(e?.isAllDay)
+          };
+        })
+        .filter(Boolean)
+    : null;
 
   return {
-    text,
+    events,
     provider: safeProvider,
     fetchedAtMs: Number.isFinite(fetchedAtMs) ? fetchedAtMs : null,
     upstream,
@@ -531,7 +545,7 @@ async function refreshInBackground({ forceRefresh } = {}) {
 
     const holidayCnYears = await holidayCnYearsPromise;
 
-    const workEvents = parseICS(workResult.text);
+    const workEvents = Array.isArray(workResult.events) ? workResult.events : parseICS(workResult.text);
     const schedule = buildScheduleData(workEvents, holidayCnYears, 2);
 
     const data = {

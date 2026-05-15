@@ -60,3 +60,6 @@ skills-lock.json
 
 # Local function config
 .vefaas/
+
+# Temp veFaaS pulls
+.tmp_vefaas_*/
