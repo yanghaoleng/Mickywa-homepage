@@ -992,6 +992,7 @@ export default function Schedule({ theme }) {
 
   const fetchData = async ({ isAuto = false, silent = false, backgroundOnly = false, forceRefresh = false } = {}) => {
     const seq = ++fetchSeqRef.current;
+    let hasCache = false;
     const maybeRecordCloudFetch = (data) => {
       if (!data || data.isMock) return;
       if ((data.calendarSource || 'cloud') !== 'cloud') return;
@@ -1007,12 +1008,16 @@ export default function Schedule({ theme }) {
       fetchTimeoutRef.current = setTimeout(() => {
         if (fetchSeqRef.current !== seq) return;
         setSlowFetch(true);
+        if (!hasCache) {
+          setLoading(false);
+          setError(true);
+          setCalendarReason('5 秒内未拿到日历结果：云函数未响应，或上游 iCloud 日历请求超时。');
+        }
         setCountdown(c => (c > 0 ? c : 3));
       }, 5000);
     }
     
     // 先尝试同步读取缓存，快速显示
-    let hasCache = false;
     if (!backgroundOnly) {
       try {
         const cachedStr = localStorage.getItem('mickywa_schedule_cache_v2');
