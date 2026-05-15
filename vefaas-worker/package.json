@@ -3,9 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node run.js"
+    "start": "node server.js"
   },
-  "dependencies": {
-    "@volcengine/tos-sdk": "^2.9.1"
-  }
+  "dependencies": {}
 }
