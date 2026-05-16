@@ -1449,7 +1449,7 @@ export default function Schedule({ theme }) {
         }
       }
 
-      if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container') || e.target.closest('.theme-toggle')) {
+      if (e.target.closest('.slot-item') || e.target.closest('.bottom-bar') || e.target.closest('.modal-container') || e.target.closest('.theme-toggle') || e.target.closest('.half-modal-overlay')) {
         return;
       }
 
@@ -2454,7 +2454,7 @@ export default function Schedule({ theme }) {
       {/* Half Modal Overlay */}
       {showHalfModal && (
         <div 
-          className={["fixed inset-0 z-[190] transition-opacity duration-300",
+          className={["half-modal-overlay fixed inset-0 z-[190] transition-opacity duration-300",
             isHalfModalClosing ? "opacity-0 pointer-events-none" : "opacity-100"
           ].join(' ')}
         >
