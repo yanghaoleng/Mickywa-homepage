@@ -223,6 +223,7 @@ function isSlotBusy(day, slot, events) {
   }
 
   return events
+    .filter(e => !e.isAllDay)
     .some(e => e.start < slotEnd && e.end > slotStart);
 }
 
