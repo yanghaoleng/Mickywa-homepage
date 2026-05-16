@@ -337,6 +337,17 @@ body,
   }
 }
 
+@keyframes slideDownModal {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(100%);
+  }
+}
+
 @keyframes scaleInModal {
   0% {
     opacity: 0;

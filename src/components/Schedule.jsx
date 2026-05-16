@@ -1716,7 +1716,7 @@ export default function Schedule({ theme }) {
   };
 
   const openHalfModal = () => {
-    if (selectedSlot && !bookingText) {
+    if (selectedSlot) {
       primeBookingDraft(selectedSlot, selectedActivity);
     }
     setShowHalfModal(true);
@@ -2471,8 +2471,8 @@ export default function Schedule({ theme }) {
             ].join(' ')}
             style={{ 
               maxHeight: isDesktopModal ? '80vh' : 'calc(100vh - 44px)',
-              animation: isHalfModalClosing 
-                ? (isDesktopModal ? 'scaleOutModal 0.25s ease-out forwards' : 'none') 
+              animation: isHalfModalClosing
+                ? (isDesktopModal ? 'scaleOutModal 0.25s ease-out forwards' : 'slideDownModal 0.3s ease-in forwards')
                 : (isDesktopModal ? 'scaleInModal 0.3s ease-out forwards' : 'slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards')
             }}
           >
