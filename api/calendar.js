@@ -5,6 +5,15 @@ const DEFAULT_STALE_SECONDS = 3600
 const DEFAULT_LIMIT = 500
 const WORK_LOOKBACK_MS = 2 * 24 * 60 * 60 * 1000
 const WORK_LOOKAHEAD_MS = 45 * 24 * 60 * 60 * 1000
+const DEFAULT_FLOATING_TZID = 'Asia/Shanghai'
+const TZ_OFFSET_MINUTES = {
+  UTC: 0,
+  'ASIA/SHANGHAI': 8 * 60,
+  'ASIA/CHONGQING': 8 * 60,
+  'ASIA/CHUNGKING': 8 * 60,
+  'ASIA/HONG_KONG': 8 * 60,
+  'ASIA/BANGKOK': 7 * 60,
+}
 
 function getEnv(name, fallback = '') {
   const value = process.env[name]
@@ -37,26 +46,62 @@ function splitICalLines(text) {
   return lines
 }
 
-function unfoldValue(line) {
+function parsePropertyLine(line) {
   const idx = line.indexOf(':')
-  if (idx === -1) return { key: '', value: '' }
+  if (idx === -1) return { key: '', value: '', params: {} }
   const rawKey = line.slice(0, idx)
   const value = line.slice(idx + 1)
-  return { key: rawKey.split(';')[0].toUpperCase(), value }
+  const parts = rawKey.split(';')
+  const params = {}
+  for (const part of parts.slice(1)) {
+    const eqIdx = part.indexOf('=')
+    if (eqIdx === -1) continue
+    const name = part.slice(0, eqIdx).trim().toUpperCase()
+    const paramValue = part.slice(eqIdx + 1).trim()
+    if (name) params[name] = paramValue
+  }
+  return { key: parts[0].toUpperCase(), value, params }
 }
 
-function parseDateValue(input, floatingDateOnly = false) {
+function getTzOffsetMinutes(tzid) {
+  const normalized = String(tzid || '').trim().toUpperCase()
+  if (!normalized) return null
+  return Object.prototype.hasOwnProperty.call(TZ_OFFSET_MINUTES, normalized)
+    ? TZ_OFFSET_MINUTES[normalized]
+    : null
+}
+
+function toIsoWithOffset(timestamp, tzid) {
+  const offsetMinutes = getTzOffsetMinutes(tzid)
+  if (offsetMinutes === null) return new Date(timestamp).toISOString()
+  const localTs = timestamp + offsetMinutes * 60 * 1000
+  const d = new Date(localTs)
+  const pad = (n) => String(n).padStart(2, '0')
+  const sign = offsetMinutes >= 0 ? '+' : '-'
+  const absMinutes = Math.abs(offsetMinutes)
+  const tzH = pad(Math.floor(absMinutes / 60))
+  const tzM = pad(absMinutes % 60)
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}${sign}${tzH}:${tzM}`
+}
+
+function parseDateValue(input, { valueType = '', tzid = '' } = {}) {
   if (!input) return null
   let s = String(input).trim()
+  const normalizedValueType = String(valueType || '').trim().toUpperCase()
+  const effectiveTzid = String(tzid || DEFAULT_FLOATING_TZID).trim() || DEFAULT_FLOATING_TZID
+
   if (/^\d{8}$/.test(s)) {
     const y = Number(s.slice(0, 4))
     const m = Number(s.slice(4, 6)) - 1
     const d = Number(s.slice(6, 8))
-    const timestamp = Date.UTC(y, m, d, 0, 0, 0)
+    const offsetMinutes = getTzOffsetMinutes(effectiveTzid) ?? 0
+    const timestamp = Date.UTC(y, m, d, 0, 0, 0) - offsetMinutes * 60 * 1000
     return {
       iso: new Date(timestamp).toISOString(),
+      isoLocal: toIsoWithOffset(timestamp, effectiveTzid),
       timestamp,
       isDateOnly: true,
+      tzid: effectiveTzid,
     }
   }
 
@@ -66,11 +111,17 @@ function parseDateValue(input, floatingDateOnly = false) {
   if (!match) return null
 
   const [, y, mo, d, h, mi, se] = match
-  const timestamp = Date.UTC(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi), Number(se))
+  let timestamp = Date.UTC(Number(y), Number(mo) - 1, Number(d), Number(h), Number(mi), Number(se))
+  const offsetMinutes = isZulu ? 0 : getTzOffsetMinutes(effectiveTzid)
+  if (!isZulu && offsetMinutes !== null) {
+    timestamp -= offsetMinutes * 60 * 1000
+  }
   return {
     iso: new Date(timestamp).toISOString(),
+    isoLocal: toIsoWithOffset(timestamp, isZulu ? 'UTC' : effectiveTzid),
     timestamp,
-    isDateOnly: floatingDateOnly,
+    isDateOnly: normalizedValueType === 'DATE',
+    tzid: isZulu ? 'UTC' : effectiveTzid,
   }
 }
 
@@ -87,8 +138,16 @@ function parseICS(text) {
 
     if (line === 'END:VEVENT') {
       if (current?.DTSTART) {
-        const start = parseDateValue(current.DTSTART, /^\d{8}$/.test(current.DTSTART))
-        const end = current.DTEND ? parseDateValue(current.DTEND, /^\d{8}$/.test(current.DTEND)) : null
+        const start = parseDateValue(current.DTSTART, {
+          valueType: current.DTSTART_VALUE,
+          tzid: current.DTSTART_TZID,
+        })
+        const end = current.DTEND
+          ? parseDateValue(current.DTEND, {
+              valueType: current.DTEND_VALUE,
+              tzid: current.DTEND_TZID || current.DTSTART_TZID,
+            })
+          : null
         const computedEnd = end?.timestamp ?? (start ? start.timestamp + (/^\d{8}$/.test(current.DTSTART) ? 86400000 : 0) : null)
 
         if (start && computedEnd !== null) {
@@ -100,10 +159,13 @@ function parseICS(text) {
             start: start.timestamp,
             end: computedEnd,
             startISO: start.iso,
+            startLocal: start.isoLocal,
             endISO: new Date(computedEnd).toISOString(),
+            endLocal: end?.isoLocal || toIsoWithOffset(computedEnd, start.tzid),
             isAllDay: start.isDateOnly || /^\d{8}$/.test(current.DTSTART),
             status: current.STATUS || '',
             organizer: current.ORGANIZER || '',
+            timeZone: start.tzid || DEFAULT_FLOATING_TZID,
             raw: current,
           })
         }
@@ -113,8 +175,12 @@ function parseICS(text) {
     }
 
     if (!current) continue
-    const { key, value } = unfoldValue(line)
-    if (key) current[key] = value
+    const { key, value, params } = parsePropertyLine(line)
+    if (key) {
+      current[key] = value
+      if (params.TZID) current[`${key}_TZID`] = params.TZID
+      if (params.VALUE) current[`${key}_VALUE`] = params.VALUE
+    }
   }
 
   return events
