@@ -661,13 +661,6 @@ export default function Schedule({ theme }) {
     return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
   };
 
-  const formatSelectedSlotDateLabel = (slotData) => {
-    const date = getSafeDayDate(slotData?.day);
-    const slotLabel = slotData?.slot?.label || '';
-    if (!date) return slotLabel;
-    return `${date.getMonth() + 1}月${date.getDate()}日 ${slotLabel}`.trim();
-  };
-
   const formatSelectedSlotRelativeLabel = (slotData) => {
     const date = getSafeDayDate(slotData?.day);
     if (!date) return '';
@@ -682,12 +675,28 @@ export default function Schedule({ theme }) {
     return `${weekPrefix(target)}${weekdayLabel(target)}`;
   };
 
+  const normalizeBookingText = (text = '') => {
+    return String(text || '')
+      .replace(/\s*\n+\s*/g, ' ')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  };
+
   const buildBookingDraft = (slotData, activityText = '') => {
-    const dateLabel = formatSelectedSlotDateLabel(slotData) || (slotData?.slot?.label || '晚上');
-    const relativeLabel = formatSelectedSlotRelativeLabel(slotData);
+    const dateLabel = formatSelectedSlotFullLabel(slotData) || (slotData?.slot?.label || '晚上');
     const activity = activityText || '玩';
-    const prefix = relativeLabel ? `${dateLabel}（${relativeLabel}）` : dateLabel;
-    return `${prefix}\n${activity}`;
+    return normalizeBookingText(`${dateLabel} ${activity}`);
+  };
+
+  const formatSelectedSlotFullLabel = (slotData) => {
+    const date = getSafeDayDate(slotData?.day);
+    const slotLabel = slotData?.slot?.label || '';
+    const relativeLabel = formatSelectedSlotRelativeLabel(slotData);
+    if (!date) {
+      return [relativeLabel, slotLabel].filter(Boolean).join(' ');
+    }
+    const datePart = `${date.getMonth() + 1}月${date.getDate()}日`;
+    return [datePart, relativeLabel, slotLabel].filter(Boolean).join(' ');
   };
 
   const getActivityPoolForSlot = (slotData) => {
@@ -2429,7 +2438,7 @@ export default function Schedule({ theme }) {
           >
             <div className="min-w-0 flex-1">
               <div className="text-[14px] font-medium text-[#3A3A3A] dark:text-[#FFFFFF] truncate">
-                {formatSelectedSlotDateLabel(selectedSlot)}
+                {formatSelectedSlotFullLabel(selectedSlot)}
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -2475,14 +2484,11 @@ export default function Schedule({ theme }) {
             {/* Title */}
             <div className="px-5 pb-4">
               <h2 className="text-lg font-semibold text-[#3A3A3A] dark:text-[#FFFFFF] leading-snug">
-                <span>{formatSelectedSlotDateLabel(selectedSlot)}</span>
-                <span className="ml-2 text-[14px] font-medium text-[#3A3A3A]/55 dark:text-[#FFFFFF]/55">
-                  {formatSelectedSlotRelativeLabel(selectedSlot) ? `（${formatSelectedSlotRelativeLabel(selectedSlot)}）` : ''}
-                </span>
-                <span className="block mt-1 whitespace-normal break-words">
-                  <BottomUpLettersSwap text={selectedActivity} active={true} />
-                </span>
+                {formatSelectedSlotFullLabel(selectedSlot)}
               </h2>
+              <div className="mt-1 text-[15px] font-medium text-[#3A3A3A]/72 dark:text-[#FFFFFF]/72 leading-snug min-h-[22px]">
+                <BottomUpLettersSwap text={selectedActivity} active={true} />
+              </div>
             </div>
             
             {/* Content */}
@@ -2528,9 +2534,15 @@ export default function Schedule({ theme }) {
                   ref={bookingTextareaRef}
                   className="w-full px-4 py-3 rounded-[12px] text-[14px] text-[#3A3A3A] dark:text-[#FFFFFF] bg-[#FFFFFF] dark:bg-[#333333] border border-[#3A3A3A]/10 dark:border-[#FFFFFF]/10 resize-none focus:outline-none focus:border-[#083A8E] dark:focus:border-[#D3F1FF] transition-colors"
                   rows={2}
+                  wrap="off"
                   placeholder={buildBookingDraft(selectedSlot, selectedActivity)}
                   value={bookingText}
-                  onChange={(e) => setBookingText(e.target.value)}
+                  onChange={(e) => setBookingText(normalizeBookingText(e.target.value))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
                 />
               </div>
               
