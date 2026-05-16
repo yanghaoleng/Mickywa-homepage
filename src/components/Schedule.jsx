@@ -185,6 +185,7 @@ function SmartRecButton({
   fading,
   pressed,
   onActivate,
+  onConfirm,
   onBlurFade,
   animationDelay,
   setEl
@@ -215,7 +216,8 @@ function SmartRecButton({
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           e.stopPropagation();
-          onActivate?.();
+          if (selected) onConfirm?.();
+          else onActivate?.();
         }
       }}
     >
@@ -316,7 +318,6 @@ export default function Schedule({ theme }) {
   const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
   const [isDesktopModal, setIsDesktopModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState('');
-  const [bookingNote, setBookingNote] = useState('');
   const [halfModalScrollY, setHalfModalScrollY] = useState(0);
   const halfModalRef = useRef(null);
   const touchStartYRef = useRef(0);
@@ -617,10 +618,17 @@ export default function Schedule({ theme }) {
     nextMonday.setDate(nextMonday.getDate() + 7);
     const nextNextMonday = new Date(baseMonday);
     nextNextMonday.setDate(nextNextMonday.getDate() + 14);
+    const targetMonday = new Date(date);
+    const targetDow = targetMonday.getDay();
+    const targetOffset = targetDow === 0 ? -6 : 1 - targetDow;
+    targetMonday.setDate(targetMonday.getDate() + targetOffset);
 
-    if (date >= baseMonday && date < nextMonday) return '本周';
-    if (date >= nextMonday && date < nextNextMonday) return '下周';
-    return '';
+    const diffWeeks = Math.round((targetMonday - baseMonday) / (7 * 24 * 60 * 60 * 1000));
+
+    if (diffWeeks <= 0) return '本周';
+    if (diffWeeks === 1) return '下周';
+    if (diffWeeks === 2) return '下下周';
+    return `${diffWeeks}周后`;
   };
 
   const getAnyFreeSlot = (day) => {
@@ -639,6 +647,49 @@ export default function Schedule({ theme }) {
     const daySlot = day.slots.find(s => s.key === 'daytime' && s.status === 'free');
     if (daySlot) return { slot: daySlot, label: '白天' };
     return { slot: free[0], label: free[0].label };
+  };
+
+  const getSafeDayDate = (day) => {
+    if (day?.date instanceof Date && !Number.isNaN(day.date.getTime())) {
+      return day.date;
+    }
+    const key = String(day?.key || '');
+    const match = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(key);
+    if (!match) return null;
+    return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  };
+
+  const formatSelectedSlotDateLabel = (slotData) => {
+    const date = getSafeDayDate(slotData?.day);
+    const slotLabel = slotData?.slot?.label || '';
+    if (!date) return slotLabel;
+    return `${date.getMonth() + 1}月${date.getDate()}日 ${slotLabel}`.trim();
+  };
+
+  const buildBookingDraft = (slotData, activityText = '') => {
+    const dateLabel = formatSelectedSlotDateLabel(slotData) || (slotData?.slot?.label || '晚上');
+    const activity = activityText || '玩';
+    return `你好，羊石坨坨，我想要预约${dateLabel}，跟你去${activity}。\n如果你有空的话，请回复我一下～`;
+  };
+
+  const halfModalActivities = useMemo(() => {
+    const slotKey = selectedSlot?.slot?.key;
+    const bucket = slotKey === 'evening' ? 'evening' : 'daytime';
+    const pool = ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]?.length
+      ? ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]
+      : ENTERTAINMENT_ACTIVITIES_BY_TIME.allday;
+    return [...new Set([selectedActivity, ...pool].filter(Boolean))].slice(0, 3);
+  }, [selectedActivity, selectedSlot]);
+
+  const primeBookingDraft = (slotData, preferredActivity = '') => {
+    const slotKey = slotData?.slot?.key;
+    const bucket = slotKey === 'evening' ? 'evening' : 'daytime';
+    const pool = ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]?.length
+      ? ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]
+      : ENTERTAINMENT_ACTIVITIES_BY_TIME.allday;
+    const nextActivity = preferredActivity || pool[0] || '';
+    setSelectedActivity(nextActivity);
+    setBookingText(buildBookingDraft(slotData, nextActivity));
   };
 
   const recommendations = useMemo(() => {
@@ -708,7 +759,7 @@ export default function Schedule({ theme }) {
         const sameWeekend = Math.abs((sun.date - sat.date) / 86400000) <= 1;
         if (sameWeekend && weekPrefix(sat.date) === weekPrefix(sun.date)) {
           const prefix = weekPrefix(sat.date);
-          const baseDateText = prefix ? `${prefix}六-日` : `${sat.date.getMonth() + 1}月${sat.date.getDate()}日-${sun.date.getDate()}日`;
+          const baseDateText = prefix ? `${prefix}六日` : `${relOrWeek(sat.date)}和${relOrWeek(sun.date)}`;
           const pickedSat = pickSlots(sat);
           const pickedSun = pickSlots(sun);
           const picked = pickedSat || pickedSun;
@@ -966,12 +1017,20 @@ export default function Schedule({ theme }) {
     }
     setSelectedSmartId(rec.id);
     triggerSlotPress(rec.id);
+    const recommendationActivity = smartActivityById[rec.id] ?? rec.activity ?? '';
     
     // Set the selected slot from the recommendation
     const day = schedule.find(d => d.key === rec.dayKey);
     if (day) {
       const slot = day.slots.find(s => s.key === rec.slotKey);
       if (slot) {
+        const nextSelectedSlot = {
+          day,
+          slot,
+          slotIdx: day.slots.indexOf(slot),
+          uniqueKey: `${day.key}-${day.slots.indexOf(slot)}`
+        };
+        primeBookingDraft(nextSelectedSlot, recommendationActivity);
         const slotIdx = day.slots.indexOf(slot);
         setSelectedSlot({
           day,
@@ -1268,29 +1327,6 @@ export default function Schedule({ theme }) {
   }, [countdown]);
 
 
-  // Update booking text when form or slot changes
-  useEffect(() => {
-    if (!selectedSlot) return;
-    
-    const d = selectedSlot.day.date;
-    const dateStr = `${d.getMonth() + 1}月${d.getDate()}日`;
-    const timeStr = `${selectedSlot.slot.label}(${selectedSlot.slot.displayTime || `${selectedSlot.slot.start}-${selectedSlot.slot.end}`})`;
-    
-    // Join styles if it's an array
-    const styleStr = Array.isArray(form.style) 
-      ? (form.style.length > 0 ? form.style.join('/') : '待定')
-      : (form.style || '待定');
-
-    const text = `你好 mickywa，我想预约：
-日期：${dateStr} ${timeStr}
-长度：${form.length || '待定'}
-款式：${styleStr}
-卸甲：${form.remove || '待定'}
-备注：`;
-
-    setBookingText(text);
-  }, [form, selectedSlot]);
-
   const handleScroll = () => {
     if (window.scrollY > 300) {
       setShowBackToday(true);
@@ -1337,6 +1373,7 @@ export default function Schedule({ theme }) {
       slotIdx,
       uniqueKey
     });
+    primeBookingDraft({ day, slot, slotIdx, uniqueKey });
     setShowBookingBar(true);
   };
 
@@ -1627,6 +1664,9 @@ export default function Schedule({ theme }) {
   };
 
   const openHalfModal = () => {
+    if (selectedSlot && !bookingText) {
+      primeBookingDraft(selectedSlot, selectedActivity);
+    }
     setShowHalfModal(true);
   };
 
@@ -1639,7 +1679,7 @@ export default function Schedule({ theme }) {
   };
 
   const copyBookingText = async () => {
-    const text = `你好，羊石坨坨，我想要在${selectedSlot?.slot?.label || ''}跟你去${selectedActivity || '玩'}。${bookingNote ? '\n' + bookingNote : ''}`;
+    const text = bookingText || buildBookingDraft(selectedSlot, selectedActivity);
     try {
       await navigator.clipboard.writeText(text);
       showToast('已复制');
@@ -1972,6 +2012,10 @@ export default function Schedule({ theme }) {
                           else delete smartRecRefs.current[rec.id];
                         }}
                         onActivate={() => handleRecommendationClick(rec)}
+                        onConfirm={() => {
+                          handleRecommendationClick(rec);
+                          setTimeout(() => openHalfModal(), 0);
+                        }}
                         onBlurFade={fadeOutSmartFill}
                       />
                     );
@@ -2330,7 +2374,7 @@ export default function Schedule({ theme }) {
           >
             <div className="min-w-0 flex-1">
               <div className="text-[14px] font-medium text-[#3A3A3A] dark:text-[#FFFFFF] truncate">
-                {selectedSlot.day.date.getMonth() + 1}月{selectedSlot.day.date.getDate()}日 {selectedSlot.slot.label}
+                {formatSelectedSlotDateLabel(selectedSlot)}
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -2376,7 +2420,7 @@ export default function Schedule({ theme }) {
             {/* Title */}
             <div className="px-5 pb-4">
               <h2 className="text-lg font-semibold text-[#3A3A3A] dark:text-[#FFFFFF]">
-                  {selectedSlot?.day.date.getMonth() + 1}月{selectedSlot?.day.date.getDate()}日 {selectedSlot?.slot.label} 
+                  {formatSelectedSlotDateLabel(selectedSlot)} 
                   <BottomUpLettersSwap text={selectedActivity} active={true} />
                 </h2>
             </div>
@@ -2387,7 +2431,7 @@ export default function Schedule({ theme }) {
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-[#3A3A3A]/70 dark:text-[#FFFFFF]/70 mb-3">选择游玩项目</h3>
                 <div className="flex flex-col gap-2">
-                  {ENTERTAINMENT_ACTIVITIES_BY_TIME.daytime.slice(0, 5).map((activity, idx) => (
+                  {halfModalActivities.map((activity, idx) => (
                     <button
                       key={idx}
                       type="button"
@@ -2397,7 +2441,10 @@ export default function Schedule({ theme }) {
                           ? "text-[#083A8E] dark:text-[#083A8E]" 
                           : "bg-[#E5E5E5] dark:bg-[#444444] text-[#3A3A3A] dark:text-[#FFFFFF]"
                       ].join(' ')}
-                      onClick={() => setSelectedActivity(activity)}
+                      onClick={() => {
+                        setSelectedActivity(activity);
+                        setBookingText(buildBookingDraft(selectedSlot, activity));
+                      }}
                     >
                       {selectedActivity === activity && (
                         <div className="absolute inset-0 animate-color-change rounded-[12px]" />
@@ -2413,10 +2460,10 @@ export default function Schedule({ theme }) {
                 <h3 className="text-sm font-medium text-[#3A3A3A]/70 dark:text-[#FFFFFF]/70 mb-3">预约文案</h3>
                 <textarea
                   className="w-full px-4 py-3 rounded-[12px] text-[14px] text-[#3A3A3A] dark:text-[#FFFFFF] bg-[#FFFFFF] dark:bg-[#333333] border border-[#3A3A3A]/10 dark:border-[#FFFFFF]/10 resize-none focus:outline-none focus:border-[#083A8E] dark:focus:border-[#D3F1FF] transition-colors"
-                  rows={4}
-                  placeholder={`你好，羊石坨坨，我想要在${selectedSlot?.slot?.label || '晚上'}跟你去${selectedActivity || '玩'}。`}
-                  value={bookingNote}
-                  onChange={(e) => setBookingNote(e.target.value)}
+                  rows={2}
+                  placeholder={buildBookingDraft(selectedSlot, selectedActivity)}
+                  value={bookingText}
+                  onChange={(e) => setBookingText(e.target.value)}
                 />
               </div>
               
