@@ -998,6 +998,11 @@ export default function Schedule({ theme }) {
     const maybeRecordCloudFetch = (data) => {
       if (!data || data.isMock) return;
       if ((data.calendarSource || 'cloud') !== 'cloud') return;
+      const actualElapsed = Number(data.calendarFetchElapsedMs);
+      if (Number.isFinite(actualElapsed) && actualElapsed >= 0) {
+        setCloudFetchDeltaMs(actualElapsed);
+        return;
+      }
       if (cloudFetchDeltaMs !== null) return;
       if (typeof baseContentReadyAtRef.current !== 'number') return;
       const delta = performance.now() - baseContentReadyAtRef.current;

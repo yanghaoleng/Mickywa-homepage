@@ -223,7 +223,6 @@ function isSlotBusy(day, slot, events) {
   }
 
   return events
-    .filter(e => !e.isAllDay)
     .some(e => e.start < slotEnd && e.end > slotStart);
 }
 
@@ -390,6 +389,7 @@ async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } 
   const url = `/api/calendar?type=work&format=json&provider=${encodeURIComponent(safeProvider)}${t}`;
   const payload = await fetchJsonWithTimeout(url, { timeoutMs: 5000 });
   const fetchedAtMs = Number(payload?.fetchedAtMs);
+  const elapsedMs = Number(payload?.elapsedMs);
   const upstream = String(payload?.upstream || '');
 
   const events = Array.isArray(payload?.events)
@@ -412,6 +412,7 @@ async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } 
     events,
     provider: safeProvider,
     fetchedAtMs: Number.isFinite(fetchedAtMs) ? fetchedAtMs : null,
+    elapsedMs: Number.isFinite(elapsedMs) ? elapsedMs : null,
     upstream,
   };
 }
@@ -556,6 +557,7 @@ async function refreshInBackground({ forceRefresh } = {}) {
       calendarSource: workResult.provider,
       calendarUpstream: workResult.upstream,
       calendarFetchedAtMs: workResult.fetchedAtMs,
+      calendarFetchElapsedMs: workResult.elapsedMs,
       calendarReason: '',
     };
     try {
@@ -568,6 +570,7 @@ async function refreshInBackground({ forceRefresh } = {}) {
     mockData.isMock = true;
     mockData.calendarSource = 'mock';
     mockData.calendarReason = '云函数获取失败';
+    mockData.calendarFetchElapsedMs = null;
     mockData.calendarError = String(e?.message || e || '');
     return mockData;
   }

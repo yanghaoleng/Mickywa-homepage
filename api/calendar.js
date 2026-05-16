@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto'
 const DEFAULT_TTL_SECONDS = 300
 const DEFAULT_STALE_SECONDS = 3600
 const DEFAULT_LIMIT = 500
+const WORK_LOOKBACK_MS = 2 * 24 * 60 * 60 * 1000
+const WORK_LOOKAHEAD_MS = 45 * 24 * 60 * 60 * 1000
 
 function getEnv(name, fallback = '') {
   const value = process.env[name]
@@ -118,6 +120,26 @@ function parseICS(text) {
   return events
 }
 
+function getRelevantEvents(events, type, nowMs = Date.now()) {
+  const sorted = [...(events || [])].sort((a, b) => {
+    const aStart = Number(a?.start) || 0
+    const bStart = Number(b?.start) || 0
+    return aStart - bStart
+  })
+
+  if (type !== 'work') return sorted
+
+  const windowStart = nowMs - WORK_LOOKBACK_MS
+  const windowEnd = nowMs + WORK_LOOKAHEAD_MS
+
+  return sorted.filter(event => {
+    const start = Number(event?.start)
+    const end = Number(event?.end)
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return false
+    return start < windowEnd && end > windowStart
+  })
+}
+
 function jsonResponse(res, statusCode, body, headers = {}) {
   res.statusCode = statusCode
   res.setHeader('Content-Type', 'application/json; charset=utf-8')
@@ -228,17 +250,21 @@ export default async function handler(req, res) {
 
   try {
     const text = await fetchUpstreamICS(targetUrl)
-    const events = parseICS(text).slice(0, limit)
-    const etag = `W/\"${Buffer.from(JSON.stringify({ type, limit, count: events.length, size: text.length })).toString('base64url')}\"`
+    const allEvents = parseICS(text)
+    const relevantEvents = getRelevantEvents(allEvents, type, startedAt)
+    const events = relevantEvents.slice(0, limit)
+    const etag = `W/\"${Buffer.from(JSON.stringify({ type, limit, count: events.length, totalCount: allEvents.length, filteredCount: relevantEvents.length, size: text.length })).toString('base64url')}\"`
     const ifNoneMatch = readRequestHeader(req, 'if-none-match')
     const fetchedAtMs = Date.now()
     const fetchedAt = new Date(fetchedAtMs).toISOString()
+    const elapsedMs = Math.max(0, fetchedAtMs - startedAt)
 
     res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}, stale-while-revalidate=${staleSeconds}`)
     res.setHeader('ETag', etag)
     res.setHeader('X-Calendar-Source', type)
     res.setHeader('X-Calendar-Upstream', targetUrl)
     res.setHeader('X-Calendar-Fetched-At', String(fetchedAtMs))
+    res.setHeader('X-Calendar-Elapsed-Ms', String(elapsedMs))
 
     if (ifNoneMatch && ifNoneMatch === etag) {
       res.statusCode = 304
@@ -258,6 +284,9 @@ export default async function handler(req, res) {
       upstream: targetUrl,
       fetchedAt,
       fetchedAtMs,
+      elapsedMs,
+      totalCount: allEvents.length,
+      filteredCount: relevantEvents.length,
       count: events.length,
       events,
     })
