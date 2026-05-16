@@ -666,30 +666,70 @@ export default function Schedule({ theme }) {
     return `${date.getMonth() + 1}月${date.getDate()}日 ${slotLabel}`.trim();
   };
 
-  const buildBookingDraft = (slotData, activityText = '') => {
-    const dateLabel = formatSelectedSlotDateLabel(slotData) || (slotData?.slot?.label || '晚上');
-    const activity = activityText || '玩';
-    return `你好，羊石坨坨，我想要预约${dateLabel}，跟你去${activity}。\n如果你有空的话，请回复我一下～`;
+  const formatSelectedSlotRelativeLabel = (slotData) => {
+    const date = getSafeDayDate(slotData?.day);
+    if (!date) return '';
+    const now = new Date();
+    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const diffDays = Math.round((target - base) / 86400000);
+    if (diffDays === 0) return '今天';
+    if (diffDays === 1) return '明天';
+    if (diffDays === 2) return '后天';
+    if (diffDays === 3) return '大后天';
+    return `${weekPrefix(target)}${weekdayLabel(target)}`;
   };
 
-  const halfModalActivities = useMemo(() => {
-    const slotKey = selectedSlot?.slot?.key;
-    const bucket = slotKey === 'evening' ? 'evening' : 'daytime';
-    const pool = ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]?.length
-      ? ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]
-      : ENTERTAINMENT_ACTIVITIES_BY_TIME.allday;
-    return [...new Set([selectedActivity, ...pool].filter(Boolean))].slice(0, 3);
-  }, [selectedActivity, selectedSlot]);
+  const buildBookingDraft = (activityText = '') => {
+    const activity = activityText || '玩';
+    return `随机：${activity}`;
+  };
 
-  const primeBookingDraft = (slotData, preferredActivity = '') => {
+  const getActivityPoolBySlot = (slotData) => {
     const slotKey = slotData?.slot?.key;
     const bucket = slotKey === 'evening' ? 'evening' : 'daytime';
     const pool = ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]?.length
       ? ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]
       : ENTERTAINMENT_ACTIVITIES_BY_TIME.allday;
-    const nextActivity = preferredActivity || pool[0] || '';
+    return pool || [];
+  };
+
+  const pickRandomActivity = (pool, excludeSet, prev = '') => {
+    const candidates = (pool || []).filter(a => a && !excludeSet.has(a));
+    if (candidates.length === 0) return '';
+    if (candidates.length === 1) return candidates[0];
+    let next = prev;
+    while (!next || next === prev) {
+      next = candidates[Math.floor(Math.random() * candidates.length)];
+    }
+    return next;
+  };
+
+  const [halfModalFixedActivities, setHalfModalFixedActivities] = useState([]);
+  const [halfModalRandomActivity, setHalfModalRandomActivity] = useState('');
+
+  const halfModalActivityOptions = useMemo(() => {
+    const a = halfModalFixedActivities?.[0] || '';
+    const b = halfModalFixedActivities?.[1] || '';
+    const c = halfModalRandomActivity || '';
+    return [
+      a ? { id: 'fixed-0', text: a } : null,
+      b ? { id: 'fixed-1', text: b } : null,
+      c ? { id: 'random', text: c } : null
+    ].filter(Boolean);
+  }, [halfModalFixedActivities, halfModalRandomActivity]);
+
+  const primeBookingDraft = (slotData, preferredActivity = '') => {
+    const pool = getActivityPoolBySlot(slotData);
+    const fixed = pool.slice(0, 2).filter(Boolean);
+    const exclude = new Set(fixed);
+    const random = pickRandomActivity(pool, exclude);
+    setHalfModalFixedActivities(fixed);
+    setHalfModalRandomActivity(random);
+
+    const nextActivity = preferredActivity || fixed[0] || random || '';
     setSelectedActivity(nextActivity);
-    setBookingText(buildBookingDraft(slotData, nextActivity));
+    setBookingText(buildBookingDraft(nextActivity));
   };
 
   const recommendations = useMemo(() => {
@@ -1191,7 +1231,7 @@ export default function Schedule({ theme }) {
     
     try {
       // 后台刷新数据，forceRefresh 只有手动刷新时才设为 true
-      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh: forceRefresh || hasCache });
+      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh });
       if (fetchSeqRef.current !== seq) return;
       
       const now = new Date();
@@ -1679,7 +1719,7 @@ export default function Schedule({ theme }) {
   };
 
   const copyBookingText = async () => {
-    const text = bookingText || buildBookingDraft(selectedSlot, selectedActivity);
+    const text = bookingText || buildBookingDraft(selectedActivity);
     try {
       await navigator.clipboard.writeText(text);
       showToast('已复制');

@@ -327,7 +327,6 @@ async function fallbackFetch(url) {
 }
 
 const CACHE_KEY = 'mickywa_schedule_cache_v3';
-const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v2_';
 const HOLIDAY_CN_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 
@@ -577,8 +576,21 @@ async function refreshInBackground({ forceRefresh } = {}) {
   }
 }
 
+function readScheduleCache() {
+  try {
+    const cachedStr = localStorage.getItem(CACHE_KEY);
+    if (!cachedStr) return null;
+    const cached = JSON.parse(cachedStr);
+    if (!cached || !cached.data) return null;
+    return hydrateDates(cached.data);
+  } catch (e) {
+    console.error('Cache read fail:', e);
+    return null;
+  }
+}
+
 export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false } = {}) {
-  const now = Date.now();
+  const cachedData = readScheduleCache();
 
   if (forceMock) {
     const mockData = getMockSchedule();
@@ -586,34 +598,16 @@ export async function getCalendarsWithCache({ forceMock = false, forceRefresh = 
     return mockData;
   }
 
-  // 先尝试读取缓存
-  let cachedData = null;
   try {
-    const cachedStr = localStorage.getItem(CACHE_KEY);
-    if (cachedStr) {
-      const cached = JSON.parse(cachedStr);
-      if (cached && cached.data) {
-        cachedData = hydrateDates(cached.data);
-        // 如果缓存没过期，直接返回缓存，后台刷新
-        if (cached.timestamp && now - cached.timestamp < CACHE_TTL) {
-          // 后台刷新，不阻塞
-          refreshInBackground({ forceRefresh }).catch(() => {});
-          return cachedData;
-        }
-      }
+    const freshData = await refreshInBackground({ forceRefresh });
+    if (!freshData?.isMock || !cachedData) {
+      return freshData;
     }
-  } catch (e) {
-    console.error('Cache read fail:', e);
-  }
-
-  // 如果有缓存但已过期，先返回缓存，后台刷新
-  if (cachedData) {
-    refreshInBackground({ forceRefresh: true }).catch(() => {});
     return cachedData;
+  } catch (e) {
+    if (cachedData) return cachedData;
+    throw e;
   }
-
-  // 没有缓存，阻塞获取
-  return await refreshInBackground({ forceRefresh });
 }
 
 function hydrateDates(data) {
