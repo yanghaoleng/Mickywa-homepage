@@ -326,7 +326,7 @@ async function fallbackFetch(url) {
   }
 }
 
-const CACHE_KEY = 'mickywa_schedule_cache_v2';
+const CACHE_KEY = 'mickywa_schedule_cache_v3';
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v2_';
 const HOLIDAY_CN_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days

@@ -1113,7 +1113,7 @@ export default function Schedule({ theme }) {
     // 先尝试同步读取缓存，快速显示
     if (!backgroundOnly) {
       try {
-        const cachedStr = localStorage.getItem('mickywa_schedule_cache_v2');
+        const cachedStr = localStorage.getItem('mickywa_schedule_cache_v3');
         if (cachedStr) {
           const cached = JSON.parse(cachedStr);
           if (cached && cached.data) {
@@ -1191,7 +1191,7 @@ export default function Schedule({ theme }) {
     
     try {
       // 后台刷新数据，forceRefresh 只有手动刷新时才设为 true
-      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh });
+      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh: forceRefresh || hasCache });
       if (fetchSeqRef.current !== seq) return;
       
       const now = new Date();
