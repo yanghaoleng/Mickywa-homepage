@@ -319,7 +319,9 @@ export default function Schedule({ theme }) {
   const [isDesktopModal, setIsDesktopModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState('');
   const [halfModalScrollY, setHalfModalScrollY] = useState(0);
+  const [halfModalActivities, setHalfModalActivities] = useState([]);
   const halfModalRef = useRef(null);
+  const bookingTextareaRef = useRef(null);
   const touchStartYRef = useRef(0);
 
   // 新增：跟踪当前焦点区域和日历中选中的可预约日期索引
@@ -669,8 +671,8 @@ export default function Schedule({ theme }) {
   const formatSelectedSlotRelativeLabel = (slotData) => {
     const date = getSafeDayDate(slotData?.day);
     if (!date) return '';
-    const now = new Date();
-    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const today = new Date();
+    const base = new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const diffDays = Math.round((target - base) / 86400000);
     if (diffDays === 0) return '今天';
@@ -680,56 +682,57 @@ export default function Schedule({ theme }) {
     return `${weekPrefix(target)}${weekdayLabel(target)}`;
   };
 
-  const buildBookingDraft = (activityText = '') => {
+  const buildBookingDraft = (slotData, activityText = '') => {
+    const dateLabel = formatSelectedSlotDateLabel(slotData) || (slotData?.slot?.label || '晚上');
+    const relativeLabel = formatSelectedSlotRelativeLabel(slotData);
     const activity = activityText || '玩';
-    return `随机：${activity}`;
+    const prefix = relativeLabel ? `${dateLabel}（${relativeLabel}）` : dateLabel;
+    return `${prefix}\n${activity}`;
   };
 
-  const getActivityPoolBySlot = (slotData) => {
+  const getActivityPoolForSlot = (slotData) => {
     const slotKey = slotData?.slot?.key;
     const bucket = slotKey === 'evening' ? 'evening' : 'daytime';
-    const pool = ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]?.length
+    return ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]?.length
       ? ENTERTAINMENT_ACTIVITIES_BY_TIME[bucket]
       : ENTERTAINMENT_ACTIVITIES_BY_TIME.allday;
-    return pool || [];
   };
 
-  const pickRandomActivity = (pool, excludeSet, prev = '') => {
-    const candidates = (pool || []).filter(a => a && !excludeSet.has(a));
-    if (candidates.length === 0) return '';
-    if (candidates.length === 1) return candidates[0];
-    let next = prev;
-    while (!next || next === prev) {
-      next = candidates[Math.floor(Math.random() * candidates.length)];
-    }
-    return next;
+  const buildHalfModalActivities = (slotData, preferredActivity = '') => {
+    const pool = [...new Set(getActivityPoolForSlot(slotData).filter(Boolean))];
+    const fixed = pool.slice(0, 2);
+    const remaining = pool.filter(item => !fixed.includes(item));
+    const fallbackRandom = preferredActivity && !fixed.includes(preferredActivity)
+      ? preferredActivity
+      : (remaining[Math.floor(Math.random() * Math.max(remaining.length, 1))] || fixed[1] || fixed[0] || '');
+    const randomItem = remaining.includes(fallbackRandom)
+      ? fallbackRandom
+      : (remaining[Math.floor(Math.random() * Math.max(remaining.length, 1))] || fallbackRandom);
+    return [fixed[0] || randomItem, fixed[1] || randomItem, randomItem].filter(Boolean).slice(0, 3);
   };
 
-  const [halfModalFixedActivities, setHalfModalFixedActivities] = useState([]);
-  const [halfModalRandomActivity, setHalfModalRandomActivity] = useState('');
-
-  const halfModalActivityOptions = useMemo(() => {
-    const a = halfModalFixedActivities?.[0] || '';
-    const b = halfModalFixedActivities?.[1] || '';
-    const c = halfModalRandomActivity || '';
-    return [
-      a ? { id: 'fixed-0', text: a } : null,
-      b ? { id: 'fixed-1', text: b } : null,
-      c ? { id: 'random', text: c } : null
-    ].filter(Boolean);
-  }, [halfModalFixedActivities, halfModalRandomActivity]);
+  const rotateRandomActivity = () => {
+    const pool = [...new Set(getActivityPoolForSlot(selectedSlot).filter(Boolean))];
+    setHalfModalActivities(prev => {
+      const fixed = prev.slice(0, 2);
+      const currentRandom = prev[2] || '';
+      const candidates = pool.filter(item => !fixed.includes(item) && item !== currentRandom);
+      const nextRandom = candidates.length
+        ? candidates[Math.floor(Math.random() * candidates.length)]
+        : (currentRandom || pool.find(item => !fixed.includes(item)) || fixed[0] || '');
+      const next = [fixed[0], fixed[1], nextRandom].filter(Boolean).slice(0, 3);
+      setSelectedActivity(nextRandom);
+      setBookingText(buildBookingDraft(selectedSlot, nextRandom));
+      return next;
+    });
+  };
 
   const primeBookingDraft = (slotData, preferredActivity = '') => {
-    const pool = getActivityPoolBySlot(slotData);
-    const fixed = pool.slice(0, 2).filter(Boolean);
-    const exclude = new Set(fixed);
-    const random = pickRandomActivity(pool, exclude);
-    setHalfModalFixedActivities(fixed);
-    setHalfModalRandomActivity(random);
-
-    const nextActivity = preferredActivity || fixed[0] || random || '';
+    const nextActivities = buildHalfModalActivities(slotData, preferredActivity);
+    const nextActivity = preferredActivity || nextActivities[0] || '';
+    setHalfModalActivities(nextActivities);
     setSelectedActivity(nextActivity);
-    setBookingText(buildBookingDraft(nextActivity));
+    setBookingText(buildBookingDraft(slotData, nextActivity));
   };
 
   const recommendations = useMemo(() => {
@@ -1231,7 +1234,7 @@ export default function Schedule({ theme }) {
     
     try {
       // 后台刷新数据，forceRefresh 只有手动刷新时才设为 true
-      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh });
+      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh: forceRefresh || hasCache });
       if (fetchSeqRef.current !== seq) return;
       
       const now = new Date();
@@ -1719,7 +1722,7 @@ export default function Schedule({ theme }) {
   };
 
   const copyBookingText = async () => {
-    const text = bookingText || buildBookingDraft(selectedActivity);
+    const text = bookingText || buildBookingDraft(selectedSlot, selectedActivity);
     try {
       await navigator.clipboard.writeText(text);
       showToast('已复制');
@@ -1728,6 +1731,18 @@ export default function Schedule({ theme }) {
       showToast('复制失败，请手动复制');
     }
   };
+
+  useEffect(() => {
+    if (!showHalfModal) return;
+    const timer = setTimeout(() => {
+      bookingTextareaRef.current?.focus();
+      bookingTextareaRef.current?.setSelectionRange?.(
+        bookingTextareaRef.current.value.length,
+        bookingTextareaRef.current.value.length
+      );
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [showHalfModal]);
 
   const handleHalfModalTouchStart = (e) => {
     touchStartYRef.current = e.touches?.[0]?.clientY || 0;
@@ -2459,10 +2474,15 @@ export default function Schedule({ theme }) {
             
             {/* Title */}
             <div className="px-5 pb-4">
-              <h2 className="text-lg font-semibold text-[#3A3A3A] dark:text-[#FFFFFF]">
-                  {formatSelectedSlotDateLabel(selectedSlot)} 
+              <h2 className="text-lg font-semibold text-[#3A3A3A] dark:text-[#FFFFFF] leading-snug">
+                <span>{formatSelectedSlotDateLabel(selectedSlot)}</span>
+                <span className="ml-2 text-[14px] font-medium text-[#3A3A3A]/55 dark:text-[#FFFFFF]/55">
+                  {formatSelectedSlotRelativeLabel(selectedSlot) ? `（${formatSelectedSlotRelativeLabel(selectedSlot)}）` : ''}
+                </span>
+                <span className="block mt-1 whitespace-normal break-words">
                   <BottomUpLettersSwap text={selectedActivity} active={true} />
-                </h2>
+                </span>
+              </h2>
             </div>
             
             {/* Content */}
@@ -2476,12 +2496,16 @@ export default function Schedule({ theme }) {
                       key={idx}
                       type="button"
                       className={[
-                        "px-4 py-3 rounded-[12px] text-[14px] font-medium transition-all active:scale-95 relative overflow-hidden",
+                        "px-4 py-3 rounded-[12px] text-[14px] font-medium transition-all active:scale-95 relative overflow-hidden text-left",
                         selectedActivity === activity 
                           ? "text-[#083A8E] dark:text-[#083A8E]" 
                           : "bg-[#E5E5E5] dark:bg-[#444444] text-[#3A3A3A] dark:text-[#FFFFFF]"
                       ].join(' ')}
                       onClick={() => {
+                        if (idx === 2) {
+                          rotateRandomActivity();
+                          return;
+                        }
                         setSelectedActivity(activity);
                         setBookingText(buildBookingDraft(selectedSlot, activity));
                       }}
@@ -2489,7 +2513,9 @@ export default function Schedule({ theme }) {
                       {selectedActivity === activity && (
                         <div className="absolute inset-0 animate-color-change rounded-[12px]" />
                       )}
-                      <span className="relative z-10">{activity}</span>
+                      <span className="relative z-10 whitespace-normal break-words">
+                        {idx === 2 ? `随机：${activity}` : activity}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -2499,6 +2525,7 @@ export default function Schedule({ theme }) {
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-[#3A3A3A]/70 dark:text-[#FFFFFF]/70 mb-3">预约文案</h3>
                 <textarea
+                  ref={bookingTextareaRef}
                   className="w-full px-4 py-3 rounded-[12px] text-[14px] text-[#3A3A3A] dark:text-[#FFFFFF] bg-[#FFFFFF] dark:bg-[#333333] border border-[#3A3A3A]/10 dark:border-[#FFFFFF]/10 resize-none focus:outline-none focus:border-[#083A8E] dark:focus:border-[#D3F1FF] transition-colors"
                   rows={2}
                   placeholder={buildBookingDraft(selectedSlot, selectedActivity)}
