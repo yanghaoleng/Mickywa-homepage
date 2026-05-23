@@ -31,9 +31,10 @@ async function fetchText(url, timeoutMs) {
 
 async function fetchJson(url, timeoutMs) {
   const res = await fetchWithTimeout(url, { timeoutMs, headers: { Accept: 'application/json' } });
-  const json = await res.json();
+  const text = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return json;
+  if (!text) throw new Error('Invalid JSON');
+  return JSON.parse(text);
 }
 
 export async function buildSchedulePayload() {

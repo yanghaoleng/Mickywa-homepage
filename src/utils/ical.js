@@ -523,12 +523,28 @@ function getMockSchedule() {
   return { workEvents: [], holidayEvents: [], schedule };
 }
 
-// 后台刷新函数，不阻塞返回
-async function refreshInBackground({ forceRefresh } = {}) {
-  try {
-    const now = Date.now();
+function formatFetchError(err) {
+  const name = String(err?.name || '');
+  const msg = String(err?.message || err || '');
+  if (name === 'AbortError') return 'timeout';
+  if (/timeout/i.test(msg)) return 'timeout';
+  if (msg === 'Invalid JSON') return 'invalid_json';
+  if (/Failed to fetch/i.test(msg)) return 'network_error';
+  if (/HTTP\s+\d+/.test(msg)) return msg;
+  return msg || 'unknown_error';
+}
 
-    const tosData = await fetchScheduleJson({ forceRefresh }).catch(() => null);
+async function refreshInBackground({ forceRefresh } = {}) {
+  const now = Date.now();
+  let scheduleJsonError = null;
+  let calendarApiError = null;
+  try {
+    let tosData = null;
+    try {
+      tosData = await fetchScheduleJson({ forceRefresh });
+    } catch (e) {
+      scheduleJsonError = e;
+    }
     if (tosData) {
       try {
         localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: now, data: tosData }));
@@ -545,6 +561,7 @@ async function refreshInBackground({ forceRefresh } = {}) {
     try {
       workResult = await fetchWorkCalendarFromProvider('cloud', { forceRefresh });
     } catch (e) {
+      calendarApiError = e;
       workResult = await fetchWorkCalendarFromProvider('cloud', { forceRefresh: true });
     }
 
@@ -573,7 +590,11 @@ async function refreshInBackground({ forceRefresh } = {}) {
     const mockData = getMockSchedule();
     mockData.isMock = true;
     mockData.calendarSource = 'mock';
-    mockData.calendarReason = '云函数获取失败';
+    const parts = [];
+    if (scheduleJsonError) parts.push(`schedule_json:${formatFetchError(scheduleJsonError)}`);
+    if (calendarApiError) parts.push(`calendar_api:${formatFetchError(calendarApiError)}`);
+    parts.push(`final:${formatFetchError(e)}`);
+    mockData.calendarReason = parts.join('；');
     mockData.calendarFetchElapsedMs = null;
     mockData.calendarError = String(e?.message || e || '');
     return mockData;
