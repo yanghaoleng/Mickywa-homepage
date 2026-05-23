@@ -7,7 +7,7 @@ function env(name, fallback = '') {
 }
 
 const port = Number(env('PORT', env('VEFAAS_PORT', '3000'))) || 3000;
-const ttlSeconds = Math.max(5, Number(env('CACHE_TTL_SECONDS', '180')) || 180);
+const ttlSeconds = Math.max(5, Number(env('CACHE_TTL_SECONDS', '600')) || 600);
 const staleSeconds = Math.max(0, Number(env('CACHE_STALE_SECONDS', '60')) || 60);
 
 let cache = {

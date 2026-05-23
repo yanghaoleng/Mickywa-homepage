@@ -327,6 +327,7 @@ async function fallbackFetch(url) {
 const CACHE_KEY = 'mickywa_schedule_cache_v3';
 const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v2_';
 const HOLIDAY_CN_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
+const SCHEDULE_MIN_REFRESH_MS = 2 * 60 * 1000;
 
 function fetchTextWithTimeout(url, { timeoutMs = 12000 } = {}) {
   const controller = new AbortController();
@@ -349,10 +350,16 @@ function fetchJsonWithTimeout(url, { timeoutMs = 12000 } = {}) {
 
   return fetch(url, { signal: controller.signal })
     .then(async (res) => {
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      let json = null;
+      if (text) {
+        try {
+          json = JSON.parse(text);
+        } catch (_) {
+          throw new Error('Invalid JSON');
+        }
       }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return json;
     })
     .finally(() => clearTimeout(timeoutId));
@@ -370,7 +377,7 @@ function appendCacheBuster(url, { enabled } = {}) {
 async function fetchScheduleJson({ forceRefresh = false } = {}) {
   if (!SCHEDULE_JSON_URL) return null;
   const url = appendCacheBuster(SCHEDULE_JSON_URL, { enabled: forceRefresh });
-  const data = await fetchJsonWithTimeout(url, { timeoutMs: 5000 });
+  const data = await fetchJsonWithTimeout(url, { timeoutMs: 12000 });
   if (!data || !Array.isArray(data.schedule)) return null;
   const normalized = hydrateDates({
     ...data,
@@ -385,7 +392,7 @@ async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } 
   const safeProvider = provider === 'cloud' ? 'cloud' : 'cloud';
   const t = forceRefresh ? `&t=${Date.now()}` : '';
   const url = `/api/calendar?type=work&format=json&provider=${encodeURIComponent(safeProvider)}${t}`;
-  const payload = await fetchJsonWithTimeout(url, { timeoutMs: 5000 });
+  const payload = await fetchJsonWithTimeout(url, { timeoutMs: 12000 });
   const fetchedAtMs = Number(payload?.fetchedAtMs);
   const elapsedMs = Number(payload?.elapsedMs);
   const upstream = String(payload?.upstream || '');
@@ -417,7 +424,7 @@ async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } 
 async function fetchHolidayCnYear(year) {
   const url = `${HOLIDAY_CN_BASE_URL}/${year}.json`;
   try {
-    return await fetchJsonWithTimeout(url, { timeoutMs: 5000 });
+    return await fetchJsonWithTimeout(url, { timeoutMs: 12000 });
   } catch (_) {
     return { days: [] };
   }
@@ -573,13 +580,14 @@ async function refreshInBackground({ forceRefresh } = {}) {
   }
 }
 
-function readScheduleCache() {
+function readScheduleCacheEntry() {
   try {
     const cachedStr = localStorage.getItem(CACHE_KEY);
     if (!cachedStr) return null;
     const cached = JSON.parse(cachedStr);
     if (!cached || !cached.data) return null;
-    return hydrateDates(cached.data);
+    const timestamp = Number(cached.timestamp) || 0;
+    return { timestamp, data: hydrateDates(cached.data) };
   } catch (e) {
     console.error('Cache read fail:', e);
     return null;
@@ -587,7 +595,15 @@ function readScheduleCache() {
 }
 
 export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false } = {}) {
-  const cachedData = readScheduleCache();
+  const now = Date.now();
+  const cachedEntry = readScheduleCacheEntry();
+  const cachedData = cachedEntry?.data || null;
+  if (cachedEntry && cachedData && !forceRefresh) {
+    const ageMs = now - (Number(cachedEntry.timestamp) || 0);
+    if (ageMs >= 0 && ageMs < SCHEDULE_MIN_REFRESH_MS) {
+      return cachedData;
+    }
+  }
 
   if (forceMock) {
     const mockData = getMockSchedule();
