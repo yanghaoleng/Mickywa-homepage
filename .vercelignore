@@ -5,3 +5,6 @@ dist
 .trae
 .log
 .figma
+.mcp.json
+.vefaas
+.tmp_vefaas_*

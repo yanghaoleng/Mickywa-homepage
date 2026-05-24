@@ -379,7 +379,7 @@ export default function Schedule({ theme }) {
   const [pressedSlotId, setPressedSlotId] = useState(null);
   const [selectedSmartId, setSelectedSmartId] = useState(null);
   const [fadingSmartId, setFadingSmartId] = useState(null);
-  const [isCalendarExpanded, setIsCalendarExpanded] = useState(false);
+  const [isCalendarExpanded, setIsCalendarExpanded] = useState(true);
   const [isCalendarCollapsing, setIsCalendarCollapsing] = useState(false);
   const [recNonce, setRecNonce] = useState(0);
   const [smartActivityById, setSmartActivityById] = useState({});
@@ -798,7 +798,7 @@ export default function Schedule({ theme }) {
   const buildBookingDraft = (slotData, activityText = '') => {
     const dateLabel = formatSelectedSlotFullLabel(slotData) || (slotData?.slot?.label || '晚上');
     const activity = activityText || '玩';
-    return normalizeBookingText(`${dateLabel} ${activity}`);
+    return normalizeBookingText(`嗨，老羊，我想找你耍，${dateLabel} ${activity}`);
   };
 
   const formatSelectedSlotFullLabel = (slotData) => {
@@ -2081,8 +2081,9 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div ref={rootRef} className="w-full max-w-[440px] px-5 pt-1 pb-32 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain custom-scrollbar relative">
+      <div ref={rootRef} className="w-full md:w-screen max-w-[440px] md:max-w-none px-5 md:px-0 pt-1 pb-32 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain custom-scrollbar relative">
         <DetachedStickersOverlay scrollContainerRef={rootRef} isVisible={isCalendarExpanded} />
+        <div className="mx-auto w-full max-w-[440px]">
         <div className="flex flex-col items-center justify-start spring-scale-in mb-5">
           <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
             <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
@@ -2613,9 +2614,9 @@ export default function Schedule({ theme }) {
                 </div>
               </div>
             </div>
-
           </div>
         )}
+        </div>
       </div>
 
       {/* Toast */}

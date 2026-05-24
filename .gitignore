@@ -60,9 +60,12 @@ skills-lock.json
 
 # Local function config
 .vefaas/
+.mcp.json
 
 # Temp veFaaS pulls
 .tmp_vefaas_*/
 
 # Local scratch files
 window.innerHeight
+.vercel
+.env*.local
