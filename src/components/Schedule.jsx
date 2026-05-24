@@ -2069,7 +2069,7 @@ export default function Schedule({ theme }) {
   };
 
   return (
-    <div className="h-full md:h-auto overflow-hidden md:overflow-y-auto flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
+    <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
       <div className="pt-4 pb-1 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start spring-scale-in">
           <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
@@ -2088,8 +2088,9 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div ref={rootRef} className="w-full max-w-[440px] px-5 pt-1 pb-32 flex-1 md:flex-none overflow-y-auto md:overflow-y-visible overflow-x-hidden overscroll-contain custom-scrollbar relative">
+      <div ref={rootRef} className="w-full md:w-screen max-w-[440px] md:max-w-none pt-1 pb-32 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain custom-scrollbar relative">
         <DetachedStickersOverlay scrollContainerRef={rootRef} isVisible={isCalendarExpanded} />
+        <div className="mx-auto w-full max-w-[440px] px-5">
         <div className="flex flex-col items-center justify-start spring-scale-in mb-5">
           <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
             <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
@@ -2622,6 +2623,7 @@ export default function Schedule({ theme }) {
             </div>
           </div>
         )}
+        </div>
       </div>
 
       {/* Toast */}
