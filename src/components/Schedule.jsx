@@ -640,6 +640,9 @@ export default function Schedule({ theme }) {
     if (isCalendarExpanded) {
       setIsCalendarCollapsing(true);
       window.setTimeout(() => setIsCalendarCollapsing(false), 220);
+      if (navigator.vibrate) {
+        navigator.vibrate(10);
+      }
     } else {
       setIsCalendarCollapsing(false);
     }
