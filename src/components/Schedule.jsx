@@ -2088,7 +2088,7 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div ref={rootRef} className="w-full md:w-screen max-w-[440px] md:max-w-none pt-1 pb-32 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain custom-scrollbar relative">
+      <div ref={rootRef} className="w-full pt-1 pb-32 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain custom-scrollbar relative">
         <DetachedStickersOverlay scrollContainerRef={rootRef} isVisible={isCalendarExpanded} />
         <div className="mx-auto w-full max-w-[440px] px-5">
         <div className="flex flex-col items-center justify-start spring-scale-in mb-5">
