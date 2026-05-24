@@ -136,6 +136,21 @@ body,
   animation: spring-click 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
+@keyframes haptic-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  30% {
+    transform: scale(0.97);
+    opacity: 0.8;
+  }
+}
+
+.haptic-pulse {
+  animation: haptic-pulse 0.15s ease-out forwards;
+}
+
 @keyframes press-shrink {
   0% {
     transform: scale(1);
