@@ -2090,7 +2090,7 @@ export default function Schedule({ theme }) {
 
       <div ref={rootRef} className="w-full pt-1 pb-32 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain relative">
         <DetachedStickersOverlay scrollContainerRef={rootRef} isVisible={isCalendarExpanded} />
-        <div className="mx-auto w-full max-w-[440px] px-5">
+        <div className="mx-auto w-full max-w-[440px] min-[860px]:max-w-[860px] px-5">
         <div className="flex flex-col items-center justify-start spring-scale-in mb-5">
           <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
             <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
@@ -2159,7 +2159,7 @@ export default function Schedule({ theme }) {
         )}
 
         {!loading && !error && (
-          <div key={contentKey} className="pb-10 overflow-visible">
+          <div key={contentKey} className="pb-10 overflow-visible min-[860px]:grid min-[860px]:grid-cols-[minmax(0,440px)_minmax(0,340px)] min-[860px]:items-start min-[860px]:justify-center min-[860px]:gap-6">
             <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
               <div className="h-8 mb-4 px-2 relative inline-block" ref={calendarTitleRef}>
                 <img
@@ -2540,84 +2540,86 @@ export default function Schedule({ theme }) {
               </div>
             </div>
 
-            {/* 一起vibe板块 */}
-            <div className="spring-scale-in mt-6 bg-[#FEF3C7] dark:bg-[#8E6A08]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
-              <div className="h-8 mb-4 px-2 relative inline-block">
-                <img
-                  src="/assets/一起Vibe.svg"
-                  alt="一起vibe"
-                  className="h-full w-auto dark:opacity-0"
-                />
-                <div className="absolute inset-y-0 left-2 right-0 hidden dark:block bg-[#FFF4D3] pointer-events-none" style={{ WebkitMaskImage: 'url(/assets/一起Vibe.svg)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'left center', maskImage: 'url(/assets/一起Vibe.svg)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'left center' }}></div>
-              </div>
-              <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
-                <div className="space-y-2">
-                  <SimpleActionButton actionText="去github" title="个人预约站（本站）" 
-                    onClick={() => { window.open("https://github.com/yanghaoleng/Mickywa-homepage", "_blank"); }} 
-                    textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
+            <div className="min-[860px]:flex min-[860px]:flex-col min-[860px]:gap-6">
+              {/* 一起vibe板块 */}
+              <div className="spring-scale-in mt-6 min-[860px]:mt-0 bg-[#FEF3C7] dark:bg-[#8E6A08]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
+                <div className="h-8 mb-4 px-2 relative inline-block">
+                  <img
+                    src="/assets/一起Vibe.svg"
+                    alt="一起vibe"
+                    className="h-full w-auto dark:opacity-0"
                   />
-                  <SimpleActionButton actionText="去github" title="工作室预约站" 
-                    onClick={() => { window.open("https://github.com/yanghaoleng/Bookingcal", "_blank"); }} 
-                    textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
-                  />
-                  <SimpleActionButton actionText="一周掌握/2300¥" title="我带你玩" 
-                    onClick={() => { 
-                      const messages = [
-                        "你好老杨，我想让你带我玩儿Vibe Coding，价钱还可以便宜点吗？包学会吗？",
-                        "你好，老羊，我没有看错吧？你亲自带我玩Vibe Coding，整整一周，手把手指导，传授你所有最新的宝贵技能和心得，让我在AI时代完成从User到Builder的转变，竟然只需要一件大衣的钱。快把收款码发过来！！"
-                      ];
-                      const message = messages[Math.floor(Math.random() * messages.length)];
-                      const encodedText = encodeURIComponent(message);
-                      window.location.href = `sms:yanghaoleng@icloud.com?body=${encodedText}`;
-                    }} 
-                    textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
-                  />
+                  <div className="absolute inset-y-0 left-2 right-0 hidden dark:block bg-[#FFF4D3] pointer-events-none" style={{ WebkitMaskImage: 'url(/assets/一起Vibe.svg)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'left center', maskImage: 'url(/assets/一起Vibe.svg)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'left center' }}></div>
+                </div>
+                <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
+                  <div className="space-y-2">
+                    <SimpleActionButton actionText="去github" title="个人预约站（本站）" 
+                      onClick={() => { window.open("https://github.com/yanghaoleng/Mickywa-homepage", "_blank"); }} 
+                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
+                    />
+                    <SimpleActionButton actionText="去github" title="工作室预约站" 
+                      onClick={() => { window.open("https://github.com/yanghaoleng/Bookingcal", "_blank"); }} 
+                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
+                    />
+                    <SimpleActionButton actionText="一周掌握/2300¥" title="我带你玩" 
+                      onClick={() => { 
+                        const messages = [
+                          "你好老杨，我想让你带我玩儿Vibe Coding，价钱还可以便宜点吗？包学会吗？",
+                          "你好，老羊，我没有看错吧？你亲自带我玩Vibe Coding，整整一周，手把手指导，传授你所有最新的宝贵技能和心得，让我在AI时代完成从User到Builder的转变，竟然只需要一件大衣的钱。快把收款码发过来！！"
+                        ];
+                        const message = messages[Math.floor(Math.random() * messages.length)];
+                        const encodedText = encodeURIComponent(message);
+                        window.location.href = `sms:yanghaoleng@icloud.com?body=${encodedText}`;
+                      }} 
+                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* 刷抖音板块 */}
-            <div className="spring-scale-in mt-6 bg-[#FFE4E6] dark:bg-[#8E083A]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
-              <div className="h-8 mb-4 px-2 relative inline-block">
-                <img
-                  src="/assets/刷抖音.svg"
-                  alt="刷抖音"
-                  className="h-full w-auto dark:opacity-0"
-                />
-                <div className="absolute inset-y-0 left-2 right-0 hidden dark:block bg-[#FFD3F1] pointer-events-none" style={{ WebkitMaskImage: 'url(/assets/刷抖音.svg)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'left center', maskImage: 'url(/assets/刷抖音.svg)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'left center' }}></div>
-              </div>
-              <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
-                <div className="space-y-2">
-                  <SimpleActionButton actionText="去抖音" title="看小鸟" 
-                    onClick={() => { 
-                      window.open("https://v.douyin.com/p08oCSqO5hE/", "_blank"); 
-                    }} 
-                    textClass="text-[#8E083A] dark:text-[#FFD3F1]" 
+              {/* 刷抖音板块 */}
+              <div className="spring-scale-in mt-6 min-[860px]:mt-0 bg-[#FFE4E6] dark:bg-[#8E083A]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
+                <div className="h-8 mb-4 px-2 relative inline-block">
+                  <img
+                    src="/assets/刷抖音.svg"
+                    alt="刷抖音"
+                    className="h-full w-auto dark:opacity-0"
                   />
-                  <SimpleActionButton actionText="去抖音" title="看帅哥" 
-                    onClick={() => { window.open("https://v.douyin.com/sfQu9qDL9eQ/", "_blank"); }} 
-                    textClass="text-[#8E083A] dark:text-[#FFD3F1]" 
-                  />
+                  <div className="absolute inset-y-0 left-2 right-0 hidden dark:block bg-[#FFD3F1] pointer-events-none" style={{ WebkitMaskImage: 'url(/assets/刷抖音.svg)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'left center', maskImage: 'url(/assets/刷抖音.svg)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'left center' }}></div>
+                </div>
+                <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
+                  <div className="space-y-2">
+                    <SimpleActionButton actionText="去抖音" title="看小鸟" 
+                      onClick={() => { 
+                        window.open("https://v.douyin.com/p08oCSqO5hE/", "_blank"); 
+                      }} 
+                      textClass="text-[#8E083A] dark:text-[#FFD3F1]" 
+                    />
+                    <SimpleActionButton actionText="去抖音" title="看帅哥" 
+                      onClick={() => { window.open("https://v.douyin.com/sfQu9qDL9eQ/", "_blank"); }} 
+                      textClass="text-[#8E083A] dark:text-[#FFD3F1]" 
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* 随便聊板块 */}
-            <div className="spring-scale-in mt-6 bg-[#E6F4EA] dark:bg-[#088E3A]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
-              <div className="h-8 mb-4 px-2 relative inline-block">
-                <img
-                  src="/assets/随便聊.svg"
-                  alt="随便聊"
-                  className="h-full w-auto dark:opacity-0"
-                />
-                <div className="absolute inset-y-0 left-2 right-0 hidden dark:block bg-[#D3FFD3] pointer-events-none" style={{ WebkitMaskImage: 'url(/assets/随便聊.svg)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'left center', maskImage: 'url(/assets/随便聊.svg)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'left center' }}></div>
-              </div>
-              <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
-                <div className="space-y-2">
-                  <SimpleActionButton actionText="发送消息" title="iMessage" 
-                    onClick={() => { window.location.href = "sms:yanghaoleng@icloud.com"; }} 
-                    textClass="text-[#088E3A] dark:text-[#D3FFD3]" 
+              {/* 随便聊板块 */}
+              <div className="spring-scale-in mt-6 min-[860px]:mt-0 bg-[#E6F4EA] dark:bg-[#088E3A]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
+                <div className="h-8 mb-4 px-2 relative inline-block">
+                  <img
+                    src="/assets/随便聊.svg"
+                    alt="随便聊"
+                    className="h-full w-auto dark:opacity-0"
                   />
+                  <div className="absolute inset-y-0 left-2 right-0 hidden dark:block bg-[#D3FFD3] pointer-events-none" style={{ WebkitMaskImage: 'url(/assets/随便聊.svg)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'left center', maskImage: 'url(/assets/随便聊.svg)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'left center' }}></div>
+                </div>
+                <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
+                  <div className="space-y-2">
+                    <SimpleActionButton actionText="发送消息" title="iMessage" 
+                      onClick={() => { window.location.href = "sms:yanghaoleng@icloud.com"; }} 
+                      textClass="text-[#088E3A] dark:text-[#D3FFD3]" 
+                    />
+                  </div>
                 </div>
               </div>
             </div>
