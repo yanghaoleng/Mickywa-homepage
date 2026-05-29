@@ -59,6 +59,21 @@ function canvasToImageSrc(canvas) {
   });
 }
 
+function getContainedStickerRect(img) {
+  const sourceWidth = img.naturalWidth || img.width || STICKER_DRAW_SIZE;
+  const sourceHeight = img.naturalHeight || img.height || STICKER_DRAW_SIZE;
+  const scale = Math.min(STICKER_DRAW_SIZE / sourceWidth, STICKER_DRAW_SIZE / sourceHeight);
+  const width = sourceWidth * scale;
+  const height = sourceHeight * scale;
+
+  return {
+    x: STICKER_CANVAS_PADDING + (STICKER_DRAW_SIZE - width) / 2,
+    y: STICKER_CANVAS_PADDING + (STICKER_DRAW_SIZE - height) / 2,
+    width,
+    height
+  };
+}
+
 async function renderOutlinedSticker(src) {
   if (typeof document === 'undefined') return src;
 
@@ -78,18 +93,17 @@ async function renderOutlinedSticker(src) {
   ctx.scale(dpr, dpr);
   outlineCtx.scale(dpr, dpr);
 
-  const x = STICKER_CANVAS_PADDING;
-  const y = STICKER_CANVAS_PADDING;
+  const drawRect = getContainedStickerRect(img);
 
   ctx.save();
   ctx.shadowColor = 'rgba(0,0,0,0.15)';
   ctx.shadowBlur = 3;
   ctx.shadowOffsetY = 2;
-  ctx.drawImage(img, x, y, STICKER_DRAW_SIZE, STICKER_DRAW_SIZE);
+  ctx.drawImage(img, drawRect.x, drawRect.y, drawRect.width, drawRect.height);
   ctx.restore();
 
   OUTLINE_OFFSETS.forEach(([dx, dy]) => {
-    outlineCtx.drawImage(img, x + dx, y + dy, STICKER_DRAW_SIZE, STICKER_DRAW_SIZE);
+    outlineCtx.drawImage(img, drawRect.x + dx, drawRect.y + dy, drawRect.width, drawRect.height);
   });
   outlineCtx.globalCompositeOperation = 'source-in';
   outlineCtx.fillStyle = '#fff';
@@ -97,7 +111,7 @@ async function renderOutlinedSticker(src) {
   outlineCtx.globalCompositeOperation = 'source-over';
 
   ctx.drawImage(outlineCanvas, 0, 0, STICKER_CANVAS_SIZE, STICKER_CANVAS_SIZE);
-  ctx.drawImage(img, x, y, STICKER_DRAW_SIZE, STICKER_DRAW_SIZE);
+  ctx.drawImage(img, drawRect.x, drawRect.y, drawRect.width, drawRect.height);
 
   return canvasToImageSrc(canvas);
 }
