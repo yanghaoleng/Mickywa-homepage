@@ -12,14 +12,148 @@ const STICKERS = [
   '/assets/道具/白色芍药.webp',
   '/assets/道具/马鞭.webp',
   '/assets/道具/黄色法拉利.webp',
-  '/assets/道具/宝矿力.webp'
+  '/assets/道具/宝矿力.webp',
+  '/assets/道具/电瓶车.webp',
+  '/assets/道具/鹦鹉01.webp',
+  '/assets/道具/鹦鹉02.webp',
+  '/assets/道具/鹦鹉03.webp',
+  '/assets/道具/鹦鹉04.webp'
 ];
+
+const STICKER_VISUAL_CLASS = 'object-contain';
+const STICKER_VISUAL_OFFSET = -4;
+const STICKER_CANVAS_SIZE = 48;
+const STICKER_DRAW_SIZE = 40;
+const STICKER_CANVAS_PADDING = (STICKER_CANVAS_SIZE - STICKER_DRAW_SIZE) / 2;
+const OUTLINE_OFFSETS = [
+  [2, 0],
+  [-2, 0],
+  [0, 2],
+  [0, -2],
+  [1.5, 1.5],
+  [-1.5, 1.5],
+  [1.5, -1.5],
+  [-1.5, -1.5]
+];
+const outlinedStickerCache = new Map();
+
+function loadStickerImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+function canvasToImageSrc(canvas) {
+  if (!canvas.toBlob || typeof URL === 'undefined' || !URL.createObjectURL) {
+    return Promise.resolve(canvas.toDataURL('image/png'));
+  }
+
+  return new Promise(resolve => {
+    canvas.toBlob(blob => {
+      resolve(blob ? URL.createObjectURL(blob) : canvas.toDataURL('image/png'));
+    }, 'image/png');
+  });
+}
+
+async function renderOutlinedSticker(src) {
+  if (typeof document === 'undefined') return src;
+
+  const img = await loadStickerImage(src);
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const width = STICKER_CANVAS_SIZE * dpr;
+  const height = STICKER_CANVAS_SIZE * dpr;
+  const canvas = document.createElement('canvas');
+  const outlineCanvas = document.createElement('canvas');
+  canvas.width = outlineCanvas.width = width;
+  canvas.height = outlineCanvas.height = height;
+
+  const ctx = canvas.getContext('2d');
+  const outlineCtx = outlineCanvas.getContext('2d');
+  if (!ctx || !outlineCtx) return src;
+
+  ctx.scale(dpr, dpr);
+  outlineCtx.scale(dpr, dpr);
+
+  const x = STICKER_CANVAS_PADDING;
+  const y = STICKER_CANVAS_PADDING;
+
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.15)';
+  ctx.shadowBlur = 3;
+  ctx.shadowOffsetY = 2;
+  ctx.drawImage(img, x, y, STICKER_DRAW_SIZE, STICKER_DRAW_SIZE);
+  ctx.restore();
+
+  OUTLINE_OFFSETS.forEach(([dx, dy]) => {
+    outlineCtx.drawImage(img, x + dx, y + dy, STICKER_DRAW_SIZE, STICKER_DRAW_SIZE);
+  });
+  outlineCtx.globalCompositeOperation = 'source-in';
+  outlineCtx.fillStyle = '#fff';
+  outlineCtx.fillRect(0, 0, STICKER_CANVAS_SIZE, STICKER_CANVAS_SIZE);
+  outlineCtx.globalCompositeOperation = 'source-over';
+
+  ctx.drawImage(outlineCanvas, 0, 0, STICKER_CANVAS_SIZE, STICKER_CANVAS_SIZE);
+  ctx.drawImage(img, x, y, STICKER_DRAW_SIZE, STICKER_DRAW_SIZE);
+
+  return canvasToImageSrc(canvas);
+}
+
+function getOutlinedStickerSrc(src) {
+  if (typeof window === 'undefined') return Promise.resolve(src);
+
+  const cached = outlinedStickerCache.get(src);
+  if (cached?.value) return Promise.resolve(cached.value);
+  if (cached?.promise) return cached.promise;
+
+  const promise = renderOutlinedSticker(src)
+    .then(value => {
+      outlinedStickerCache.set(src, { value });
+      return value;
+    })
+    .catch(() => {
+      outlinedStickerCache.set(src, { value: src });
+      return src;
+    });
+
+  outlinedStickerCache.set(src, { promise });
+  return promise;
+}
+
+function useOutlinedStickerSrc(src) {
+  const [outlinedSrc, setOutlinedSrc] = useState(() => outlinedStickerCache.get(src)?.value || src);
+
+  useEffect(() => {
+    let cancelled = false;
+    setOutlinedSrc(outlinedStickerCache.get(src)?.value || src);
+    getOutlinedStickerSrc(src).then(value => {
+      if (!cancelled) setOutlinedSrc(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [src]);
+
+  return outlinedSrc;
+}
 
 // 预加载所有贴纸
 if (typeof window !== 'undefined') {
+  if (!window.__outlinedStickerCacheCleanup) {
+    window.__outlinedStickerCacheCleanup = true;
+    window.addEventListener('pagehide', () => {
+      outlinedStickerCache.forEach(entry => {
+        if (entry?.value?.startsWith?.('blob:')) URL.revokeObjectURL(entry.value);
+      });
+      outlinedStickerCache.clear();
+    });
+  }
+
   STICKERS.forEach(src => {
-    const img = new Image();
-    img.src = src;
+    getOutlinedStickerSrc(src);
   });
 }
 
@@ -138,6 +272,7 @@ function DetachedSticker({ sticker, scrollContainerRef }) {
   const [isDragging, setIsDragging] = useState(false);
   const imgRef = useRef(null);
   const positionRef = useRef({ x: sticker.x, y: sticker.y });
+  const outlinedSrc = useOutlinedStickerSrc(sticker.src);
   
   useEffect(() => {
     positionRef.current = { x: sticker.x, y: sticker.y };
@@ -226,7 +361,7 @@ function DetachedSticker({ sticker, scrollContainerRef }) {
   return (
     <img
       ref={imgRef}
-      src={sticker.src}
+      src={outlinedSrc}
       alt="sticker"
       onPointerDown={handlePointerDown}
       style={{
@@ -234,13 +369,15 @@ function DetachedSticker({ sticker, scrollContainerRef }) {
         position: 'absolute',
         left: `${positionRef.current.x}px`,
         top: `${positionRef.current.y}px`,
+        width: `${STICKER_CANVAS_SIZE}px`,
+        height: `${STICKER_CANVAS_SIZE}px`,
+        maxWidth: 'none',
         touchAction: 'none',
         WebkitUserSelect: 'none',
         userSelect: 'none',
-        WebkitTouchCallout: 'none',
-        filter: 'drop-shadow(2px 0px 0px white) drop-shadow(-2px 0px 0px white) drop-shadow(0px 2px 0px white) drop-shadow(0px -2px 0px white) drop-shadow(0px 2px 3px rgba(0,0,0,0.15))'
+        WebkitTouchCallout: 'none'
       }}
-      className={`w-10 h-10 object-contain cursor-grab active:cursor-grabbing transition duration-300 ${
+      className={`${STICKER_VISUAL_CLASS} cursor-grab active:cursor-grabbing transition duration-300 ${
         sticker.isDeleting ? 'scale-0 opacity-0' : (isDragging ? 'scale-150' : 'scale-100 hover:scale-110')
       }`}
       draggable={false}
@@ -294,6 +431,8 @@ function StickerSlot({ slotSticker, index, scrollContainerRef, onReplace }) {
   const [previewMounted, setPreviewMounted] = useState(false);
   const previewStartPos = useRef({ x: 0, y: 0 });
   const dragSrcRef = useRef('');
+  const dragDisplaySrcRef = useRef('');
+  const outlinedSrc = useOutlinedStickerSrc(slotSticker.src);
 
   const handlePointerDown = (e) => {
     e.preventDefault();
@@ -308,6 +447,7 @@ function StickerSlot({ slotSticker, index, scrollContainerRef, onReplace }) {
     
     previewStartPos.current = { x: rect.left, y: rect.top };
     dragSrcRef.current = slotSticker.src;
+    dragDisplaySrcRef.current = outlinedSrc;
     setPreviewMounted(true);
     
     let hasDetachedLocal = false;
@@ -413,20 +553,22 @@ function StickerSlot({ slotSticker, index, scrollContainerRef, onReplace }) {
   const previewContent = previewMounted ? (
     <img
       ref={previewRef}
-      src={dragSrcRef.current}
+      src={dragDisplaySrcRef.current}
       alt="sticker"
       style={{
         zIndex: 9999999,
         position: 'fixed',
         left: `${previewStartPos.current.x}px`,
         top: `${previewStartPos.current.y}px`,
+        width: `${STICKER_CANVAS_SIZE}px`,
+        height: `${STICKER_CANVAS_SIZE}px`,
+        maxWidth: 'none',
         touchAction: 'none',
         WebkitUserSelect: 'none',
         userSelect: 'none',
-        WebkitTouchCallout: 'none',
-        filter: 'drop-shadow(2px 0px 0px white) drop-shadow(-2px 0px 0px white) drop-shadow(0px 2px 0px white) drop-shadow(0px -2px 0px white) drop-shadow(0px 2px 3px rgba(0,0,0,0.15))'
+        WebkitTouchCallout: 'none'
       }}
-      className={`w-10 h-10 object-contain cursor-grabbing transition duration-300 scale-150`}
+      className={`${STICKER_VISUAL_CLASS} cursor-grabbing transition duration-300 scale-150`}
       draggable={false}
     />
   ) : null;
@@ -439,22 +581,24 @@ function StickerSlot({ slotSticker, index, scrollContainerRef, onReplace }) {
       <img
         key={slotSticker.src}
         ref={elRef}
-        src={slotSticker.src}
+        src={outlinedSrc}
         alt="sticker"
         onPointerDown={handlePointerDown}
         style={{
           zIndex: 10,
           position: 'absolute',
-          left: '0',
-          top: '0',
+          left: `${STICKER_VISUAL_OFFSET}px`,
+          top: `${STICKER_VISUAL_OFFSET}px`,
+          width: `${STICKER_CANVAS_SIZE}px`,
+          height: `${STICKER_CANVAS_SIZE}px`,
+          maxWidth: 'none',
           touchAction: 'none',
           WebkitUserSelect: 'none',
           userSelect: 'none',
           WebkitTouchCallout: 'none',
-          opacity: isDragging ? 0 : 1,
-          filter: 'drop-shadow(2px 0px 0px white) drop-shadow(-2px 0px 0px white) drop-shadow(0px 2px 0px white) drop-shadow(0px -2px 0px white) drop-shadow(0px 2px 3px rgba(0,0,0,0.15))'
+          opacity: isDragging ? 0 : 1
         }}
-        className="w-10 h-10 object-contain cursor-grab transition duration-300 scale-100 hover:scale-110 animate-bubble-in"
+        className={`${STICKER_VISUAL_CLASS} cursor-grab transition duration-300 scale-100 hover:scale-110 animate-bubble-in`}
         draggable={false}
       />
       {previewMounted && createPortal(previewContent, document.body)}
