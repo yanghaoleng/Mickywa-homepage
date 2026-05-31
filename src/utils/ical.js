@@ -6,7 +6,8 @@ const WORK_CAL_URL = import.meta.env.VITE_WORK_CAL_URL || '/api/calendar?type=wo
 const HOLIDAY_CAL_URL = import.meta.env.VITE_HOLIDAY_CAL_URL || '/api/calendar?type=holiday';
 
 const HOLIDAY_CN_BASE_URL = import.meta.env.VITE_HOLIDAY_CN_BASE_URL || 'https://fastly.jsdelivr.net/gh/NateScarlet/holiday-cn@master';
-const SCHEDULE_JSON_URL = import.meta.env.VITE_SCHEDULE_JSON_URL || '';
+const SAME_ORIGIN_SCHEDULE_JSON_URL = '/api/schedule';
+const LEGACY_SCHEDULE_JSON_URL = import.meta.env.VITE_SCHEDULE_JSON_URL || '';
 
 const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
 
@@ -328,6 +329,8 @@ const CACHE_KEY = 'mickywa_schedule_cache_v3';
 const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v2_';
 const HOLIDAY_CN_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 const SCHEDULE_MIN_REFRESH_MS = 2 * 60 * 1000;
+const SCHEDULE_STALE_FALLBACK_MS = 10 * 60 * 1000;
+const scheduleJsonInFlight = new Map();
 
 function fetchTextWithTimeout(url, { timeoutMs = 12000 } = {}) {
   const controller = new AbortController();
@@ -374,18 +377,79 @@ function appendCacheBuster(url, { enabled } = {}) {
   return u.toString();
 }
 
-async function fetchScheduleJson({ forceRefresh = false } = {}) {
-  if (!SCHEDULE_JSON_URL) return null;
-  const url = appendCacheBuster(SCHEDULE_JSON_URL, { enabled: forceRefresh });
-  const data = await fetchJsonWithTimeout(url, { timeoutMs: 12000 });
-  if (!data || !Array.isArray(data.schedule)) return null;
-  const normalized = hydrateDates({
-    ...data,
-    isMock: false,
-    calendarSource: data.calendarSource || 'tos',
-    calendarReason: data.calendarReason || ''
+function isSameOriginScheduleUrl(url) {
+  if (typeof window === 'undefined') return false;
+  try {
+    const parsed = new URL(String(url || ''), window.location.origin);
+    return parsed.origin === window.location.origin && parsed.pathname === SAME_ORIGIN_SCHEDULE_JSON_URL && !parsed.search;
+  } catch (_) {
+    return false;
+  }
+}
+
+function withTimeout(promise, timeoutMs) {
+  let timeoutId = null;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new DOMException('Preloaded schedule timed out', 'AbortError')), timeoutMs);
   });
-  return normalized;
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
+}
+
+function getPreloadedScheduleJson(url, { forceRefresh = false, timeoutMs = 12000 } = {}) {
+  if (forceRefresh || !isSameOriginScheduleUrl(url)) return null;
+  const promise = window.__MICKYWA_SCHEDULE_PRELOAD__;
+  if (!promise || typeof promise.then !== 'function') return null;
+  return withTimeout(promise, timeoutMs).then(data => {
+    if (!data) {
+      const error = window.__MICKYWA_SCHEDULE_PRELOAD_ERROR__ || new Error('Preloaded schedule unavailable');
+      throw error;
+    }
+    return data;
+  });
+}
+
+function getScheduleJsonUrls() {
+  const urls = [SAME_ORIGIN_SCHEDULE_JSON_URL, LEGACY_SCHEDULE_JSON_URL]
+    .map(url => String(url || '').trim())
+    .filter(Boolean);
+  return [...new Set(urls)];
+}
+
+function loadScheduleJsonCandidate(candidateUrl, { forceRefresh = false, timeoutMs = 12000 } = {}) {
+  const inFlightKey = `${candidateUrl}|${forceRefresh ? 'refresh' : 'normal'}`;
+  const existing = scheduleJsonInFlight.get(inFlightKey);
+  if (existing) return existing;
+
+  const url = appendCacheBuster(candidateUrl, { enabled: forceRefresh });
+  const promise = (getPreloadedScheduleJson(candidateUrl, { forceRefresh, timeoutMs }) || fetchJsonWithTimeout(url, { timeoutMs }))
+    .finally(() => scheduleJsonInFlight.delete(inFlightKey));
+  scheduleJsonInFlight.set(inFlightKey, promise);
+  return promise;
+}
+
+async function fetchScheduleJson({ forceRefresh = false } = {}) {
+  const urls = getScheduleJsonUrls();
+  if (!urls.length) return null;
+
+  let lastError = null;
+  for (const candidateUrl of urls) {
+    try {
+      const data = await loadScheduleJsonCandidate(candidateUrl, { forceRefresh, timeoutMs: 12000 });
+      if (!data || !Array.isArray(data.schedule)) continue;
+      return hydrateDates({
+        ...data,
+        isMock: false,
+        calendarSource: data.calendarSource || 'cloud',
+        calendarReason: data.calendarReason || '',
+        calendarScheduleUrl: candidateUrl
+      });
+    } catch (e) {
+      lastError = e;
+    }
+  }
+
+  if (lastError) throw lastError;
+  return null;
 }
 
 async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } = {}) {
@@ -395,7 +459,6 @@ async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } 
   const payload = await fetchJsonWithTimeout(url, { timeoutMs: 12000 });
   const fetchedAtMs = Number(payload?.fetchedAtMs);
   const elapsedMs = Number(payload?.elapsedMs);
-  const upstream = String(payload?.upstream || '');
 
   const events = Array.isArray(payload?.events)
     ? payload.events
@@ -417,7 +480,7 @@ async function fetchWorkCalendarFromProvider(provider, { forceRefresh = false } 
     provider: safeProvider,
     fetchedAtMs: Number.isFinite(fetchedAtMs) ? fetchedAtMs : null,
     elapsedMs: Number.isFinite(elapsedMs) ? elapsedMs : null,
-    upstream,
+    upstream: '',
   };
 }
 
@@ -587,17 +650,13 @@ async function refreshInBackground({ forceRefresh } = {}) {
     return data;
   } catch (e) {
     console.error('Fetch fail:', e);
-    const mockData = getMockSchedule();
-    mockData.isMock = true;
-    mockData.calendarSource = 'mock';
     const parts = [];
     if (scheduleJsonError) parts.push(`schedule_json:${formatFetchError(scheduleJsonError)}`);
     if (calendarApiError) parts.push(`calendar_api:${formatFetchError(calendarApiError)}`);
     parts.push(`final:${formatFetchError(e)}`);
-    mockData.calendarReason = parts.join('；');
-    mockData.calendarFetchElapsedMs = null;
-    mockData.calendarError = String(e?.message || e || '');
-    return mockData;
+    const error = new Error(parts.join('；'));
+    error.calendarReason = parts.join('；');
+    throw error;
   }
 }
 
@@ -615,15 +674,45 @@ function readScheduleCacheEntry() {
   }
 }
 
+function isRealScheduleData(data) {
+  return Boolean(data && !data.isMock && Array.isArray(data.schedule));
+}
+
+function getScheduleDataTimestamp(data, fallbackTimestamp = 0) {
+  const generatedAtMs = Number(data?.generatedAtMs);
+  if (Number.isFinite(generatedAtMs) && generatedAtMs > 0) return generatedAtMs;
+  const fetchedAtMs = Number(data?.calendarFetchedAtMs);
+  if (Number.isFinite(fetchedAtMs) && fetchedAtMs > 0) return fetchedAtMs;
+  return Number(fallbackTimestamp) || 0;
+}
+
+function getScheduleCacheFreshness(entry, now = Date.now()) {
+  if (!entry || !isRealScheduleData(entry.data)) {
+    return { ageMs: Infinity, fastFresh: false, staleFresh: false };
+  }
+  const timestamp = getScheduleDataTimestamp(entry.data, entry.timestamp);
+  const ageMs = now - timestamp;
+  return {
+    ageMs,
+    fastFresh: ageMs >= 0 && ageMs < SCHEDULE_MIN_REFRESH_MS,
+    staleFresh: ageMs >= 0 && ageMs < SCHEDULE_STALE_FALLBACK_MS,
+  };
+}
+
+export function readFreshScheduleCache() {
+  const entry = readScheduleCacheEntry();
+  const freshness = getScheduleCacheFreshness(entry);
+  if (!freshness.fastFresh) return null;
+  return { ...entry, ageMs: freshness.ageMs };
+}
+
 export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false } = {}) {
   const now = Date.now();
   const cachedEntry = readScheduleCacheEntry();
   const cachedData = cachedEntry?.data || null;
-  if (cachedEntry && cachedData && !forceRefresh) {
-    const ageMs = now - (Number(cachedEntry.timestamp) || 0);
-    if (ageMs >= 0 && ageMs < SCHEDULE_MIN_REFRESH_MS) {
-      return cachedData;
-    }
+  const cachedFreshness = getScheduleCacheFreshness(cachedEntry, now);
+  if (cachedEntry && cachedData && !forceRefresh && cachedFreshness.fastFresh) {
+    return cachedData;
   }
 
   if (forceMock) {
@@ -639,7 +728,12 @@ export async function getCalendarsWithCache({ forceMock = false, forceRefresh = 
     }
     return cachedData;
   } catch (e) {
-    if (cachedData) return cachedData;
+    if (cachedData && cachedFreshness.staleFresh) {
+      return {
+        ...cachedData,
+        calendarReason: cachedData.calendarReason || `using_recent_cache_after_refresh_error:${formatFetchError(e)}`,
+      };
+    }
     throw e;
   }
 }

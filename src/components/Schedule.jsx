@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import DraggableStickers, { DetachedStickersOverlay } from './DraggableStickers';
-import { getCalendarsWithCache } from '../utils/ical';
+import { getCalendarsWithCache, readFreshScheduleCache } from '../utils/ical';
 import { formatRelativeDate } from '../utils/time';
 import { estimateDuration, estimatePrice, formatDuration } from '../config/estimateConfig';
 import smartActivitiesMd from '../config/smartActivities.md?raw';
@@ -1233,35 +1233,7 @@ export default function Schedule({ theme }) {
         if (fetchSeqRef.current !== seq) return;
         setSlowFetch(true);
         if (!hasCache) {
-          getCalendarsWithCache({ forceMock: true })
-            .then(mockRes => {
-              if (fetchSeqRef.current !== seq) return;
-
-              const now = new Date();
-              const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-              const endExclusive = new Date(startOfToday);
-              endExclusive.setDate(endExclusive.getDate() + 22);
-
-              const nextDays = (mockRes.schedule || [])
-                .filter(day => day?.date instanceof Date)
-                .filter(day => day.date >= startOfToday && day.date < endExclusive)
-                .sort((a, b) => a.date - b.date);
-
-              setSchedule(nextDays);
-              setRecNonce(n => n + 1);
-              setIsMock(true);
-              setCalendarSource('mock');
-              setCalendarReason('网络较慢，已先展示演示数据（仍会自动重试）。');
-              setLoading(false);
-              setError(false);
-              setToast({ message: '网络较慢，已先展示演示数据', type: 'error' });
-
-              if (fetchFailSafeRef.current) {
-                clearTimeout(fetchFailSafeRef.current);
-                fetchFailSafeRef.current = null;
-              }
-            })
-            .catch(() => {});
+          setLoadingWatchdogError('日历同步比预期慢，仍在等待准确数据。');
         }
         setCountdown(c => (c > 0 ? c : 3));
       }, 5000);
@@ -1270,59 +1242,45 @@ export default function Schedule({ theme }) {
     // 先尝试同步读取缓存，快速显示
     if (!backgroundOnly) {
       try {
-        const cachedStr = localStorage.getItem('mickywa_schedule_cache_v3');
-        if (cachedStr) {
-          const cached = JSON.parse(cachedStr);
-          if (cached && cached.data) {
-            // 直接使用缓存，不等待后台刷新
-            const hydrateCachedData = (data) => {
-              if (!data || !data.schedule) return data;
-              data.schedule.forEach(day => {
-                if (typeof day.date === 'string') {
-                  day.date = new Date(day.date);
-                }
-              });
-              return data;
-            };
-            
-            const res = hydrateCachedData(cached.data);
-            const now = new Date();
-            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            const endExclusive = new Date(startOfToday);
-            endExclusive.setDate(endExclusive.getDate() + 22);
+        const cached = readFreshScheduleCache();
+        if (cached?.data) {
+          const res = cached.data;
+          const now = new Date();
+          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+          const endExclusive = new Date(startOfToday);
+          endExclusive.setDate(endExclusive.getDate() + 22);
 
-            const nextDays = (res.schedule || [])
-              .filter(day => day?.date instanceof Date || typeof day.date === 'string')
-              .map(day => {
-                if (typeof day.date === 'string') {
-                  day.date = new Date(day.date);
-                }
-                return day;
-              })
-              .filter(day => day.date >= startOfToday && day.date < endExclusive)
-              .sort((a, b) => a.date - b.date);
+          const nextDays = (res.schedule || [])
+            .filter(day => day?.date instanceof Date || typeof day.date === 'string')
+            .map(day => {
+              if (typeof day.date === 'string') {
+                day.date = new Date(day.date);
+              }
+              return day;
+            })
+            .filter(day => day.date >= startOfToday && day.date < endExclusive)
+            .sort((a, b) => a.date - b.date);
 
-            setSchedule(nextDays);
-            setRecNonce(n => n + 1);
-            setIsMock(!!res.isMock);
-            setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
-            setCalendarReason(res.calendarReason || '');
-            maybeRecordCloudFetch(res);
-            hasCache = true;
-            if (!isAuto && !silent) {
-              setLoading(false);
-              setError(false);
-              setLoadingWatchdogError('');
-              setSlowFetch(false);
-            }
-            if (fetchTimeoutRef.current) {
-              clearTimeout(fetchTimeoutRef.current);
-              fetchTimeoutRef.current = null;
-            }
-            if (fetchFailSafeRef.current) {
-              clearTimeout(fetchFailSafeRef.current);
-              fetchFailSafeRef.current = null;
-            }
+          setSchedule(nextDays);
+          setRecNonce(n => n + 1);
+          setIsMock(!!res.isMock);
+          setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
+          setCalendarReason(res.calendarReason || '');
+          maybeRecordCloudFetch(res);
+          hasCache = true;
+          if (!isAuto && !silent) {
+            setLoading(false);
+            setError(false);
+            setLoadingWatchdogError('');
+            setSlowFetch(false);
+          }
+          if (fetchTimeoutRef.current) {
+            clearTimeout(fetchTimeoutRef.current);
+            fetchTimeoutRef.current = null;
+          }
+          if (fetchFailSafeRef.current) {
+            clearTimeout(fetchFailSafeRef.current);
+            fetchFailSafeRef.current = null;
           }
         }
       } catch (e) {
@@ -1386,6 +1344,8 @@ export default function Schedule({ theme }) {
       }
     } catch (e) {
       console.error(e);
+      const reason = String(e?.calendarReason || e?.message || e || '');
+      if (reason) setCalendarReason(reason);
       if (!isAuto && !silent && !hasCache) {
         setLoading(false);
         setError(true);

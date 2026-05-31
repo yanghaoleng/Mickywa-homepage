@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto'
+import { createHash } from 'node:crypto'
 
 const DEFAULT_TTL_SECONDS = 300
 const DEFAULT_STALE_SECONDS = 3600
@@ -21,6 +22,7 @@ function getEnv(name, fallback = '') {
 }
 
 function parseCacheSeconds(value, fallback) {
+  if (value === undefined || value === null || value === '') return fallback
   const num = Number(value)
   return Number.isFinite(num) && num >= 0 ? Math.floor(num) : fallback
 }
@@ -29,6 +31,10 @@ function readRequestHeader(req, name) {
   const value = req.headers?.[name.toLowerCase()]
   if (Array.isArray(value)) return value[0]
   return value || ''
+}
+
+function hashPrivateValue(value) {
+  return createHash('sha256').update(String(value || '')).digest('hex').slice(0, 12)
 }
 
 function splitICalLines(text) {
@@ -228,7 +234,7 @@ function normalizeFetchError(error, targetUrl, elapsedMs) {
   return {
     code,
     message: timeout ? `Upstream request timed out after ${elapsedMs}ms` : message,
-    upstream: targetUrl,
+    upstreamHash: hashPrivateValue(targetUrl),
     status,
     timeout,
     elapsedMs,
@@ -262,6 +268,8 @@ async function fetchUpstreamICS(url) {
 
   return response.text()
 }
+
+export { parseICS, fetchUpstreamICS, getRelevantEvents, hashPrivateValue }
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -320,7 +328,7 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}, stale-while-revalidate=${staleSeconds}`)
     res.setHeader('ETag', etag)
     res.setHeader('X-Calendar-Source', type)
-    res.setHeader('X-Calendar-Upstream', targetUrl)
+    res.setHeader('X-Calendar-Upstream-Hash', hashPrivateValue(targetUrl))
     res.setHeader('X-Calendar-Fetched-At', String(fetchedAtMs))
     res.setHeader('X-Calendar-Elapsed-Ms', String(elapsedMs))
 
@@ -339,7 +347,7 @@ export default async function handler(req, res) {
 
     return jsonResponse(res, 200, {
       source: type,
-      upstream: targetUrl,
+      upstreamHash: hashPrivateValue(targetUrl),
       fetchedAt,
       fetchedAtMs,
       elapsedMs,
@@ -355,11 +363,11 @@ export default async function handler(req, res) {
       error: 'Failed to fetch calendar',
       source: type,
       provider,
-      upstream: targetUrl,
+      upstreamHash: hashPrivateValue(targetUrl),
       details,
     }, {
       'X-Calendar-Source': type,
-      'X-Calendar-Upstream': targetUrl,
+      'X-Calendar-Upstream-Hash': hashPrivateValue(targetUrl),
       'X-Calendar-Error-Code': details.code,
     })
   }

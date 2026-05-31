@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOJO Demos</title>
+    <link rel="icon" href="assets/demo-favicons/index.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.2/src/fill/style.css">
+    <link rel="stylesheet" href="demo-enhance.css">
+    <style>
+        @font-face {
+            font-family: "Mohr Rounded";
+            src: url("assets/字体/MohrRounded-Bold.ttf") format("truetype");
+            font-weight: 700;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --gray-1: #FAFAFA;
+            --gray-2: #F5F4F4;
+            --gray-3: #E0DFDF;
+            --gray-5: #666666;
+            --gray-6: #404040;
+            --ink: #2F2A1F;
+            --white: #FFFFFF;
+            --yellow-1: #FCF9DE;
+            --yellow-2: #FCF3BA;
+            --yellow-4: #FCDA00;
+            --yellow-6: #544300;
+            --orange-4: #FF9045;
+            --pink-4: #FF7A99;
+            --blue-4: #5AC8FA;
+            --pro-blue-4: #528BFF;
+            --green-4: #78C562;
+            --purple-4: #AE84E3;
+            --radius-card: 22px;
+            --radius-pill: 999px;
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--gray-6);
+            background:
+                radial-gradient(circle at 8% 16%, rgba(252, 218, 0, .28), transparent 28%),
+                radial-gradient(circle at 82% 12%, rgba(90, 200, 250, .22), transparent 26%),
+                linear-gradient(180deg, #FFFFFF 0%, var(--gray-1) 68%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(64, 64, 64, .035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(64, 64, 64, .035) 1px, transparent 1px);
+            background-size: 34px 34px;
+            mask-image: linear-gradient(to bottom, rgba(0, 0, 0, .75), transparent 72%);
+        }
+
+        .page {
+            position: relative;
+            width: min(1080px, calc(100% - 40px));
+            margin: 0 auto;
+            padding: 34px 0 48px;
+        }
+
+        .hero-main {
+            display: grid;
+            gap: 12px;
+            justify-items: start;
+            margin: 4px 0 24px;
+            text-align: left;
+        }
+
+        .brand-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 132px;
+            min-height: 58px;
+            padding: 10px 16px;
+            border: 1px solid rgba(64, 64, 64, .07);
+            border-radius: 22px;
+            background: rgba(255, 255, 255, .82);
+            box-shadow: 0 18px 54px rgba(31, 40, 77, .08);
+            backdrop-filter: blur(18px);
+        }
+
+        .brand-mark img {
+            width: 98px;
+            height: auto;
+            display: block;
+        }
+
+        h1 {
+            color: var(--ink);
+            font-family: "Mohr Rounded", "PingFang SC", sans-serif;
+            font-size: clamp(30px, 5vw, 54px);
+            line-height: 1;
+            letter-spacing: 0;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .card {
+            position: relative;
+            display: grid;
+            grid-template-columns: 78px minmax(0, 1fr) 42px;
+            gap: 14px;
+            align-items: start;
+            min-height: 126px;
+            overflow: hidden;
+            padding: 14px;
+            border: 1px solid rgba(64, 64, 64, .08);
+            border-radius: var(--radius-card);
+            color: inherit;
+            background: rgba(255, 255, 255, .86);
+            text-decoration: none;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .66);
+            backdrop-filter: blur(18px);
+            transition: border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .card::after {
+            content: "";
+            position: absolute;
+            right: -40px;
+            bottom: -48px;
+            width: 118px;
+            height: 118px;
+            border-radius: 42px;
+            opacity: .15;
+            background: currentColor;
+            transform: rotate(15deg);
+        }
+
+        .card:hover {
+            border-color: rgba(64, 64, 64, .16);
+            box-shadow: 0 22px 58px rgba(31, 40, 77, .12);
+        }
+
+        .demo-shot {
+            position: relative;
+            z-index: 1;
+            display: block;
+            width: 78px;
+            height: 104px;
+            overflow: hidden;
+            border: 1px solid rgba(64, 64, 64, .08);
+            border-radius: 18px;
+            background: var(--gray-1);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .68);
+        }
+
+        .demo-shot img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: top center;
+            display: block;
+        }
+
+        .demo-index-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            width: 20px;
+            height: 20px;
+            margin-top: 1px;
+            color: currentColor;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .demo-index-icon i {
+            font-size: 18px;
+        }
+
+        .card-body {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            min-width: 0;
+            padding-top: 12px;
+        }
+
+        .card h2 {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            color: var(--ink);
+            font-size: 19px;
+            line-height: 1.22;
+            letter-spacing: 0;
+        }
+
+        .card-action {
+            position: relative;
+            z-index: 1;
+            display: inline-grid;
+            place-items: center;
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-pill);
+            color: rgba(64, 64, 64, .34);
+            background: rgba(64, 64, 64, .06);
+            box-shadow: none;
+            justify-self: end;
+            margin-top: 6px;
+            transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+        }
+
+        .card-action i {
+            font-size: 22px;
+        }
+
+        .card:hover .card-action,
+        .brand-choice:hover .card-action {
+            color: var(--yellow-6);
+            background: var(--yellow-4);
+            box-shadow: 0 14px 32px rgba(252, 218, 0, .22);
+        }
+
+        .brand-options {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            margin-top: 0;
+        }
+
+        .brand-card {
+            grid-template-columns: 78px minmax(0, 1fr);
+        }
+
+        .brand-card .card-body {
+            display: grid;
+            grid-template-columns: 20px minmax(0, 1fr);
+            column-gap: 8px;
+            row-gap: 8px;
+        }
+
+        .brand-card .brand-options {
+            grid-column: 2;
+            width: min(184px, 100%);
+        }
+
+        .brand-choice {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 44px;
+            padding: 7px 8px 7px 14px;
+            border: 1px solid rgba(64, 64, 64, .08);
+            border-radius: 999px;
+            color: var(--ink);
+            background: rgba(255, 255, 255, .72);
+            text-decoration: none;
+        }
+
+        .brand-choice .card-action {
+            width: 30px;
+            height: 30px;
+            margin: 0;
+        }
+
+        .brand-choice .card-action i {
+            font-size: 16px;
+        }
+
+        .card.blue {
+            color: var(--pro-blue-4);
+        }
+
+        .card.blue .demo-index-icon {
+            color: #1F284D;
+        }
+
+        .card.orange {
+            color: var(--orange-4);
+        }
+
+        .card.orange .demo-index-icon {
+            color: #6B2D03;
+        }
+
+        .card.green {
+            color: var(--green-4);
+        }
+
+        .card.green .demo-index-icon {
+            color: #155200;
+        }
+
+        .card.purple {
+            color: var(--purple-4);
+        }
+
+        .card.purple .demo-index-icon {
+            color: #4E2680;
+        }
+
+        @media (max-width: 980px) {
+            .cards {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .page {
+                width: min(100% - 28px, 1080px);
+                padding-top: 18px;
+                padding-bottom: 24px;
+            }
+
+            .hero-main {
+                gap: 8px;
+                margin-bottom: 14px;
+            }
+
+            .brand-mark {
+                min-width: 108px;
+                min-height: 46px;
+                padding: 8px 12px;
+                border-radius: 18px;
+            }
+
+            .brand-mark img {
+                width: 82px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+                gap: 7px;
+            }
+
+            .card {
+                grid-template-columns: 54px minmax(0, 1fr) 34px;
+                gap: 10px;
+                min-height: 82px;
+                padding: 10px;
+                border-radius: 18px;
+            }
+
+            .card::after {
+                width: 86px;
+                height: 86px;
+                right: -44px;
+                bottom: -50px;
+            }
+
+            .demo-shot {
+                width: 54px;
+                height: 72px;
+                border-radius: 13px;
+            }
+
+            .demo-index-icon {
+                width: 18px;
+                height: 18px;
+                margin-top: 0;
+            }
+
+            .demo-index-icon i {
+                font-size: 16px;
+            }
+
+            .card h2 {
+                font-size: 16px;
+            }
+
+            .card-body {
+                gap: 7px;
+                padding-top: 7px;
+            }
+
+            .card > .card-action {
+                width: 34px;
+                height: 34px;
+                margin-top: 2px;
+            }
+
+            .brand-options {
+                gap: 6px;
+                margin: 6px 0 0;
+            }
+
+            .brand-card .brand-options {
+                width: min(174px, 100%);
+            }
+
+            .brand-card {
+                grid-template-columns: 54px minmax(0, 1fr);
+            }
+
+            .brand-choice {
+                min-height: 34px;
+                padding: 4px 5px 4px 10px;
+                font-size: 14px;
+            }
+
+            .brand-choice .card-action {
+                width: 26px;
+                height: 26px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <section class="hero-main" aria-labelledby="demo-title">
+            <div class="brand-mark">
+                <img src="assets/品牌logo/叫叫 Logo - 基础.svg" alt="叫叫">
+            </div>
+            <h1 id="demo-title">JOJO Demos</h1>
+        </section>
+
+        <section class="cards" aria-label="Demo 列表">
+            <a href="https://kbook.mikeywa.icu" class="card orange" target="_blank" rel="noopener noreferrer">
+                <span class="demo-shot"><img src="assets/demo-shots/kbook.jpg" alt="KBook 移动端截图"></span>
+                <div class="card-body">
+                    <span class="demo-index-icon"><i class="ph-fill ph-book-open-text"></i></span>
+                    <h2>KBook</h2>
+                </div>
+                <span class="card-action" aria-label="进入"><i class="ph-fill ph-arrow-up-right"></i></span>
+            </a>
+
+            <a href="https://lansen.mikeywa.icu" class="card green" target="_blank" rel="noopener noreferrer">
+                <span class="demo-shot"><img src="assets/demo-shots/lansen.jpg" alt="Lansen 移动端截图"></span>
+                <div class="card-body">
+                    <span class="demo-index-icon"><i class="ph-fill ph-sparkle"></i></span>
+                    <h2>Lansen</h2>
+                </div>
+                <span class="card-action" aria-label="进入"><i class="ph-fill ph-arrow-up-right"></i></span>
+            </a>
+
+            <a href="https://jojoup-ios.mikeywa.icu" class="card purple" target="_blank" rel="noopener noreferrer">
+                <span class="demo-shot"><img src="assets/demo-shots/jojoup-ios.jpg" alt="JOJOUP iOS 移动端截图"></span>
+                <div class="card-body">
+                    <span class="demo-index-icon"><i class="ph-fill ph-device-mobile-camera"></i></span>
+                    <h2>JOJOUP iOS</h2>
+                </div>
+                <span class="card-action" aria-label="进入"><i class="ph-fill ph-arrow-up-right"></i></span>
+            </a>
+
+            <a href="login.html" class="card" target="_blank" rel="noopener noreferrer">
+                <span class="demo-shot"><img src="assets/demo-shots/assessment.jpg" alt="定期测评移动端截图"></span>
+                <div class="card-body">
+                    <span class="demo-index-icon"><i class="ph-fill ph-clipboard-text"></i></span>
+                    <h2>定期测评与学习承接</h2>
+                </div>
+                <span class="card-action" aria-label="进入"><i class="ph-fill ph-arrow-up-right"></i></span>
+            </a>
+
+            <article class="card blue brand-card">
+                <span class="demo-shot"><img src="assets/demo-shots/brand.jpg" alt="品牌官网移动端截图"></span>
+                <div class="card-body">
+                    <span class="demo-index-icon"><i class="ph-fill ph-megaphone-simple"></i></span>
+                    <h2>品牌官网</h2>
+                    <div class="brand-options" aria-label="选择品牌官网">
+                        <a class="brand-choice" href="jiaojiao.html" target="_blank" rel="noopener noreferrer">
+                            <span>叫叫</span>
+                            <span class="card-action" aria-label="打开叫叫品牌官网"><i class="ph-fill ph-arrow-up-right"></i></span>
+                        </a>
+                        <a class="brand-choice" href="lvdou.html" target="_blank" rel="noopener noreferrer">
+                            <span>绿豆</span>
+                            <span class="card-action" aria-label="打开绿豆品牌官网"><i class="ph-fill ph-arrow-up-right"></i></span>
+                        </a>
+                    </div>
+                </div>
+            </article>
+
+            <a href="app.html" class="card purple" target="_blank" rel="noopener noreferrer">
+                <span class="demo-shot"><img src="assets/demo-shots/webapp.jpg" alt="成长内容 Web App 移动端截图"></span>
+                <div class="card-body">
+                    <span class="demo-index-icon"><i class="ph-fill ph-device-mobile"></i></span>
+                    <h2>成长内容 Web App</h2>
+                </div>
+                <span class="card-action" aria-label="进入"><i class="ph-fill ph-arrow-up-right"></i></span>
+            </a>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="demo-motion.js"></script>
+</body>
+</html>

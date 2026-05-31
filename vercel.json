@@ -1,6 +1,11 @@
 {
+  "redirects": [
+    { "source": "/JOJO", "destination": "/JOJO/", "permanent": false }
+  ],
   "rewrites": [
     { "source": "/api/calendar", "destination": "/api/calendar" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/schedule", "destination": "/api/schedule" },
+    { "source": "/JOJO/", "destination": "/JOJO/index.html" },
+    { "source": "/((?!JOJO/).*)", "destination": "/index.html" }
   ]
 }

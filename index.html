@@ -10,6 +10,31 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      (function () {
+        var shouldFetch = true;
+        try {
+          var cached = JSON.parse(localStorage.getItem('mickywa_schedule_cache_v3') || 'null');
+          var data = cached && cached.data;
+          var ts = Number(data && (data.generatedAtMs || data.calendarFetchedAtMs)) || Number(cached && cached.timestamp) || 0;
+          var ageMs = Date.now() - ts;
+          shouldFetch = !(data && !data.isMock && Array.isArray(data.schedule) && ageMs >= 0 && ageMs < 120000);
+        } catch (_) {}
+
+        if (!shouldFetch) return;
+        window.__MICKYWA_SCHEDULE_PRELOAD__ = fetch('/api/schedule', {
+          headers: { Accept: 'application/json' }
+        })
+          .then(function (res) {
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return res.json();
+          })
+          .catch(function (error) {
+            window.__MICKYWA_SCHEDULE_PRELOAD_ERROR__ = error;
+            return null;
+          });
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -50,6 +50,7 @@ Thumbs.db
 
 # Agent files
 .agent/
+.codex/
 .minimax/
 .agents/
 .trae/
@@ -67,5 +68,9 @@ skills-lock.json
 
 # Local scratch files
 window.innerHeight
+
+# Local credentialed DNS helper scripts
+configure-dns.sh
+configure-volc-dns.py
 .vercel
 .env*.local

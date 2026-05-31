@@ -1,6 +1,7 @@
 import http from 'node:http'
 
-const { default: handler } = await import(new URL('./calendar.js', import.meta.url).href)
+const { default: calendarHandler } = await import(new URL('./calendar.js', import.meta.url).href)
+const { default: scheduleHandler } = await import(new URL('./schedule.js', import.meta.url).href)
 
 function createResponse(res) {
   return {
@@ -19,6 +20,7 @@ const server = http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost:3000')
     const query = Object.fromEntries(url.searchParams.entries())
+    const handler = url.pathname === '/api/schedule' ? scheduleHandler : calendarHandler
     await handler(
       {
         method: req.method,
