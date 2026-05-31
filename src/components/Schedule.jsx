@@ -1306,7 +1306,7 @@ export default function Schedule({ theme }) {
     
     try {
       // 后台刷新数据，forceRefresh 只有手动刷新时才设为 true
-      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh: forceRefresh || hasCache });
+      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh });
       if (fetchSeqRef.current !== seq) return;
       
       const now = new Date();
