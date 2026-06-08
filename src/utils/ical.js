@@ -412,9 +412,11 @@ function getPreloadedScheduleJson(url, { forceRefresh = false, timeoutMs = 12000
   });
 }
 
-function getScheduleJsonUrls({ forceRefresh = false } = {}) {
+function getScheduleJsonUrls({ forceRefresh = false, liveRefresh = false } = {}) {
   const urls = (forceRefresh
     ? [SAME_ORIGIN_SCHEDULE_JSON_URL, LEGACY_SCHEDULE_JSON_URL]
+    : liveRefresh
+      ? [SAME_ORIGIN_SCHEDULE_JSON_URL, LEGACY_SCHEDULE_JSON_URL]
     : [STATIC_SCHEDULE_JSON_URL, SAME_ORIGIN_SCHEDULE_JSON_URL, LEGACY_SCHEDULE_JSON_URL])
     .map(url => String(url || '').trim())
     .filter(Boolean);
@@ -433,8 +435,8 @@ function loadScheduleJsonCandidate(candidateUrl, { forceRefresh = false, timeout
   return promise;
 }
 
-async function fetchScheduleJson({ forceRefresh = false } = {}) {
-  const urls = getScheduleJsonUrls({ forceRefresh });
+async function fetchScheduleJson({ forceRefresh = false, liveRefresh = false } = {}) {
+  const urls = getScheduleJsonUrls({ forceRefresh, liveRefresh });
   if (!urls.length) return null;
 
   let lastError = null;
@@ -603,14 +605,14 @@ function formatFetchError(err) {
   return msg || 'unknown_error';
 }
 
-async function refreshInBackground({ forceRefresh } = {}) {
+async function refreshInBackground({ forceRefresh, liveRefresh } = {}) {
   const now = Date.now();
   let scheduleJsonError = null;
   let calendarApiError = null;
   try {
     let tosData = null;
     try {
-      tosData = await fetchScheduleJson({ forceRefresh });
+      tosData = await fetchScheduleJson({ forceRefresh, liveRefresh });
     } catch (e) {
       scheduleJsonError = e;
     }
@@ -712,12 +714,12 @@ export function readFreshScheduleCache() {
   return { ...entry, ageMs: freshness.ageMs };
 }
 
-export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false } = {}) {
+export async function getCalendarsWithCache({ forceMock = false, forceRefresh = false, liveRefresh = false } = {}) {
   const now = Date.now();
   const cachedEntry = readScheduleCacheEntry();
   const cachedData = cachedEntry?.data || null;
   const cachedFreshness = getScheduleCacheFreshness(cachedEntry, now);
-  if (cachedEntry && cachedData && !forceRefresh && cachedFreshness.fastFresh) {
+  if (cachedEntry && cachedData && !forceRefresh && !liveRefresh && cachedFreshness.fastFresh) {
     return cachedData;
   }
 
@@ -728,7 +730,7 @@ export async function getCalendarsWithCache({ forceMock = false, forceRefresh = 
   }
 
   try {
-    const freshData = await refreshInBackground({ forceRefresh });
+    const freshData = await refreshInBackground({ forceRefresh, liveRefresh });
     if (!freshData?.isMock || !cachedData) {
       return freshData;
     }

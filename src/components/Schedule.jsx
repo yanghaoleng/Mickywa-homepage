@@ -50,6 +50,8 @@ const ENTERTAINMENT_ACTIVITIES_BY_TIME = parseActivitiesByTime(smartActivitiesMd
 const LENGTH_OPTIONS = ['本甲', '短甲', '中长', '长甲', '延长', '待定'];
 const STYLE_OPTIONS = ['纯色', '跳色', '法式', '猫眼', '渐变', '设计', '待定'];
 const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
+const PULL_REFRESH_THRESHOLD = 72;
+const PULL_REFRESH_MAX = 96;
 
 function BottomUpLettersSwap({ text, active }) {
   const [displayText, setDisplayText] = useState(text ?? '');
@@ -384,6 +386,8 @@ export default function Schedule({ theme }) {
   const [recNonce, setRecNonce] = useState(0);
   const [smartActivityById, setSmartActivityById] = useState({});
   const [smartAnimEnabledById, setSmartAnimEnabledById] = useState({});
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPullRefreshing, setIsPullRefreshing] = useState(false);
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
@@ -418,6 +422,9 @@ export default function Schedule({ theme }) {
   const halfModalRef = useRef(null);
   const bookingTextareaRef = useRef(null);
   const touchStartYRef = useRef(0);
+  const pullStartYRef = useRef(0);
+  const pullDistanceRef = useRef(0);
+  const isPullTrackingRef = useRef(false);
 
   // 新增：跟踪当前焦点区域和日历中选中的可预约日期索引
   const [focusArea, setFocusArea] = useState('smart'); // 'smart' 或 'calendar'
@@ -1311,7 +1318,8 @@ export default function Schedule({ theme }) {
     
     try {
       // 后台刷新数据，forceRefresh 只有手动刷新时才设为 true
-      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh });
+      const liveRefresh = isAuto && !forceRefresh;
+      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh, liveRefresh });
       if (fetchSeqRef.current !== seq) return;
       
       const now = new Date();
@@ -1387,12 +1395,12 @@ export default function Schedule({ theme }) {
     fetchData();
     const liveRefreshTimer = setTimeout(() => {
       if (scheduleReadyRef.current) {
-        fetchData({ isAuto: true, silent: true, forceRefresh: true });
+        fetchData({ isAuto: true, silent: true });
       }
     }, 2500);
     const timer = setInterval(() => {
       if (scheduleReadyRef.current) {
-        fetchData({ isAuto: true, silent: true, forceRefresh: true });
+        fetchData({ isAuto: true, silent: true });
       }
     }, 3 * 60 * 1000);
     return () => {
@@ -1878,6 +1886,67 @@ export default function Schedule({ theme }) {
     }
   };
 
+  const resetPullRefresh = () => {
+    pullDistanceRef.current = 0;
+    setPullDistance(0);
+  };
+
+  const handlePullTouchStart = (e) => {
+    if (isPullRefreshing || showModalRef.current || showHalfModalRef.current) return;
+    const scrollEl = rootRef.current;
+    if (!scrollEl || scrollEl.scrollTop > 0) return;
+
+    pullStartYRef.current = e.touches?.[0]?.clientY || 0;
+    isPullTrackingRef.current = true;
+  };
+
+  const handlePullTouchMove = (e) => {
+    if (!isPullTrackingRef.current || isPullRefreshing) return;
+
+    const scrollEl = rootRef.current;
+    const currentY = e.touches?.[0]?.clientY || 0;
+    const diff = currentY - pullStartYRef.current;
+
+    if (!scrollEl || scrollEl.scrollTop > 0 || diff <= 0) {
+      isPullTrackingRef.current = false;
+      resetPullRefresh();
+      return;
+    }
+
+    const nextDistance = Math.min(PULL_REFRESH_MAX, diff * 0.45);
+    pullDistanceRef.current = nextDistance;
+    setPullDistance(nextDistance);
+    if (nextDistance > 8) e.preventDefault();
+  };
+
+  const finishPullRefresh = async () => {
+    if (isPullRefreshing) return;
+
+    setIsPullRefreshing(true);
+    pullDistanceRef.current = PULL_REFRESH_THRESHOLD;
+    setPullDistance(PULL_REFRESH_THRESHOLD);
+
+    try {
+      await fetchData({ isAuto: true, forceRefresh: true });
+    } finally {
+      setTimeout(() => {
+        setIsPullRefreshing(false);
+        resetPullRefresh();
+      }, 250);
+    }
+  };
+
+  const handlePullTouchEnd = () => {
+    if (!isPullTrackingRef.current) return;
+
+    isPullTrackingRef.current = false;
+    if (pullDistanceRef.current >= PULL_REFRESH_THRESHOLD) {
+      finishPullRefresh();
+    } else {
+      resetPullRefresh();
+    }
+  };
+
   const handleMarkClick = (e) => {
     const svgElement = e.currentTarget.querySelector('svg');
     if (svgElement) {
@@ -2065,8 +2134,26 @@ export default function Schedule({ theme }) {
         </div>
       </div>
 
-      <div ref={rootRef} className="w-full pt-1 pb-32 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain relative">
+      <div
+        ref={rootRef}
+        className="w-full pt-1 pb-32 flex-1 overflow-y-auto overflow-x-hidden overscroll-contain relative"
+        onTouchStart={handlePullTouchStart}
+        onTouchMove={handlePullTouchMove}
+        onTouchEnd={handlePullTouchEnd}
+        onTouchCancel={handlePullTouchEnd}
+      >
         <DetachedStickersOverlay scrollContainerRef={rootRef} isVisible={isCalendarExpanded} />
+        <div className="sticky top-2 z-[60] h-0 flex justify-center pointer-events-none">
+          <div
+            className="rounded-full bg-[#083A8E] text-white text-[12px] px-3 py-1.5 shadow-lg transition-all duration-150"
+            style={{
+              opacity: isPullRefreshing || pullDistance > 6 ? 1 : 0,
+              transform: `translateY(${Math.max(0, pullDistance - 28)}px)`
+            }}
+          >
+            {isPullRefreshing ? '正在刷新' : pullDistance >= PULL_REFRESH_THRESHOLD ? '松开刷新' : '下拉刷新'}
+          </div>
+        </div>
         <div className="mx-auto w-full max-w-[440px] min-[860px]:max-w-[860px] px-5">
         <div className="flex flex-col items-center justify-start spring-scale-in mb-5">
           <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
@@ -2534,9 +2621,13 @@ export default function Schedule({ theme }) {
                       onClick={() => { window.open("https://github.com/yanghaoleng/Mickywa-homepage", "_blank"); }}
                       textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
                     />
-                    <SimpleActionButton actionText="打开" title="叫叫相关" 
+                    <SimpleActionButton actionText="打开" title="叫叫收藏夹"
                       onClick={() => { window.open("https://jojodemos.mikeywa.icu", "_blank"); }} 
                       textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
+                    />
+                    <SimpleActionButton actionText="打开" title="MP3下载器"
+                      onClick={() => { window.open("https://ncm.mikeywa.icu", "_blank"); }}
+                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
                     />
                     <SimpleActionButton actionText="一周掌握/2300¥" title="我带你玩" 
                       onClick={() => { 
@@ -2572,7 +2663,7 @@ export default function Schedule({ theme }) {
                       }} 
                       textClass="text-[#8E083A] dark:text-[#FFD3F1]" 
                     />
-                    <SimpleActionButton actionText="去抖音" title="看帅哥" 
+                    <SimpleActionButton actionText="去抖音" title="鉴赏美男"
                       onClick={() => { window.open("https://v.douyin.com/sfQu9qDL9eQ/", "_blank"); }} 
                       textClass="text-[#8E083A] dark:text-[#FFD3F1]" 
                     />

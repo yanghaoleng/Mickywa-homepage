@@ -1,4 +1,5 @@
 const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
+export const SCHEDULE_DAYS = 21;
 
 function parseICalDateToTimestamp(str) {
   if (!str) return null;
@@ -113,6 +114,25 @@ function getDateRangeDays(days, nowMs = Date.now()) {
   return res;
 }
 
+export function getScheduleWindow(nowMs = Date.now(), days = SCHEDULE_DAYS) {
+  const start = getShanghaiTodayComponents(nowMs);
+  const startMs = Date.UTC(start.y, start.m - 1, start.d, 0, 0, 0) - SHANGHAI_OFFSET_MS;
+  const endMs = startMs + days * 24 * 60 * 60 * 1000;
+  return { startMs, endMs, days };
+}
+
+export function getEventsInScheduleWindow(events, nowMs = Date.now(), days = SCHEDULE_DAYS) {
+  const { startMs, endMs } = getScheduleWindow(nowMs, days);
+  return [...(events || [])]
+    .filter(event => {
+      const start = Number(event?.start);
+      const end = Number(event?.end);
+      if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
+      return start < endMs && end > startMs;
+    })
+    .sort((a, b) => Number(a.start) - Number(b.start));
+}
+
 export const TIME_SLOTS = [
   { key: 'daytime', label: '白天', start: '10:00', end: '18:00' },
   { key: 'evening', label: '晚上', start: '18:00', end: '22:00' }
@@ -148,7 +168,7 @@ function isSlotBusy(day, slot, events, nowMs = Date.now()) {
 }
 
 export function buildScheduleData(workEvents, holidayCnYears, months = 2, nowMs = Date.now()) {
-  const days = 21;
+  const days = SCHEDULE_DAYS;
   const targetDays = getDateRangeDays(days, nowMs);
   const statutory = buildStatutoryHolidayMaps(holidayCnYears);
 
@@ -192,4 +212,3 @@ export function buildScheduleData(workEvents, holidayCnYears, months = 2, nowMs 
     };
   });
 }
-

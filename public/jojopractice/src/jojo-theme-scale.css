@@ -1,0 +1,851 @@
+:root {
+  color-scheme: light;
+  --jojo-font-body: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  --jojo-font-rounded: "MohrRounded-Bold", "PingFang SC", "Hiragino Sans GB", Arial, sans-serif;
+  --jojo-white: #FFFFFF;
+  --jojo-black: #000000;
+  --jojo-gray-1: #FAFAFA;
+  --jojo-gray-2: #F5F4F4;
+  --jojo-gray-3: #E0DFDF;
+  --jojo-gray-4: #B2B2B2;
+  --jojo-gray-5: #666666;
+  --jojo-gray-6: #404040;
+  --jojo-yellow-1: #FCF9DE;
+  --jojo-yellow-2: #FCF3BA;
+  --jojo-yellow-3: #FFEB6B;
+  --jojo-yellow-4: #FCDA00;
+  --jojo-yellow-5: #DBAF00;
+  --jojo-yellow-6: #544300;
+  --jojo-brown-1: #FEF7E5;
+  --jojo-brown-3: #E0BF94;
+  --jojo-blue-1: #EBF9FF;
+  --jojo-blue-2: #DBF3FF;
+  --jojo-blue-3: #87D7FF;
+  --jojo-blue-4: #33BBFF;
+  --jojo-blue-5: #0090D9;
+  --jojo-blue-6: #0C567A;
+  --jojo-purple-1: #F9F5FF;
+  --jojo-purple-2: #F3EBFC;
+  --jojo-purple-3: #C8A0FA;
+  --jojo-purple-4: #AE84E3;
+  --jojo-purple-5: #8D4BDE;
+  --jojo-purple-6: #4E2680;
+  --jojo-red-4: #FF715C;
+  --jojo-green-4: #4DBD60;
+  --jojo-green-5: #2B993D;
+  --jojo-radius-min: 8px;
+  --jojo-radius-small: 24px;
+  --jojo-radius-large: 52px;
+  --jojo-radius-max: 92px;
+  --jojo-space-page: 20px;
+  --jojo-space-small: 16px;
+  --jojo-space-medium: 28px;
+  --jojo-space-large: 40px;
+  --jojo-root-width: 1756;
+  --jojo-root-height: 810;
+  --jojo-stage-scale: 1;
+  --jojo-content-scale: 1;
+  --jojo-bg: var(--jojo-yellow-2);
+  --jojo-deck: var(--jojo-yellow-3);
+  --jojo-deck-soft: var(--jojo-yellow-1);
+  --jojo-paper: var(--jojo-white);
+  --jojo-accent: var(--jojo-yellow-4);
+  --jojo-accent-soft: var(--jojo-brown-1);
+  --jojo-accent-strong: var(--jojo-yellow-5);
+  --jojo-ink: var(--jojo-gray-6);
+  --jojo-muted: var(--jojo-gray-5);
+  --jojo-line: var(--jojo-gray-3);
+  --jojo-shadow: rgba(152, 108, 49, 0.16);
+  --jojo-motion-quick: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --jojo-motion-slow: cubic-bezier(0.2, 0.9, 0.18, 1);
+  --jojo-motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --jojo-motion-ease-in: cubic-bezier(0.32, 0, 0.67, 0);
+  --jojo-motion-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+:root[data-theme="easy-yellow"],
+[data-theme="easy-yellow"] {
+  --jojo-bg: var(--jojo-yellow-2);
+  --jojo-deck: var(--jojo-yellow-3);
+  --jojo-deck-soft: var(--jojo-yellow-1);
+  --jojo-accent: var(--jojo-yellow-4);
+  --jojo-accent-soft: var(--jojo-brown-1);
+  --jojo-accent-strong: var(--jojo-yellow-5);
+  --jojo-ink: var(--jojo-gray-6);
+  --jojo-muted: var(--jojo-gray-5);
+  --jojo-shadow: rgba(152, 108, 49, 0.18);
+}
+
+:root[data-theme="easy-blue"],
+[data-theme="easy-blue"] {
+  --jojo-bg: var(--jojo-blue-2);
+  --jojo-deck: var(--jojo-blue-3);
+  --jojo-deck-soft: var(--jojo-blue-1);
+  --jojo-accent: var(--jojo-blue-4);
+  --jojo-accent-soft: var(--jojo-blue-1);
+  --jojo-accent-strong: var(--jojo-blue-5);
+  --jojo-ink: var(--jojo-gray-6);
+  --jojo-muted: var(--jojo-gray-5);
+  --jojo-shadow: rgba(0, 144, 217, 0.18);
+}
+
+:root[data-theme="challenge"],
+[data-theme="challenge"] {
+  --jojo-bg: var(--jojo-purple-3);
+  --jojo-deck: var(--jojo-purple-4);
+  --jojo-deck-soft: var(--jojo-purple-2);
+  --jojo-accent: var(--jojo-purple-5);
+  --jojo-accent-soft: var(--jojo-purple-1);
+  --jojo-accent-strong: var(--jojo-purple-6);
+  --jojo-ink: var(--jojo-gray-6);
+  --jojo-muted: var(--jojo-gray-5);
+  --jojo-shadow: rgba(78, 38, 128, 0.2);
+}
+
+:root[data-theme="focus"],
+[data-theme="focus"] {
+  --jojo-bg: var(--jojo-gray-1);
+  --jojo-deck: var(--jojo-white);
+  --jojo-deck-soft: var(--jojo-gray-2);
+  --jojo-accent: var(--jojo-yellow-4);
+  --jojo-accent-soft: var(--jojo-yellow-1);
+  --jojo-accent-strong: var(--jojo-yellow-6);
+  --jojo-ink: var(--jojo-gray-6);
+  --jojo-muted: var(--jojo-gray-5);
+  --jojo-shadow: rgba(64, 64, 64, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--jojo-ink);
+  background: var(--jojo-gray-6);
+  font-family: var(--jojo-font-body);
+}
+
+button,
+select {
+  font: inherit;
+}
+
+.jojo-adaptive-stage {
+  position: relative;
+  display: grid;
+  width: 100vw;
+  height: 100svh;
+  min-height: 560px;
+  place-items: center;
+  overflow: hidden;
+  background: var(--jojo-gray-6);
+}
+
+.jojo-adaptive-root {
+  position: relative;
+  width: calc(var(--jojo-root-width) * var(--jojo-stage-scale) * 1px);
+  height: calc(var(--jojo-root-height) * var(--jojo-stage-scale) * 1px);
+}
+
+.jojo-adaptive-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--jojo-root-width) * 1px);
+  height: calc(var(--jojo-root-height) * 1px);
+  transform: scale(var(--jojo-stage-scale));
+  transform-origin: left top;
+}
+
+.jojo-quiz-screen {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1756px;
+  height: 810px;
+  overflow: hidden;
+  border-radius: var(--jojo-radius-max);
+  background: var(--jojo-bg);
+  box-shadow: 0 46px 100px rgba(0, 0, 0, 0.2);
+  transform: translate(-50%, -50%) scale(var(--jojo-content-scale));
+  transform-origin: center;
+}
+
+.jojo-quiz-screen::before,
+.jojo-quiz-screen::after {
+  position: absolute;
+  z-index: 1;
+  width: 128px;
+  height: 368px;
+  border-radius: 46px;
+  background: var(--jojo-deck);
+  content: "";
+  opacity: 0.86;
+  transform: rotate(-10deg);
+}
+
+.jojo-quiz-screen::before {
+  left: 108px;
+  top: 150px;
+  clip-path: polygon(0 0, 72% 0, 100% 18%, 78% 50%, 100% 82%, 72% 100%, 0 100%);
+}
+
+.jojo-quiz-screen::after {
+  right: 104px;
+  top: 238px;
+  transform: rotate(-15deg);
+}
+
+.jojo-topbar {
+  position: absolute;
+  z-index: 4;
+  left: 88px;
+  right: 88px;
+  top: 0;
+  display: flex;
+  height: 98px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 30px 12px;
+  color: var(--jojo-accent-strong);
+}
+
+.jojo-icon-btn {
+  display: grid;
+  width: 76px;
+  height: 76px;
+  place-items: center;
+  border: 0;
+  border-radius: 16px;
+  color: var(--jojo-accent-strong);
+  background: transparent;
+  cursor: pointer;
+}
+
+.jojo-back-glyph {
+  width: 26px;
+  height: 26px;
+  border-bottom: 7px solid currentColor;
+  border-left: 7px solid currentColor;
+  border-radius: 4px 0 0 4px;
+  transform: rotate(45deg);
+}
+
+.jojo-counter {
+  min-width: 102px;
+  text-align: center;
+  font-family: var(--jojo-font-rounded);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.jojo-tool-glyph {
+  position: relative;
+  width: 54px;
+  height: 52px;
+}
+
+.jojo-tool-glyph::before,
+.jojo-tool-glyph::after {
+  position: absolute;
+  border-radius: 999px;
+  background: currentColor;
+  content: "";
+}
+
+.jojo-tool-glyph::before {
+  left: 12px;
+  top: 3px;
+  width: 8px;
+  height: 46px;
+  box-shadow: 22px 0 currentColor;
+}
+
+.jojo-tool-glyph::after {
+  left: 4px;
+  top: 13px;
+  width: 24px;
+  height: 8px;
+  box-shadow: 22px 18px currentColor;
+}
+
+.jojo-board {
+  position: absolute;
+  z-index: 2;
+  left: 136px;
+  top: 90px;
+  width: 1484px;
+  height: 656px;
+}
+
+.jojo-board::before,
+.jojo-board::after {
+  position: absolute;
+  border-radius: 52px;
+  content: "";
+}
+
+.jojo-board::before {
+  inset: 0 34px;
+  background: var(--jojo-deck);
+}
+
+.jojo-board::after {
+  inset: 8px 74px 8px;
+  border: 8px solid var(--jojo-deck-soft);
+  background: var(--jojo-paper);
+  box-shadow: 0 12px 0 var(--jojo-shadow);
+}
+
+.jojo-question {
+  position: absolute;
+  z-index: 3;
+  left: 198px;
+  top: 98px;
+  display: flex;
+  width: 1360px;
+  height: 116px;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 40px;
+}
+
+.jojo-audio {
+  position: relative;
+  display: grid;
+  width: 64px;
+  height: 64px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 4px solid var(--jojo-accent);
+  border-radius: 16px;
+  color: var(--jojo-accent-strong);
+  background: var(--jojo-yellow-3);
+  box-shadow: 0 7px 0 var(--jojo-accent);
+}
+
+.jojo-audio::before {
+  width: 19px;
+  height: 24px;
+  border-radius: 5px 10px 10px 5px;
+  background: currentColor;
+  clip-path: polygon(0 25%, 38% 25%, 100% 0, 100% 100%, 38% 75%, 0 75%);
+  content: "";
+}
+
+.jojo-audio::after {
+  position: absolute;
+  right: 13px;
+  width: 14px;
+  height: 22px;
+  border: 4px solid currentColor;
+  border-left: 0;
+  border-radius: 0 999px 999px 0;
+  content: "";
+}
+
+.jojo-question-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.jojo-demo-kicker {
+  color: var(--jojo-accent-strong);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.jojo-question-text {
+  flex: 1;
+  color: var(--jojo-muted);
+  font-size: 38px;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.jojo-choice-region {
+  position: absolute;
+  z-index: 3;
+  left: 198px;
+  top: 214px;
+  display: flex;
+  width: 1360px;
+  height: 480px;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 108px;
+}
+
+.jojo-material-choice-card {
+  display: grid;
+  width: 480px;
+  height: 480px;
+  grid-template-rows: 350px 1fr;
+  gap: 12px;
+  margin: 0;
+  border: 4px solid var(--jojo-line);
+  border-radius: 32px;
+  background: var(--jojo-white);
+  box-shadow: 0 8px 0 rgba(224, 223, 223, 0.72);
+  padding: 20px;
+}
+
+.jojo-material-choice-card img {
+  width: 100%;
+  height: 350px;
+  object-fit: contain;
+}
+
+.jojo-material-choice-card figcaption {
+  display: grid;
+  min-height: 70px;
+  place-items: center;
+  color: var(--jojo-gray-6);
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+}
+
+.jojo-option-list {
+  display: grid;
+  width: 772px;
+  gap: 28px;
+  padding-top: 1px;
+}
+
+.jojo-choice-option {
+  position: relative;
+  display: grid;
+  grid-template-columns: 664px 100px;
+  gap: 8px;
+  min-height: 122px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+}
+
+.jojo-option-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: center;
+  border: 4px solid var(--jojo-line);
+  border-radius: 24px 14px 14px 24px;
+  background: var(--jojo-white);
+  box-shadow: 0 4px 0 var(--jojo-line);
+  color: var(--jojo-gray-6);
+  padding: 20px 112px 20px 30px;
+}
+
+.jojo-option-card::before,
+.jojo-option-card::after {
+  position: absolute;
+  pointer-events: none;
+  content: "";
+  opacity: 0;
+}
+
+.jojo-option-card::after {
+  right: 24px;
+  top: 50%;
+  width: 72px;
+  height: 72px;
+  border: 4px solid var(--jojo-green-5);
+  border-radius: 999px;
+  background: var(--jojo-green-4);
+  transform: translateY(-50%) scale(1);
+}
+
+.jojo-option-card::before {
+  z-index: 1;
+  right: 48px;
+  top: 50%;
+  width: 24px;
+  height: 14px;
+  border-bottom: 6px solid var(--jojo-white);
+  border-left: 6px solid var(--jojo-white);
+  border-radius: 0 0 0 3px;
+  transform: translateY(-65%) rotate(-45deg) scale(1);
+}
+
+.jojo-option-index {
+  color: var(--jojo-gray-4);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.jojo-option-text {
+  min-width: 0;
+  font-size: 40px;
+  line-height: 1.35;
+}
+
+.jojo-option-audio {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 4px solid var(--jojo-line);
+  border-radius: 14px 24px 24px 14px;
+  background: var(--jojo-white);
+  box-shadow: 0 4px 0 var(--jojo-line);
+  color: var(--jojo-gray-4);
+}
+
+.jojo-option-audio::before {
+  width: 28px;
+  height: 30px;
+  border-radius: 6px 12px 12px 6px;
+  background: currentColor;
+  clip-path: polygon(0 25%, 38% 25%, 100% 0, 100% 100%, 38% 75%, 0 75%);
+  content: "";
+}
+
+.jojo-option-audio::after {
+  position: absolute;
+  right: 22px;
+  width: 16px;
+  height: 26px;
+  border: 4px solid currentColor;
+  border-left: 0;
+  border-radius: 0 999px 999px 0;
+  content: "";
+}
+
+.jojo-choice-option.selected .jojo-option-card,
+.jojo-choice-option.selected .jojo-option-audio {
+  border-color: var(--jojo-accent);
+  background: var(--jojo-accent-soft);
+  box-shadow: none;
+}
+
+.jojo-choice-option.selected .jojo-option-index,
+.jojo-choice-option.selected .jojo-option-audio {
+  color: var(--jojo-accent-strong);
+}
+
+.jojo-choice-option.selected .jojo-option-card::before,
+.jojo-choice-option.selected .jojo-option-card::after {
+  opacity: 1;
+}
+
+.jojo-submit-wrap {
+  position: absolute;
+  z-index: 4;
+  right: 88px;
+  bottom: 18px;
+  width: 313px;
+  padding: 28px 40px;
+}
+
+.jojo-submit {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 4px solid rgba(0, 0, 0, 0.3);
+  border-radius: var(--jojo-radius-small);
+  background: var(--jojo-accent);
+  color: var(--jojo-yellow-6);
+  cursor: pointer;
+  font-size: 40px;
+  font-weight: 600;
+  line-height: 1.5;
+  padding: 20px 32px;
+}
+
+.jojo-submit:disabled {
+  border-color: var(--jojo-brown-3);
+  background: var(--jojo-brown-1);
+  color: var(--jojo-brown-3);
+  cursor: not-allowed;
+}
+
+.jojo-submit span + span {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.jojo-home-indicator {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: 16px;
+  width: 288px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--jojo-black);
+  transform: translateX(-50%);
+}
+
+.jojo-toast {
+  position: absolute;
+  z-index: 8;
+  left: 50%;
+  top: 118px;
+  display: flex;
+  min-width: 416px;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-radius: 200px;
+  background: var(--jojo-white);
+  box-shadow: 0 20px 30px rgba(172, 178, 187, 0.15);
+  color: var(--jojo-gray-6);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.5;
+  opacity: 0;
+  padding: 24px 40px;
+  pointer-events: none;
+  transform: translate(-50%, 50px);
+}
+
+.jojo-toast.is-showing {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.jojo-toast-icon {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--jojo-accent);
+}
+
+.jojo-toast-icon::before {
+  position: absolute;
+  left: 13px;
+  top: 16px;
+  width: 20px;
+  height: 11px;
+  border-bottom: 5px solid var(--jojo-white);
+  border-left: 5px solid var(--jojo-white);
+  border-radius: 0 0 0 3px;
+  content: "";
+  transform: rotate(-45deg);
+}
+
+.jojo-controls {
+  position: fixed;
+  z-index: 30;
+  left: 18px;
+  bottom: 18px;
+  display: flex;
+  max-width: calc(100vw - 36px);
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(64, 64, 64, 0.86);
+  backdrop-filter: blur(18px);
+}
+
+.jojo-theme-btn,
+.jojo-layout-select {
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--jojo-white);
+  cursor: pointer;
+  padding: 0 12px;
+}
+
+.jojo-theme-btn[aria-pressed="true"] {
+  border-color: var(--jojo-accent);
+  background: var(--jojo-accent);
+  color: var(--jojo-yellow-6);
+}
+
+.jojo-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 50%;
+  vertical-align: -2px;
+}
+
+.jojo-layout-select option {
+  color: var(--jojo-gray-6);
+}
+
+.jojo-embed .jojo-controls {
+  display: none;
+}
+
+[data-jojo-layout="tablet"] .jojo-quiz-screen {
+  box-shadow: 0 36px 90px rgba(0, 0, 0, 0.16);
+}
+
+[data-jojo-layout="tablet"] .jojo-home-indicator {
+  bottom: -18px;
+}
+
+@media (max-width: 760px) {
+  .jojo-controls {
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .jojo-theme-btn,
+  .jojo-layout-select {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ani-btnpress-scal {
+    transform-origin: center;
+    transition: transform 600ms var(--jojo-motion-quick), box-shadow 600ms var(--jojo-motion-quick);
+  }
+
+  .ani-btnpress-scal:active {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
+    transform: scale(1.5);
+  }
+
+  .ani-btnpress-down {
+    transform-origin: center;
+    transition: transform 600ms var(--jojo-motion-quick), border-color 160ms ease, background 160ms ease;
+  }
+
+  .ani-btnpress-down:hover:not(:disabled) {
+    transform: translateY(-2px);
+  }
+
+  .ani-btnpress-down:active:not(:disabled) {
+    transform: translateY(10px);
+  }
+
+  .ani-tip-repeat {
+    animation: jojo-tip-repeat 750ms infinite;
+    transform-origin: center;
+  }
+
+  .jojo-choice-option.selected .jojo-option-card::after {
+    animation: jojo-seal-down 600ms var(--jojo-motion-quick) both;
+  }
+
+  .jojo-choice-option.selected .jojo-option-card::before {
+    animation: jojo-seal-check 600ms var(--jojo-motion-quick) both;
+  }
+
+  .jojo-toast.is-showing {
+    animation: jojo-toast-up 2800ms var(--jojo-motion-slow) both;
+  }
+
+  .ani-bounds {
+    animation: jojo-bounds 2400ms 700ms infinite both;
+    transform-origin: center;
+  }
+}
+
+@keyframes jojo-tip-repeat {
+  0% {
+    transform: translateY(0);
+    animation-timing-function: var(--jojo-motion-quick);
+  }
+
+  40% {
+    transform: translateY(-10px);
+    animation-timing-function: var(--jojo-motion-ease-in);
+  }
+
+  60% {
+    transform: translateY(-10px);
+    animation-timing-function: var(--jojo-motion-ease-in);
+  }
+
+  100% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes jojo-seal-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-50%) scale(2);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@keyframes jojo-seal-check {
+  0% {
+    opacity: 0;
+    transform: translateY(-65%) rotate(-45deg) scale(2);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(-65%) rotate(-45deg) scale(1);
+  }
+}
+
+@keyframes jojo-toast-up {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 50px);
+  }
+
+  16%,
+  72% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50px);
+  }
+}
+
+@keyframes jojo-bounds {
+  0%,
+  62.5%,
+  100% {
+    transform: translateY(0);
+    animation-timing-function: var(--jojo-motion-quick);
+  }
+
+  12.5% {
+    transform: translateY(12px);
+    animation-timing-function: var(--jojo-motion-ease-out);
+  }
+
+  25% {
+    transform: translateY(-12px);
+    animation-timing-function: var(--jojo-motion-ease-in-out);
+  }
+
+  37.5% {
+    transform: translateY(6px);
+    animation-timing-function: var(--jojo-motion-ease-out);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
+}

@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { buildScheduleData, parseICS } from './ical-core.js';
+import { SCHEDULE_DAYS, buildScheduleData, getEventsInScheduleWindow, parseICS } from './ical-core.js';
 
 function env(name, fallback = '') {
   const v = process.env[name];
@@ -45,11 +45,12 @@ export async function buildSchedulePayload() {
     throw new Error('Missing WORK_CAL_URL env');
   }
 
-  const timeoutMs = parseIntSafe(env('UPSTREAM_TIMEOUT_MS'), 12000);
+  const timeoutMs = parseIntSafe(env('UPSTREAM_TIMEOUT_MS'), 10000);
   const nowMs = Date.now();
 
   const icsText = await fetchText(workCalUrl, timeoutMs);
-  const workEvents = parseICS(icsText);
+  const allWorkEvents = parseICS(icsText);
+  const workEvents = getEventsInScheduleWindow(allWorkEvents, nowMs, SCHEDULE_DAYS);
 
   const y = new Date(nowMs + 8 * 60 * 60 * 1000).getUTCFullYear();
   const years = [y, y + 1];
@@ -63,14 +64,20 @@ export async function buildSchedulePayload() {
     generatedAtMs: nowMs,
     generatedAtISO: new Date(nowMs).toISOString(),
     source: {
+      provider: 'volc-schedule',
       workCalUrl: crypto.createHash('sha256').update(workCalUrl).digest('hex').slice(0, 12),
       holidayBase
     },
     workEvents,
+    workEventTotalCount: allWorkEvents.length,
+    workEventWindowCount: workEvents.length,
     holidayCnYears,
     schedule,
     isMock: false,
     calendarSource: 'cloud',
+    calendarProvider: 'volc-schedule',
+    calendarFetchedAtMs: nowMs,
+    calendarFetchElapsedMs: Date.now() - nowMs,
     calendarReason: ''
   };
 }

@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>叫叫模块化视觉风格</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="./src/jojo-theme-scale.css">
+    <style>
+      body {
+        background: #FCF9DE;
+      }
+
+      .landing {
+        color: #404040;
+        font-family: var(--jojo-font-body);
+      }
+
+      .landing-hero {
+        position: relative;
+        display: flex;
+        min-height: 92svh;
+        align-items: center;
+        overflow: hidden;
+        padding: 48px clamp(24px, 5vw, 72px);
+        background: #404040;
+      }
+
+      .landing-hero::after {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, rgba(252, 249, 222, 0.98) 0%, rgba(252, 249, 222, 0.9) 36%, rgba(252, 249, 222, 0.2) 62%, rgba(252, 249, 222, 0) 100%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0) 82%, #FCF9DE 100%);
+        content: "";
+        pointer-events: none;
+      }
+
+      .hero-bg {
+        position: absolute;
+        inset: -4%;
+        width: 108%;
+        height: 108%;
+        border: 0;
+      }
+
+      .hero-copy {
+        position: relative;
+        z-index: 1;
+        max-width: 650px;
+      }
+
+      .landing h1 {
+        margin: 0;
+        color: #544300;
+        font-size: 88px;
+        line-height: 1.04;
+        letter-spacing: 0;
+      }
+
+      .landing .lead {
+        max-width: 700px;
+        margin: 28px 0 0;
+        color: #666666;
+        font-size: 22px;
+        line-height: 1.7;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        margin-top: 34px;
+      }
+
+      .hero-actions a,
+      .copy-command {
+        display: inline-flex;
+        min-height: 48px;
+        align-items: center;
+        border-radius: 14px;
+        text-decoration: none;
+      }
+
+      .hero-actions a {
+        border: 2px solid #544300;
+        background: #FCDA00;
+        color: #544300;
+        font-weight: 700;
+        padding: 0 18px;
+      }
+
+      .copy-command {
+        overflow: hidden;
+        border: 1px solid #E0BF94;
+        background: #FFFFFF;
+      }
+
+      .copy-command code {
+        color: #404040;
+        font-size: 15px;
+        padding: 0 14px 0 18px;
+      }
+
+      .copy-command button {
+        align-self: stretch;
+        border: 0;
+        border-left: 1px solid #E0BF94;
+        background: #FEF7E5;
+        color: #986C31;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 700;
+        padding: 0 14px;
+      }
+
+      .landing-section {
+        padding: 80px clamp(24px, 5vw, 72px);
+      }
+
+      .section-head {
+        max-width: 860px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        color: #404040;
+        font-size: 54px;
+        line-height: 1.12;
+      }
+
+      .section-head p {
+        margin: 18px 0 0;
+        color: #666666;
+        font-size: 20px;
+        line-height: 1.7;
+      }
+
+      .rule-grid,
+      .token-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+        margin-top: 36px;
+      }
+
+      .rule-card,
+      .token-card {
+        border: 1px solid #E0BF94;
+        border-radius: 8px;
+        background: #FFFFFF;
+        padding: 24px;
+      }
+
+      .rule-card strong,
+      .token-card strong {
+        display: block;
+        color: #544300;
+        font-size: 18px;
+      }
+
+      .rule-card p,
+      .token-card p {
+        margin: 12px 0 0;
+        color: #666666;
+        line-height: 1.65;
+      }
+
+      .demo-band {
+        background: #404040;
+        color: #FFFFFF;
+      }
+
+      .demo-band .section-head h2,
+      .demo-band .section-head p {
+        color: #FFFFFF;
+      }
+
+      .demo-frame {
+        height: min(72vw, 760px);
+        min-height: 520px;
+        margin-top: 36px;
+        overflow: hidden;
+        border-radius: 20px;
+        background: #1F284D;
+      }
+
+      .demo-frame iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      .palette {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 36px;
+      }
+
+      .chip {
+        min-height: 92px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 8px;
+        background: var(--chip);
+        color: var(--text, #404040);
+        font-size: 13px;
+        font-weight: 700;
+        padding: 10px;
+      }
+
+      .chip span {
+        display: block;
+        margin-top: 8px;
+        font-weight: 500;
+        opacity: 0.78;
+      }
+
+      @media (max-width: 1120px) {
+        .landing h1 {
+          font-size: 64px;
+        }
+
+        .section-head h2 {
+          font-size: 42px;
+        }
+
+        .landing-hero::after {
+          background:
+            linear-gradient(90deg, rgba(252, 249, 222, 0.98) 0%, rgba(252, 249, 222, 0.82) 58%, rgba(252, 249, 222, 0.18) 100%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0) 82%, #FCF9DE 100%);
+        }
+
+        .palette {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 680px) {
+        .landing-hero {
+          min-height: 90svh;
+          align-items: flex-start;
+          padding-top: 30px;
+        }
+
+        .landing h1 {
+          font-size: 48px;
+        }
+
+        .section-head h2 {
+          font-size: 34px;
+        }
+
+        .hero-bg {
+          inset: auto -70% -8% -86%;
+          width: 210%;
+          height: 74%;
+        }
+
+        .rule-grid,
+        .token-grid,
+        .palette {
+          grid-template-columns: 1fr;
+        }
+
+        .demo-frame {
+          margin-inline: -14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="landing">
+      <section class="landing-hero">
+        <iframe class="hero-bg" src="./demo.html?embed=1&amp;layout=phone&amp;preview=0.5" title="叫叫模块化视觉风格 Demo 背景"></iframe>
+        <div class="hero-copy">
+          <h1>叫叫模块化视觉风格</h1>
+          <p class="lead">从 Figma「标准题主题化」还原出的儿童横屏选择题页面 scale。当前示例聚焦九尾狐选择题；Figma 尺寸按 Unity 2x 保存，网页默认按 0.5 比例预览。</p>
+          <div class="hero-actions">
+            <a href="./demo.html">打开 Demo</a>
+            <a href="./design/JOJO_MODULAR_VISUAL_STYLE.md">查看 Design MD</a>
+            <span class="copy-command">
+              <code id="npx-command">npx jojo-modular-visual-style my-quiz-demo</code>
+              <button type="button" data-copy-target="#npx-command">复制 NPX</button>
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="landing-section">
+        <div class="section-head">
+          <h2>真实适配规则</h2>
+          <p>现在只保留两个可解释的适配入口：手机横屏还原设计画板，平板模拟用更大的根节点承载同一个题面。所有设计尺寸都是 Unity 2x，网页预览可切换 0.5 或 0.25。</p>
+        </div>
+        <div class="rule-grid">
+          <article class="rule-card">
+            <strong>手机横屏</strong>
+            <p>2x 设计根节点 1756 × 810，对应 Unity 逻辑尺寸 878 × 405；网页默认用 0.5 预览。</p>
+          </article>
+          <article class="rule-card">
+            <strong>平板模拟</strong>
+            <p>2x 设计根节点 1440 × 1080，对应 Unity 逻辑尺寸 720 × 540；题面在此基础上按 0.72 居中。</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="landing-section demo-band">
+        <div class="section-head">
+          <h2>选择题 Demo</h2>
+          <p>下面展示同一道选择题在不同皮肤色调和设备模式下的表现。控制区保留皮肤切换和手机/平板切换，交互范围更聚焦。</p>
+        </div>
+        <div class="demo-frame">
+          <iframe src="./demo.html" title="完整交互 Demo"></iframe>
+        </div>
+      </section>
+
+      <section class="landing-section">
+        <div class="section-head">
+          <h2>业务主色板</h2>
+          <p>这里展示当前选择题模块实际使用的色板。完整 JUDS 色板已作为 Design MD 附录和 scale 数据备注接入，后续新增颜色必须从该 tokens 范围内选择。</p>
+        </div>
+        <div class="palette">
+          <div class="chip" style="--chip:#FCF9DE">黄 1<span>#FCF9DE</span></div>
+          <div class="chip" style="--chip:#FCF3BA">黄 2<span>#FCF3BA</span></div>
+          <div class="chip" style="--chip:#FFEB6B">黄 3<span>#FFEB6B</span></div>
+          <div class="chip" style="--chip:#FCDA00">黄 4<span>#FCDA00</span></div>
+          <div class="chip" style="--chip:#544300;--text:#FFFFFF">黄 6<span>#544300</span></div>
+          <div class="chip" style="--chip:#FEF7E5">棕 1<span>#FEF7E5</span></div>
+          <div class="chip" style="--chip:#E0BF94">棕 3<span>#E0BF94</span></div>
+          <div class="chip" style="--chip:#DBF3FF">蓝 2<span>#DBF3FF</span></div>
+          <div class="chip" style="--chip:#C8A0FA">紫 3<span>#C8A0FA</span></div>
+          <div class="chip" style="--chip:#404040;--text:#FFFFFF">灰 6<span>#404040</span></div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const copyButton = document.querySelector("[data-copy-target]");
+
+      copyButton?.addEventListener("click", async () => {
+        const target = document.querySelector(copyButton.dataset.copyTarget);
+        const value = target?.textContent?.trim() || "";
+
+        try {
+          await navigator.clipboard.writeText(value);
+        } catch {
+          const input = document.createElement("textarea");
+          input.value = value;
+          input.setAttribute("readonly", "");
+          input.style.position = "fixed";
+          input.style.left = "-999px";
+          document.body.append(input);
+          input.select();
+          document.execCommand("copy");
+          input.remove();
+        }
+
+        const previous = copyButton.textContent;
+        copyButton.textContent = "已复制";
+        window.setTimeout(() => {
+          copyButton.textContent = previous;
+        }, 1400);
+      });
+    </script>
+  </body>
+</html>

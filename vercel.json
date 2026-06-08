@@ -1,11 +1,13 @@
 {
   "redirects": [
-    { "source": "/JOJO", "destination": "/JOJO/", "permanent": false }
+    { "source": "/JOJO", "destination": "/JOJO/", "permanent": false },
+    { "source": "/jojopractice", "destination": "/jojopractice/", "permanent": false }
   ],
   "rewrites": [
     { "source": "/api/calendar", "destination": "/api/calendar" },
     { "source": "/api/schedule", "destination": "/api/schedule" },
     { "source": "/JOJO/", "destination": "/JOJO/index.html" },
-    { "source": "/((?!JOJO/).*)", "destination": "/index.html" }
+    { "source": "/jojopractice/", "destination": "/jojopractice/index.html" },
+    { "source": "/((?!JOJO/|jojopractice/).*)", "destination": "/index.html" }
   ]
 }

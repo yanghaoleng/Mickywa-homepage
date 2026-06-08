@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="easy-yellow">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>叫叫模块化视觉风格 Demo</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="./src/jojo-theme-scale.css">
+  </head>
+  <body>
+    <div class="jojo-adaptive-stage">
+      <div class="jojo-adaptive-root">
+        <div class="jojo-adaptive-canvas">
+          <main class="jojo-quiz-screen" aria-label="横屏选择题 Demo">
+            <header class="jojo-topbar">
+              <button class="jojo-icon-btn ani-btnpress-scal" aria-label="返回"><span class="jojo-back-glyph"></span></button>
+              <div class="jojo-counter" data-jojo-counter>10/20</div>
+              <button class="jojo-icon-btn ani-btnpress-scal" aria-label="作答工具"><span class="jojo-tool-glyph"></span></button>
+            </header>
+
+            <div class="jojo-board" aria-hidden="true"></div>
+
+            <section class="jojo-question">
+              <span class="jojo-audio ani-tip-repeat" aria-hidden="true"></span>
+              <div class="jojo-question-copy">
+                <div class="jojo-demo-kicker">选择题</div>
+                <div class="jojo-question-text">请选择正确答案</div>
+              </div>
+            </section>
+
+            <section class="jojo-choice-region" aria-label="选择题内容">
+              <figure class="jojo-material-choice-card ani-bounds">
+                <img src="./assets/fox-nine-tail.png" alt="九尾狐插图">
+                <figcaption>九尾狐的特征</figcaption>
+              </figure>
+
+              <div class="jojo-option-list" data-choice-group>
+                <button class="jojo-choice-option ani-btnpress-down" type="button" data-answer="A">
+                  <span class="jojo-option-card">
+                    <span class="jojo-option-index">A</span>
+                    <span class="jojo-option-text">学问深</span>
+                  </span>
+                  <span class="jojo-option-audio ani-tip-repeat" aria-hidden="true"></span>
+                </button>
+                <button class="jojo-choice-option ani-btnpress-down" type="button" data-answer="B">
+                  <span class="jojo-option-card">
+                    <span class="jojo-option-index">B</span>
+                    <span class="jojo-option-text">知识少，没有文化</span>
+                  </span>
+                  <span class="jojo-option-audio ani-tip-repeat" aria-hidden="true"></span>
+                </button>
+                <button class="jojo-choice-option ani-btnpress-down" type="button" data-answer="C">
+                  <span class="jojo-option-card">
+                    <span class="jojo-option-index">C</span>
+                    <span class="jojo-option-text">知识面广</span>
+                  </span>
+                  <span class="jojo-option-audio ani-tip-repeat" aria-hidden="true"></span>
+                </button>
+              </div>
+            </section>
+
+            <div class="jojo-submit-wrap">
+              <button class="jojo-submit ani-btnpress-down" type="button" data-jojo-show-toast disabled><span>提交</span> <span>›</span></button>
+            </div>
+            <div class="jojo-toast" role="status" aria-live="polite" data-jojo-toast>
+              <span class="jojo-toast-icon" aria-hidden="true"></span>
+              <span data-jojo-toast-text>这是一条成功提示</span>
+            </div>
+            <div class="jojo-home-indicator" aria-hidden="true"></div>
+          </main>
+        </div>
+      </div>
+    </div>
+
+    <aside class="jojo-controls" aria-label="Demo 控制">
+      <button class="jojo-theme-btn ani-btnpress-down" data-jojo-theme="easy-yellow" aria-pressed="true"><span class="jojo-swatch" style="background:#FCF3BA"></span>轻松黄</button>
+      <button class="jojo-theme-btn ani-btnpress-down" data-jojo-theme="easy-blue" aria-pressed="false"><span class="jojo-swatch" style="background:#DBF3FF"></span>轻松蓝</button>
+      <button class="jojo-theme-btn ani-btnpress-down" data-jojo-theme="challenge" aria-pressed="false"><span class="jojo-swatch" style="background:#C8A0FA"></span>挑战紫</button>
+      <button class="jojo-theme-btn ani-btnpress-down" data-jojo-theme="focus" aria-pressed="false"><span class="jojo-swatch" style="background:#FAFAFA"></span>专注白</button>
+      <select class="jojo-layout-select" data-jojo-force-layout aria-label="适配模式">
+        <option value="phone">手机横屏</option>
+        <option value="tablet">平板模拟</option>
+      </select>
+      <select class="jojo-layout-select" data-jojo-preview-scale aria-label="预览比例">
+        <option value="0.5">网页预览 0.5×</option>
+        <option value="0.25">缩略预览 0.25×</option>
+      </select>
+    </aside>
+
+    <script type="module">
+      import { bindJojoForceLayout, bindJojoMotionDemo, bindJojoThemeControls } from "./src/jojo-theme-scale.js";
+
+      bindJojoThemeControls(document);
+
+      const params = new URLSearchParams(window.location.search);
+      const forcedLayout = params.get("layout");
+      const forcedPreview = params.get("preview");
+      const select = document.querySelector("[data-jojo-force-layout]");
+      const previewSelect = document.querySelector("[data-jojo-preview-scale]");
+
+      if (params.has("embed")) {
+        document.body.classList.add("jojo-embed");
+      }
+
+      if (forcedLayout && select) {
+        select.value = forcedLayout;
+      }
+
+      if (forcedPreview && previewSelect) {
+        previewSelect.value = forcedPreview;
+      }
+
+      bindJojoForceLayout(document);
+      bindJojoMotionDemo(document);
+    </script>
+  </body>
+</html>

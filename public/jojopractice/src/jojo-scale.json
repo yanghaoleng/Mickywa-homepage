@@ -1,0 +1,319 @@
+{
+  "name": "叫叫模块化视觉风格",
+  "version": "0.1.0",
+  "source": "Figma: ✏️标准题主题化 / node 2287:18916",
+  "colorTokenSource": "/Users/jojo/Documents/编程/📍JUDS/叫叫颜色色板.tokens.json",
+  "colorPolicy": "当前业务主色只启用黄、棕、蓝、紫、灰；完整色板作为可选范围备注保留。后续新增颜色必须从 fullPalette 中选择，绿色不作为当前 Demo 皮肤入口。",
+  "unit": {
+    "designDensity": "Unity 2x",
+    "defaultPreviewScale": 0.5,
+    "thumbnailPreviewScale": 0.25,
+    "note": "Figma 中的尺寸按 Unity 2 倍记录；网页预览默认使用 0.5，缩略预览可使用 0.25。"
+  },
+  "palette": {
+    "business": {
+      "gray": {
+        "gray1": "#FAFAFA",
+        "gray2": "#F5F4F4",
+        "gray3": "#E0DFDF",
+        "gray4": "#B2B2B2",
+        "gray5": "#666666",
+        "gray6": "#404040"
+      },
+      "yellow": {
+        "yellow1": "#FCF9DE",
+        "yellow2": "#FCF3BA",
+        "yellow3": "#FFEB6B",
+        "yellow4": "#FCDA00",
+        "yellow5": "#DBAF00",
+        "yellow6": "#544300"
+      },
+      "brown": {
+        "brown1": "#FEF7E5",
+        "brown3": "#E0BF94",
+        "brown5": "#986C31"
+      },
+      "blue": {
+        "blue1": "#EBF9FF",
+        "blue2": "#DBF3FF",
+        "blue3": "#87D7FF",
+        "blue4": "#33BBFF",
+        "blue5": "#0090D9",
+        "blue6": "#0C567A"
+      },
+      "purple": {
+        "purple1": "#F9F5FF",
+        "purple2": "#F3EBFC",
+        "purple3": "#C8A0FA",
+        "purple4": "#AE84E3",
+        "purple5": "#8D4BDE",
+        "purple6": "#4E2680"
+      },
+      "feedback": {
+        "warning": "#FF715C",
+        "selected": "#FCDA00",
+        "success": "#FCDA00"
+      },
+      "neutral": {
+        "white": "#FFFFFF",
+        "black": "#000000",
+        "darkPanel": "#1F284D"
+      }
+    },
+    "themes": {
+      "easyYellow": {
+        "bg": "#FCF3BA",
+        "deck": "#FFEB6B",
+        "deckSoft": "#FCF9DE",
+        "accent": "#FCDA00",
+        "accentSoft": "#FEF7E5",
+        "accentStrong": "#DBAF00"
+      },
+      "easyBlue": {
+        "bg": "#DBF3FF",
+        "deck": "#87D7FF",
+        "deckSoft": "#EBF9FF",
+        "accent": "#33BBFF",
+        "accentSoft": "#EBF9FF",
+        "accentStrong": "#0090D9"
+      },
+      "challenge": {
+        "bg": "#C8A0FA",
+        "deck": "#AE84E3",
+        "deckSoft": "#F3EBFC",
+        "accent": "#8D4BDE",
+        "accentSoft": "#F9F5FF",
+        "accentStrong": "#4E2680"
+      },
+      "focus": {
+        "bg": "#FAFAFA",
+        "deck": "#FFFFFF",
+        "deckSoft": "#F5F4F4",
+        "accent": "#FCDA00",
+        "accentSoft": "#FCF9DE",
+        "accentStrong": "#544300"
+      }
+    },
+    "fullPalette": {
+      "灰": {
+        "灰 - 1": "#FAFAFA",
+        "灰 - 2": "#F5F4F4",
+        "灰 - 3": "#E0DFDF",
+        "灰 - 4": "#B2B2B2",
+        "灰 - 5": "#666666",
+        "灰 - 6": "#404040"
+      },
+      "主": {
+        "黄 - 1": "#FCF9DE",
+        "黄 - 2": "#FCF3BA",
+        "黄 - 3": "#FFEB6B",
+        "黄 - 4": "#FCDA00",
+        "黄 - 5": "#DBAF00",
+        "黄 - 6": "#544300",
+        "橙 - 1": "#FFF3EB",
+        "橙 - 2": "#FFEBDE",
+        "橙 - 3": "#FFA66B",
+        "橙 - 4": "#FF9045",
+        "橙 - 5": "#E35B00",
+        "橙 - 6": "#6B2D03",
+        "棕 - 1": "#FEF7E5",
+        "棕 - 2": "#FAE9D2",
+        "棕 - 3": "#E0BF94",
+        "棕 - 4": "#C09660",
+        "棕 - 5": "#986C31",
+        "棕 - 6": "#664314",
+        "蓝 - 1": "#EBF9FF",
+        "蓝 - 2": "#DBF3FF",
+        "蓝 - 3": "#87D7FF",
+        "蓝 - 4": "#33BBFF",
+        "蓝 - 5": "#0090D9",
+        "蓝 - 6": "#0C567A",
+        "绿 - 1": "#EFFAEB",
+        "绿 - 2": "#D2F7C6",
+        "绿 - 3": "#A0D98D",
+        "绿 - 4": "#5DC43B",
+        "绿 - 5": "#4AA12D",
+        "绿 - 6": "#155200",
+        "紫 - 1": "#F9F5FF",
+        "紫 - 2": "#F3EBFC",
+        "紫 - 3": "#C8A0FA",
+        "紫 - 4": "#AE84E3",
+        "紫 - 5": "#8D4BDE",
+        "紫 - 6": "#4E2680",
+        "粉 - 1": "#FFF0F3",
+        "粉 - 2": "#FFDBE4",
+        "粉 - 3": "#FF9EB5",
+        "粉 - 4": "#FF7A99",
+        "粉 - 5": "#CC2D52",
+        "粉 - 6": "#780A23"
+      },
+      "次": {
+        "红 - 1": "#FFF2F0",
+        "红 - 2": "#FFE2DE",
+        "红 - 3": "#FF9C8C",
+        "红 - 4": "#FF715C",
+        "红 - 5": "#CC2F16",
+        "红 - 6": "#781A0C",
+        "草 - 1": "#FBFCE8",
+        "草 - 2": "#F2F7B2",
+        "草 - 3": "#E9F283",
+        "草 - 4": "#C7D440",
+        "草 - 5": "#A9B52D",
+        "草 - 6": "#3D4200",
+        "青 - 1": "#EDFBFC",
+        "青 - 2": "#C2F8FC",
+        "青 - 3": "#7FE2EB",
+        "青 - 4": "#00C2D4",
+        "青 - 5": "#009AA8",
+        "青 - 6": "#00484F",
+        "综合 - 1": "#FCF9DE",
+        "综合 - 2": "#FCF3BA",
+        "综合 - 3": "#FFD21F",
+        "综合 - 4": "#F5C400",
+        "综合 - 5": "#C29800",
+        "综合 - 6": "#544300"
+      },
+      "专业": {
+        "专业蓝-1": "#EEF4FE",
+        "专业蓝-2": "#C7DAFE",
+        "专业蓝-3": "#7FAAFF",
+        "专业蓝-4": "#528BFF",
+        "专业蓝-5": "#316CE3",
+        "专业蓝-6": "#002265",
+        "专业灰-1": "#F5F8FD",
+        "专业灰-2": "#E1E8F7",
+        "专业灰-3": "#B2BED6",
+        "专业灰-4": "#919FB9",
+        "专业灰-5": "#57637C",
+        "专业灰-6": "#1F284D"
+      }
+    }
+  },
+  "radius": {
+    "min": 8,
+    "small": 24,
+    "large": 52,
+    "max": 92
+  },
+  "space": {
+    "page": 20,
+    "small": 16,
+    "medium": 28,
+    "large": 40
+  },
+  "typography": {
+    "question": {
+      "family": "PingFang SC",
+      "size": 38,
+      "weight": 400,
+      "lineHeight": 1.25
+    },
+    "option": {
+      "family": "PingFang SC",
+      "size": 40,
+      "weight": 400,
+      "lineHeight": 1.35
+    },
+    "caption": {
+      "family": "PingFang SC",
+      "size": 36,
+      "weight": 600,
+      "lineHeight": 1.25
+    },
+    "counter": {
+      "family": "MohrRounded-Bold, PingFang SC",
+      "size": 30,
+      "weight": 700,
+      "lineHeight": 1.5
+    }
+  },
+  "motion": {
+    "buttonPressScale": {
+      "className": "ani-btnpress-scal",
+      "condition": "While pressing",
+      "shape": "center scale 1.5x",
+      "durationMs": 600,
+      "spring": {
+        "name": "Quick",
+        "stiffness": 300,
+        "damping": 20,
+        "mass": 1
+      },
+      "defaultSound": "待补充"
+    },
+    "buttonPressDown": {
+      "className": "ani-btnpress-down",
+      "condition": "While pressing",
+      "shape": "Y +10px",
+      "durationMs": 600,
+      "spring": {
+        "name": "Quick",
+        "stiffness": 300,
+        "damping": 20,
+        "mass": 1
+      },
+      "defaultSound": "待补充"
+    },
+    "tipRepeat": {
+      "className": "ani-tip-repeat",
+      "condition": "自动循环播放",
+      "keyframes": [
+        { "y": -10, "durationMs": 300, "easing": "Ease out back" },
+        { "y": 10, "delayMs": 150, "durationMs": 300, "easing": "Ease in" }
+      ],
+      "defaultSound": "无"
+    },
+    "sealDown": {
+      "className": "ani-seal-down",
+      "condition": "自动播放",
+      "shape": "scale 2x to 1x, opacity 0 to 1",
+      "durationMs": 600,
+      "spring": {
+        "name": "Quick",
+        "stiffness": 300,
+        "damping": 20,
+        "mass": 1
+      },
+      "defaultSound": "待补充"
+    },
+    "toastUp": {
+      "className": "ani-toast-up",
+      "condition": "自动播放",
+      "keyframes": [
+        { "y": -50, "durationMs": 400, "spring": "Slow 80/20/1" },
+        { "y": -50, "delayMs": 2000, "durationMs": 400, "spring": "Slow 80/20/1" }
+      ],
+      "defaultSound": "无"
+    },
+    "bounds": {
+      "className": "ani-bounds",
+      "condition": "元素被强调",
+      "effect": "Y axis bounce",
+      "frameDurationMs": 300,
+      "intervalMs": 1200,
+      "keyframes": [
+        { "label": "1 弹起", "y": 12, "easing": "Ease out back" },
+        { "label": "2 下落", "y": -12, "easing": "Ease out" },
+        { "label": "3 弹起", "y": 6, "easing": "Ease in and out" },
+        { "label": "4 下落", "y": -6, "easing": "Ease out", "delayMs": 800 }
+      ]
+    }
+  },
+  "adaptation": {
+    "phoneLandscape": {
+      "designRoot2x": [1756, 810],
+      "unityRoot1x": [878, 405],
+      "defaultWebPreviewRoot": [878, 405],
+      "contentScaleInDesign": 1,
+      "defaultRenderedContentScale": 0.5
+    },
+    "tabletSimulation": {
+      "designRoot2x": [1440, 1080],
+      "unityRoot1x": [720, 540],
+      "defaultWebPreviewRoot": [720, 540],
+      "contentScaleInDesign": 0.72,
+      "defaultRenderedContentScale": 0.36
+    },
+    "autoRule": "viewport aspect <= 1.55 or min side >= 760 uses tabletSimulation; otherwise phoneLandscape. The selected design root is multiplied by defaultPreviewScale before being written to CSS."
+  }
+}
