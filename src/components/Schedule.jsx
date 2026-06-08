@@ -405,6 +405,7 @@ export default function Schedule({ theme }) {
   const smartRecRefs = useRef({});
   const mockToastShownRef = useRef(false);
   const smartSwapTimersRef = useRef({ timeouts: [], intervals: [] });
+  const scheduleReadyRef = useRef(false);
 
   const [showBookingBar, setShowBookingBar] = useState(false);
   const [showHalfModal, setShowHalfModal] = useState(false);
@@ -441,6 +442,10 @@ export default function Schedule({ theme }) {
       }
     });
     setCalendarItemKeys(keys);
+  }, [schedule]);
+
+  useEffect(() => {
+    scheduleReadyRef.current = schedule.length > 0;
   }, [schedule]);
 
   const triggerSlotPress = (slotId) => {
@@ -1380,8 +1385,20 @@ export default function Schedule({ theme }) {
 
   useEffect(() => {
     fetchData();
-    const timer = setInterval(() => fetchData({ isAuto: true }), 3 * 60 * 1000);
-    return () => clearInterval(timer);
+    const liveRefreshTimer = setTimeout(() => {
+      if (scheduleReadyRef.current) {
+        fetchData({ isAuto: true, silent: true, forceRefresh: true });
+      }
+    }, 2500);
+    const timer = setInterval(() => {
+      if (scheduleReadyRef.current) {
+        fetchData({ isAuto: true, silent: true, forceRefresh: true });
+      }
+    }, 3 * 60 * 1000);
+    return () => {
+      clearTimeout(liveRefreshTimer);
+      clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {

@@ -6,6 +6,7 @@ const WORK_CAL_URL = import.meta.env.VITE_WORK_CAL_URL || '/api/calendar?type=wo
 const HOLIDAY_CAL_URL = import.meta.env.VITE_HOLIDAY_CAL_URL || '/api/calendar?type=holiday';
 
 const HOLIDAY_CN_BASE_URL = import.meta.env.VITE_HOLIDAY_CN_BASE_URL || 'https://fastly.jsdelivr.net/gh/NateScarlet/holiday-cn@master';
+const STATIC_SCHEDULE_JSON_URL = import.meta.env.VITE_STATIC_SCHEDULE_JSON_URL || '/schedule-snapshot.json';
 const SAME_ORIGIN_SCHEDULE_JSON_URL = '/api/schedule';
 const LEGACY_SCHEDULE_JSON_URL = import.meta.env.VITE_SCHEDULE_JSON_URL || '';
 
@@ -329,7 +330,7 @@ const CACHE_KEY = 'mickywa_schedule_cache_v3';
 const HOLIDAY_CN_CACHE_PREFIX = 'mickywa_holiday_cn_year_v2_';
 const HOLIDAY_CN_CACHE_TTL = 30 * 24 * 60 * 60 * 1000; // 30 days
 const SCHEDULE_MIN_REFRESH_MS = 2 * 60 * 1000;
-const SCHEDULE_STALE_FALLBACK_MS = 10 * 60 * 1000;
+const SCHEDULE_STALE_FALLBACK_MS = 2 * 60 * 60 * 1000;
 const scheduleJsonInFlight = new Map();
 
 function fetchTextWithTimeout(url, { timeoutMs = 12000 } = {}) {
@@ -377,11 +378,12 @@ function appendCacheBuster(url, { enabled } = {}) {
   return u.toString();
 }
 
-function isSameOriginScheduleUrl(url) {
+function isSameOriginUrl(url, expectedUrl) {
   if (typeof window === 'undefined') return false;
   try {
     const parsed = new URL(String(url || ''), window.location.origin);
-    return parsed.origin === window.location.origin && parsed.pathname === SAME_ORIGIN_SCHEDULE_JSON_URL && !parsed.search;
+    const expected = new URL(String(expectedUrl || ''), window.location.origin);
+    return parsed.origin === expected.origin && parsed.pathname === expected.pathname && !parsed.search && !expected.search;
   } catch (_) {
     return false;
   }
@@ -396,7 +398,9 @@ function withTimeout(promise, timeoutMs) {
 }
 
 function getPreloadedScheduleJson(url, { forceRefresh = false, timeoutMs = 12000 } = {}) {
-  if (forceRefresh || !isSameOriginScheduleUrl(url)) return null;
+  if (typeof window === 'undefined') return null;
+  const preloadUrl = window.__MICKYWA_SCHEDULE_PRELOAD_URL__ || STATIC_SCHEDULE_JSON_URL;
+  if (forceRefresh || !isSameOriginUrl(url, preloadUrl)) return null;
   const promise = window.__MICKYWA_SCHEDULE_PRELOAD__;
   if (!promise || typeof promise.then !== 'function') return null;
   return withTimeout(promise, timeoutMs).then(data => {
@@ -408,8 +412,10 @@ function getPreloadedScheduleJson(url, { forceRefresh = false, timeoutMs = 12000
   });
 }
 
-function getScheduleJsonUrls() {
-  const urls = [SAME_ORIGIN_SCHEDULE_JSON_URL, LEGACY_SCHEDULE_JSON_URL]
+function getScheduleJsonUrls({ forceRefresh = false } = {}) {
+  const urls = (forceRefresh
+    ? [SAME_ORIGIN_SCHEDULE_JSON_URL, LEGACY_SCHEDULE_JSON_URL]
+    : [STATIC_SCHEDULE_JSON_URL, SAME_ORIGIN_SCHEDULE_JSON_URL, LEGACY_SCHEDULE_JSON_URL])
     .map(url => String(url || '').trim())
     .filter(Boolean);
   return [...new Set(urls)];
@@ -428,14 +434,14 @@ function loadScheduleJsonCandidate(candidateUrl, { forceRefresh = false, timeout
 }
 
 async function fetchScheduleJson({ forceRefresh = false } = {}) {
-  const urls = getScheduleJsonUrls();
+  const urls = getScheduleJsonUrls({ forceRefresh });
   if (!urls.length) return null;
 
   let lastError = null;
   for (const candidateUrl of urls) {
     try {
       const data = await loadScheduleJsonCandidate(candidateUrl, { forceRefresh, timeoutMs: 12000 });
-      if (!data || !Array.isArray(data.schedule)) continue;
+      if (!data || !Array.isArray(data.schedule) || data.schedule.length === 0) continue;
       return hydrateDates({
         ...data,
         isMock: false,

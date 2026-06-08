@@ -22,8 +22,11 @@
         } catch (_) {}
 
         if (!shouldFetch) return;
-        window.__MICKYWA_SCHEDULE_PRELOAD__ = fetch('/api/schedule', {
-          headers: { Accept: 'application/json' }
+        var preloadUrl = '/schedule-snapshot.json';
+        window.__MICKYWA_SCHEDULE_PRELOAD_URL__ = preloadUrl;
+        window.__MICKYWA_SCHEDULE_PRELOAD__ = fetch(preloadUrl, {
+          headers: { Accept: 'application/json' },
+          cache: 'no-cache'
         })
           .then(function (res) {
             if (!res.ok) throw new Error('HTTP ' + res.status);

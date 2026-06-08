@@ -95,7 +95,7 @@ function normalizeError(error, elapsedMs) {
   }
 }
 
-async function buildSchedulePayload({ startedAt, timeoutMs }) {
+export async function buildSchedulePayload({ startedAt, timeoutMs }) {
   const workCalUrl = normalizeWebcalUrl(getEnv('WORK_CAL_URL'))
   if (!workCalUrl) {
     throw new Error('Calendar source is not configured')
