@@ -3,8 +3,8 @@ name: Refresh schedule snapshot
 on:
   workflow_dispatch:
   schedule:
-    # UTC 04:00-15:30 = Beijing 12:00-23:30.
-    - cron: '*/30 4-15 * * *'
+    # Every 8 hours: UTC 04:00/12:00/20:00 = Beijing 12:00/20:00/04:00.
+    - cron: '0 4,12,20 * * *'
 
 jobs:
   trigger-vercel-rebuild:
