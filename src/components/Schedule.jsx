@@ -2521,6 +2521,10 @@ export default function Schedule({ theme }) {
                       onClick={() => { window.open("https://github.com/yanghaoleng/Bookingcal", "_blank"); }} 
                       textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
                     />
+                    <SimpleActionButton actionText="打开" title="叫叫相关" 
+                      onClick={() => { window.open("https://jojodemos.mikeywa.icu", "_blank"); }} 
+                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
+                    />
                     <SimpleActionButton actionText="一周掌握/2300¥" title="我带你玩" 
                       onClick={() => { 
                         const messages = [
