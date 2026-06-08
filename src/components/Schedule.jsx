@@ -2530,13 +2530,9 @@ export default function Schedule({ theme }) {
                 </div>
                 <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
                   <div className="space-y-2">
-                    <SimpleActionButton actionText="去github" title="个人预约站（本站）" 
-                      onClick={() => { window.open("https://github.com/yanghaoleng/Mickywa-homepage", "_blank"); }} 
-                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
-                    />
-                    <SimpleActionButton actionText="去github" title="工作室预约站" 
-                      onClick={() => { window.open("https://github.com/yanghaoleng/Bookingcal", "_blank"); }} 
-                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
+                    <SimpleActionButton actionText="去github" title="日程展示站"
+                      onClick={() => { window.open("https://github.com/yanghaoleng/Mickywa-homepage", "_blank"); }}
+                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
                     />
                     <SimpleActionButton actionText="打开" title="叫叫相关" 
                       onClick={() => { window.open("https://jojodemos.mikeywa.icu", "_blank"); }} 
