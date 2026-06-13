@@ -1402,7 +1402,7 @@ export default function Schedule({ theme }) {
       if (scheduleReadyRef.current) {
         fetchData({ isAuto: true, silent: true });
       }
-    }, 3 * 60 * 1000);
+    }, 10 * 60 * 1000);
     return () => {
       clearTimeout(liveRefreshTimer);
       clearInterval(timer);
