@@ -2625,6 +2625,10 @@ export default function Schedule({ theme }) {
                       onClick={() => { window.open("https://jojodemos.mikeywa.icu", "_blank"); }} 
                       textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
                     />
+                    <SimpleActionButton actionText="打开" title="蛐蛐模拟器"
+                      onClick={() => { window.open("https://ququ.mikeywa.icu", "_blank"); }}
+                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
+                    />
                     <SimpleActionButton actionText="打开" title="MP3下载器"
                       onClick={() => { window.open("https://ncm.mikeywa.icu", "_blank"); }}
                       textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
