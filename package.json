@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/generate-schedule-snapshot.mjs",
+    "prebuild": "node scripts/assert-production-source.mjs && node scripts/generate-schedule-snapshot.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "api": "node api/calendar-dev.js"
