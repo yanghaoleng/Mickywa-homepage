@@ -14,6 +14,11 @@
       "source": "/Brilliant",
       "destination": "/Brilliant/",
       "permanent": false
+    },
+    {
+      "source": "/eyestra",
+      "destination": "/eyestra/",
+      "permanent": false
     }
   ],
   "rewrites": [
@@ -38,7 +43,11 @@
       "destination": "/Brilliant/index.html"
     },
     {
-      "source": "/((?!JOJO/|jojopractice/|Brilliant/).*)",
+      "source": "/eyestra/",
+      "destination": "/eyestra/index.html"
+    },
+    {
+      "source": "/((?!JOJO/|jojopractice/|Brilliant/|eyestra/).*)",
       "destination": "/index.html"
     }
   ]
