@@ -109,6 +109,8 @@
 | 打开预约弹窗 | `打开半弹窗` 相关逻辑 | 选中日期后打开预约确认 |
 | 发送预约短信 | `sendSmartIMessage` | 发送 iMessage 预约 |
 | 获取日历数据 | `fetchData` / `getCalendarsWithCache` | 加载日程数据 |
+| 首屏加载状态 / 转圈失败页 | `loading` / `error` / `loadingWatchdogError` | 只允许驱动日历区轻提示，不再控制整页正文是否渲染 |
+| 静态日程快照 | `/schedule-snapshot.json` / `STATIC_SCHEDULE_JSON_URL` | 构建前生成的 21 天日程快照，首屏后台读取 |
 | 处理推荐点击 | `handleRecommendationClick` | 点击智能推荐时的处理 |
 
 ---
@@ -119,7 +121,8 @@
 2. **动画时长标准**：常规反馈 150-400ms，入场和趣味动画 600ms，二次确认窗口 2000ms
 3. **主题切换**：暗色模式通过 `dark:` 前缀和 `theme` 状态控制
 4. **响应式宽度**：主体内容最大宽度 440px，保持移动端和桌面端一致
+5. **首屏原则**：日历同步慢或失败时，不要恢复全屏 loading / error；静态内容必须先显示。
 
 ---
 
-*最后更新：2026-05-25*
+*最后更新：2026-07-27*

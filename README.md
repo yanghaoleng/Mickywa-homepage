@@ -21,9 +21,11 @@
 项目目前的日历数据可以直接通过获取 iCloud 日历的共享订阅链接来解析，但由于跨国网络及 iCloud 的响应原因，直接拉取的数据量大且访问速度会比较慢（平均在 5~6 秒左右）。
 
 **当前最快准确方案：**
-项目优先读取同源的 `/api/schedule`。这个 Vercel Function 会在服务端一次性拉取 iCloud 工作日历与节假日数据，生成前端可直接渲染的 21 天日程 JSON，并设置 `s-maxage` 与 `stale-while-revalidate` 让 Vercel CDN 缓存。页面 HTML 会在 React 启动前先发起 `/api/schedule` 请求，并让日历代码复用同一个 Promise，避免重复请求；如果浏览器已有 2 分钟内的真实缓存，则跳过这次早期请求。
+项目构建前会生成 `public/schedule-snapshot.json`，页面 HTML 会在 React 启动前抢跑读取这份静态快照，并让日历代码复用同一个 Promise，避免重复请求。手动刷新或后台刷新时再读取同源的 `/api/schedule`，由 Vercel Function 在服务端拉取 iCloud 工作日历与节假日数据，并设置 `s-maxage` 与 `stale-while-revalidate` 让 Vercel CDN 缓存。
 
 浏览器本地缓存只会秒显 2 分钟内的真实日程数据；更旧的数据只在短时间刷新失败时兜底，不会长期冒充最新日程。
+
+首屏不再等待日历请求完成：页面会先渲染静态内容，日历区读取本地缓存或 `/schedule-snapshot.json` 后自动补齐；如果快照、云函数或 iCloud 临时变慢，只影响日历区，不应出现全屏“加载中”或“获取日程失败”。
 
 要把生产环境速度推到极限，请配置：
 

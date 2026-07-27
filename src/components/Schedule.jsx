@@ -1300,7 +1300,7 @@ export default function Schedule({ theme }) {
       }
     }
     
-    // 只有没有缓存时才显示 loading
+    // 没有缓存时也只标记日历同步状态，正文始终先渲染。
     if (!isAuto && !silent && !hasCache && !backgroundOnly) {
       setLoading(true);
       setError(false);
@@ -1311,7 +1311,7 @@ export default function Schedule({ theme }) {
         setLoading(false);
         setError(true);
         setSlowFetch(true);
-        setCalendarReason('请求超时，已停止等待云函数返回');
+        setCalendarReason('日历请求超时，已停止等待本次同步返回');
         setCountdown(c => (c > 0 ? c : 3));
       }, 12000);
     }
@@ -1414,7 +1414,7 @@ export default function Schedule({ theme }) {
       if (loadingWatchdogRef.current) clearTimeout(loadingWatchdogRef.current);
       loadingWatchdogRef.current = setTimeout(() => {
         setSlowFetch(true);
-        setLoadingWatchdogError('5 秒内未拿到日历结果：云函数未响应，或上游 iCloud 日历请求超时。');
+        setLoadingWatchdogError('日历同步比预期慢，静态内容已先显示。');
       }, 5000);
       return () => {
         if (loadingWatchdogRef.current) {
@@ -2160,33 +2160,9 @@ export default function Schedule({ theme }) {
             <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
           </div>
         </div>
-        {loading && (
-          <div className="h-80 flex flex-col items-center justify-center">
-            {!loadingWatchdogError && (
-              <div className="w-8 h-8 border-2 border-current border-t-transparent rounded-full animate-spin mb-4"></div>
-            )}
-            <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm text-center max-w-[280px]">
-              {loadingWatchdogError || '加载中...'}
-            </span>
-            {(slowFetch || loadingWatchdogError) && (
-              <div className="mt-6 flex flex-col items-center gap-3">
-                <span className="dark:text-[#FFFFFF]/55 text-[#3A3A3A]/55 text-xs">
-                  {countdown > 0 ? `将在 ${countdown}s 后自动重试` : '请手动刷新或等待自动重试'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setCountdown(0);
-                    setSlowFetch(false);
-                    setLoadingWatchdogError('');
-                    fetchData({ forceRefresh: true });
-                  }}
-                  className="px-8 py-2 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs"
-                >
-                  立即刷新
-                </button>
-              </div>
-            )}
+        {(loading || slowFetch || error) && schedule.length > 0 && (
+          <div className="mb-4 rounded-[14px] bg-[#3A3A3A]/6 dark:bg-[#FFFFFF]/8 px-3 py-2 text-center text-[12px] leading-relaxed text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60">
+            {error ? '日历刷新失败，当前继续显示最近一次可用日程。' : '正在后台同步日历，静态内容可正常浏览。'}
           </div>
         )}
 
@@ -2205,24 +2181,7 @@ export default function Schedule({ theme }) {
           </div>
         )}
 
-        {error && (
-          <div className="h-80 flex flex-col items-center justify-center">
-            <span className="dark:text-[#FFFFFF]/70 text-[#3A3A3A]/70 text-sm mb-8">获取日程失败</span>
-            {calendarReason && (
-              <span className="dark:text-[#FFFFFF]/50 text-[#3A3A3A]/50 text-xs mb-4 text-center max-w-[260px]">
-                {calendarReason}
-              </span>
-            )}
-            <button 
-              onClick={() => setCountdown(3)}
-              className="px-8 py-2 bg-[#083A8E] text-[#FFFFFF] dark:bg-[#083A8E] dark:text-[#FFFFFF] rounded-full text-xs"
-            >
-              {countdown > 0 ? `自动刷新 (${countdown}s)` : '重新加载'}
-            </button>
-          </div>
-        )}
-
-        {!loading && !error && (
+        {(
           <div key={contentKey} className="pb-10 overflow-visible min-[860px]:grid min-[860px]:grid-cols-[minmax(0,440px)_minmax(0,340px)] min-[860px]:items-start min-[860px]:justify-center min-[860px]:gap-6">
             <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
               <div className="h-8 mb-4 px-2 relative inline-block" ref={calendarTitleRef}>
@@ -2311,6 +2270,14 @@ export default function Schedule({ theme }) {
                 }
                 months[monthKey].push(day);
               });
+
+              if (Object.keys(months).length === 0) {
+                return (
+                  <div className="py-10 text-center text-[13px] leading-relaxed text-[#3A3A3A]/55 dark:text-[#FFFFFF]/55">
+                    日历正在后台同步，其他内容可先浏览。
+                  </div>
+                );
+              }
               
               return Object.entries(months).map(([monthKey, days], monthIndex) => {
                 const [year, month] = monthKey.split('-');
