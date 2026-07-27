@@ -12,7 +12,7 @@
 | 日程组件（核心） | `Schedule` | [src/components/Schedule.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/Schedule.jsx#L338) | 主功能组件，包含日历、推荐等 |
 | 可拖拽贴纸组件 | `DraggableStickers` | [src/components/DraggableStickers.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/DraggableStickers.jsx#L251) | 贴纸功能主组件 |
 | 独立贴纸浮层 | `DetachedStickersOverlay` | [src/components/DraggableStickers.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/DraggableStickers.jsx#L79) | 拖出后的贴纸展示层 |
-| 顶部可撕 SVG 贴纸 | `PeelableStickerSvg` | `src/components/Schedule.jsx` | 首页顶部 mark 和 title 的撕下再贴回交互 |
+| 顶部静态 SVG 标识 | 顶部内联 SVG / `/assets/title.svg` | `src/components/Schedule.jsx` | 首页顶部 mark 和 title 保留点击彩蛋，无 hover 或拖放反馈 |
 
 ---
 
@@ -24,8 +24,8 @@
 | 日历区域 / 月历区域 | `schedule` 相关渲染代码 | 变量 | 日程数据数组 |
 | 板块 / 彩色板块 | 各 section（找我耍、一起Vibe等） | 元素 | 页面上的各个彩色区块 |
 | 泛泛而谈 / 灰色知识板块 / 羊石坨坨 Know-how | `KnowHowSection` / `KNOW_HOW_TOPICS` / `currentKnowHow` | 组件/数据 | 移动端在联系入口上方，桌面端在日历栏下方 |
-| 顶部云朵 / mark / 小羊石图标 | `peelable-sticker-mark` | 元素 | 页面最顶部内联 SVG，可撕下再贴回 |
-| 首页标题 / 羊石坨坨字样 | `peelable-sticker-title` | 元素 | `title.svg` 标题图，可撕下再贴回 |
+| 顶部云朵 / mark / 小羊石图标 | 顶部内联 SVG / `markBgColor` / `handleMarkClick` | 元素/状态/函数 | 页面最顶部静态 SVG，点击循环换色 |
+| 首页标题 / 羊石坨坨字样 | `/assets/title.svg` / `.title-svg` / `titleReplayKey` / `handleTitleClick` | 元素/CSS 类/状态/函数 | 静态标题图，点击重播入场动效，暗色模式通过滤镜换色 |
 | 信息流 / 内容流 | 主要滚动容器 | 容器 | 包含所有内容的滚动区域 |
 | 底部信息栏 / 预约条 | `showBookingBar` 相关 | 状态 | 选中日期后底部弹出的预约栏 |
 | 半弹窗 / 模态框 / 预约弹窗 | `showHalfModal` / `HalfModal` | 状态/组件 | 预约确认弹窗 |
@@ -42,6 +42,7 @@
 | 展开/收起日历按钮 | `handleToggleCalendar` | 函数 | [src/components/Schedule.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/Schedule.jsx#L637) | 控制日历展开收起的按钮 |
 | 刷新按钮 | 刷新相关的按钮元素 | 元素 | 重新加载日历数据的按钮 |
 | 泛泛而谈随机按钮 | `ShuffleIcon` / `randomKnowHow` | 组件/函数 | 右侧乱序播放图标随机一篇；不提供上一条或下一条 |
+| 从业心得天数 | `getKnowHowCareerDays` / `KNOW_HOW_CAREER_START_DATE` | 函数/常量 | 泛泛而谈左下角 30% 透明度文案，从 2013-05-16 起算 |
 | 微信复制按钮 | `copyWechatId` | 函数 | 随便聊板块中的“微信”按钮，复制 `yanghaoleng` 并提示 |
 
 ---
@@ -54,7 +55,7 @@
 | 弹跳效果 / 按压弹跳 | `press-jump` | CSS 类 | 按钮被点击时的弹跳效果 |
 | 彩虹背景 / 选中变色效果 | `animate-color-change` | CSS 类 | 按钮被选中时的彩虹渐变动画 |
 | 贴纸气泡弹出效果 | `bubble-in` | CSS 类 | 贴纸出现时的气泡动画 |
-| 顶部 SVG 撕贴效果 | `PeelableStickerSvg` / `peelable-sticker-*` | 组件/CSS 类 | 拖拽超过阈值后撕下，1 秒后自动贴回 |
+| 顶部 SVG 点击彩蛋 | `handleMarkClick` / `handleTitleClick` | 函数 | 云朵点击换色，标题点击重播入场动效；无贴纸、hover 或拖放反馈 |
 | 日历卡片回弹效果 | `triggerCalendarCardBounce` | 函数 | 收起日历时的回弹动画 |
 | 软模糊入场效果 | `soft-blur-in` | CSS 类 | 备用的柔和入场动画 |
 | 文字律动 / 文字切换动画 | `BottomUpLettersSwap` | 组件 | 逐字上下切换的文字动画 |
@@ -119,6 +120,7 @@
 | 发送预约短信 | `sendSmartIMessage` | 发送 iMessage 预约 |
 | 获取日历数据 | `fetchData` / `getCalendarsWithCache` | 加载日程数据 |
 | 切换泛泛而谈内容 | `randomKnowHow` | 随机切换到另一篇 |
+| 计算从业天数 | `getKnowHowCareerDays` | 生成“xxxx天的从业心得” |
 | 复制微信号 | `copyWechatId` / `copyText` | 复制 `yanghaoleng`，toast 提示“已复制微信号” |
 | 首屏加载状态 / 转圈失败页 | `loading` / `error` / `loadingWatchdogError` | 只允许驱动日历区轻提示，不再控制整页正文是否渲染 |
 | 静态日程快照 | `/schedule-snapshot.json` / `STATIC_SCHEDULE_JSON_URL` | 构建前生成的 21 天日程快照，首屏后台读取 |

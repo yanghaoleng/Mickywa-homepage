@@ -92,6 +92,14 @@ const KNOW_HOW_FRAME_MAX_HEIGHT = 420;
 const KNOW_HOW_TEXT_ANIMATION_MS = 800;
 const KNOW_HOW_CLOSING_PUNCTUATION = '，。！？；：、,.!?;:)]}）】》」』”’…';
 const KNOW_HOW_OPENING_PUNCTUATION = '([{（【《「『“‘';
+const KNOW_HOW_CAREER_START_DATE = new Date(2013, 4, 16);
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MARK_COLORS = ['#D3F1FF', '#CFEDD9', '#FFDDDD', '#FCF7BD'];
+
+const getKnowHowCareerDays = (date = new Date()) => {
+  const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  return Math.max(1, Math.floor((today - KNOW_HOW_CAREER_START_DATE) / DAY_MS) + 1);
+};
 
 const splitKnowHowTextUnits = (text) => {
   const chars = Array.from(String(text || ''));
@@ -235,13 +243,12 @@ function ShuffleIcon({ className = '' }) {
 
 function KnowHowSection({
   currentKnowHow,
-  knowHowIndex,
-  total,
   onRandom,
   className = ''
 }) {
   const contentRef = useRef(null);
   const [frameHeight, setFrameHeight] = useState(KNOW_HOW_FRAME_MIN_HEIGHT);
+  const careerDays = useMemo(() => getKnowHowCareerDays(), []);
 
   useEffect(() => {
     const updateHeight = () => {
@@ -285,9 +292,8 @@ function KnowHowSection({
               </div>
             </div>
             <div className="flex items-center justify-between gap-3 pt-1">
-              <span className="h-8 w-8" aria-hidden="true" />
-              <span className="text-[12px] tabular-nums text-[#3A3A3A]/46 dark:text-[#FFFFFF]/42">
-                {knowHowIndex + 1}/{total}
+              <span className="text-[11px] leading-none text-[#3A3A3A]/30 dark:text-[#FFFFFF]/30">
+                {careerDays}天的从业心得
               </span>
               <button
                 type="button"
@@ -315,182 +321,6 @@ const STYLE_OPTIONS = ['纯色', '跳色', '法式', '猫眼', '渐变', '设计
 const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
 const PULL_REFRESH_THRESHOLD = 72;
 const PULL_REFRESH_MAX = 96;
-const PEEL_DETACH_THRESHOLD = 20;
-const PEEL_RESTICK_DELAY = 1000;
-
-function PeelableStickerSvg({
-  children,
-  label,
-  className = '',
-  contentClassName = '',
-  onActivate
-}) {
-  const wrapRef = useRef(null);
-  const surfaceRef = useRef(null);
-  const dragRef = useRef({
-    startX: 0,
-    startY: 0,
-    x: 0,
-    y: 0,
-    detached: false,
-    pointerId: null
-  });
-  const timersRef = useRef([]);
-  const [phase, setPhase] = useState('idle');
-
-  const clearTimers = () => {
-    timersRef.current.forEach(timer => window.clearTimeout(timer));
-    timersRef.current = [];
-  };
-
-  const setTransform = (x, y, dragging = false) => {
-    const root = wrapRef.current;
-    const el = surfaceRef.current;
-    if (!el) return;
-    const distance = Math.hypot(x, y);
-    const progress = Math.min(1, distance / 120);
-    const rotation = Math.max(-16, Math.min(16, x * 0.08));
-    const tiltX = Math.max(-14, Math.min(14, -y * 0.06));
-    const tiltY = Math.max(-12, Math.min(12, x * 0.05));
-    const lift = dragging ? 1.04 : 1;
-    if (root) {
-      root.style.setProperty('--peel-progress', progress.toFixed(3));
-      root.style.setProperty('--peel-shadow-y', `${Math.round(8 + progress * 18)}px`);
-      root.style.setProperty('--peel-shadow-blur', `${Math.round(10 + progress * 18)}px`);
-      root.style.setProperty('--peel-origin-x', x >= 0 ? '0%' : '100%');
-      root.style.setProperty('--peel-origin-y', y >= 0 ? '0%' : '100%');
-      root.dataset.peelSide = x < 0 ? 'left' : 'right';
-      root.dataset.peelVertical = y < 0 ? 'top' : 'bottom';
-    }
-    el.style.transform = `translate3d(${x}px, ${y}px, 0) rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(${rotation}deg) scale(${lift})`;
-  };
-
-  const restick = () => {
-    const root = wrapRef.current;
-    const el = surfaceRef.current;
-    if (!el) return;
-    setPhase('returning');
-    el.style.transform = 'translate3d(0px, 0px, 0) rotate(0deg) scale(1)';
-    const done = window.setTimeout(() => {
-      setPhase('idle');
-      dragRef.current.x = 0;
-      dragRef.current.y = 0;
-      dragRef.current.detached = false;
-      root?.style.removeProperty('--peel-progress');
-      root?.style.removeProperty('--peel-shadow-y');
-      root?.style.removeProperty('--peel-shadow-blur');
-      root?.style.removeProperty('--peel-origin-x');
-      root?.style.removeProperty('--peel-origin-y');
-      if (root?.dataset) {
-        delete root.dataset.peelSide;
-        delete root.dataset.peelVertical;
-      }
-    }, 560);
-    timersRef.current.push(done);
-  };
-
-  useEffect(() => () => clearTimers(), []);
-
-  const handlePointerDown = (e) => {
-    if (e.button !== undefined && e.button !== 0) return;
-    if (phase === 'returning') return;
-    e.preventDefault();
-    clearTimers();
-    dragRef.current = {
-      startX: e.clientX,
-      startY: e.clientY,
-      x: 0,
-      y: 0,
-      detached: false,
-      pointerId: e.pointerId
-    };
-    setPhase('pressing');
-    e.currentTarget.setPointerCapture?.(e.pointerId);
-  };
-
-  const handlePointerMove = (e) => {
-    if (dragRef.current.pointerId !== e.pointerId) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    const distance = Math.hypot(dx, dy);
-
-    if (!dragRef.current.detached && distance < PEEL_DETACH_THRESHOLD) return;
-
-    if (!dragRef.current.detached) {
-      dragRef.current.detached = true;
-      setPhase('dragging');
-    }
-
-    dragRef.current.x = dx;
-    dragRef.current.y = dy;
-    setTransform(dx, dy, true);
-  };
-
-  const handlePointerUp = (e) => {
-    if (dragRef.current.pointerId !== e.pointerId) return;
-    e.currentTarget.releasePointerCapture?.(e.pointerId);
-    dragRef.current.pointerId = null;
-
-    if (!dragRef.current.detached) {
-      setPhase('clicked');
-      onActivate?.(e);
-      const done = window.setTimeout(() => setPhase('idle'), 420);
-      timersRef.current.push(done);
-      return;
-    }
-
-    setPhase('detached');
-    setTransform(dragRef.current.x, dragRef.current.y, false);
-    const returnTimer = window.setTimeout(restick, PEEL_RESTICK_DELAY);
-    timersRef.current.push(returnTimer);
-  };
-
-  const handlePointerCancel = (e) => {
-    if (dragRef.current.pointerId !== e.pointerId) return;
-    e.currentTarget.releasePointerCapture?.(e.pointerId);
-    dragRef.current.pointerId = null;
-    restick();
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    e.preventDefault();
-    setPhase('clicked');
-    onActivate?.(e);
-    const done = window.setTimeout(() => setPhase('idle'), 420);
-    timersRef.current.push(done);
-  };
-
-  return (
-    <div
-      ref={wrapRef}
-      className={[
-        'peelable-sticker',
-        phase !== 'idle' ? `peelable-sticker-${phase}` : '',
-        className
-      ].filter(Boolean).join(' ')}
-      role="button"
-      tabIndex={0}
-      aria-label={label}
-      data-peel-phase={phase}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerCancel}
-      onKeyDown={handleKeyDown}
-    >
-      <span className="peelable-sticker-origin" aria-hidden="true">
-        {children}
-      </span>
-      <span
-        ref={surfaceRef}
-        className={['peelable-sticker-surface', contentClassName].filter(Boolean).join(' ')}
-      >
-        {children}
-      </span>
-    </div>
-  );
-}
 
 function BottomUpLettersSwap({ text, active }) {
   const [displayText, setDisplayText] = useState(text ?? '');
@@ -813,10 +643,9 @@ export default function Schedule({ theme }) {
   });
   const [bookingText, setBookingText] = useState('');
   const [toast, setToast] = useState(null); // { message, type }
-  const [markBgColor, setMarkBgColor] = useState('');
-  const [markAnimation, setMarkAnimation] = useState(false);
+  const [markBgColor, setMarkBgColor] = useState('#FFDDDD');
+  const [titleReplayKey, setTitleReplayKey] = useState(0);
   const [countdown, setCountdown] = useState(0);
-  const [contentKey, setContentKey] = useState(0);
   const [pressedSlotId, setPressedSlotId] = useState(null);
   const [selectedSmartId, setSelectedSmartId] = useState(null);
   const [fadingSmartId, setFadingSmartId] = useState(null);
@@ -833,7 +662,6 @@ export default function Schedule({ theme }) {
   });
 
   const dayRefs = useRef({});
-  const animationInterval = useRef(null);
   const pressTimeoutRef = useRef(null);
   const rootRef = useRef(null);
   const calendarCardRef = useRef(null);
@@ -2398,66 +2226,16 @@ export default function Schedule({ theme }) {
     }
   };
 
-  const handleMarkClick = (e) => {
-    const svgElement = e.currentTarget.querySelector('svg');
-    if (svgElement) {
-      svgElement.classList.add('spring-click');
-      setTimeout(() => {
-        svgElement.classList.remove('spring-click');
-      }, 400);
-    }
-    playMarkAnimation();
+  const handleMarkClick = () => {
+    setMarkBgColor(current => {
+      const currentIndex = MARK_COLORS.indexOf(current);
+      return MARK_COLORS[(Math.max(0, currentIndex) + 1) % MARK_COLORS.length];
+    });
   };
 
-  const handleTitleClick = (e) => {
-    const imgElement = e.currentTarget.querySelector('img');
-    if (imgElement) {
-      imgElement.classList.add('spring-click');
-      setTimeout(() => {
-        imgElement.classList.remove('spring-click');
-      }, 400);
-    }
-    setContentKey(k => k + 1);
+  const handleTitleClick = () => {
+    setTitleReplayKey(key => key + 1);
   };
-
-  const playMarkAnimation = () => {
-    const colors = ['#D3F1FF', '#CFEDD9', '#FFDDDD', '#FCF7BD'];
-    setMarkAnimation(true);
-    
-    let index = 0;
-    const interval = setInterval(() => {
-      setMarkBgColor(colors[index]);
-      index = (index + 1) % colors.length;
-    }, 100);
-
-    setTimeout(() => {
-      clearInterval(interval);
-      // 动画结束后随机选择一个颜色作为背景
-      const randomColor = colors[Math.floor(Math.random() * colors.length)];
-      setMarkBgColor(randomColor);
-      setMarkAnimation(false);
-    }, 600 + colors.length * 100);
-  };
-
-  // 组件挂载时初始化背景颜色并设置自动动画
-  useEffect(() => {
-    // 随机选择一个颜色作为初始背景
-    const colors = ['#D3F1FF', '#CFEDD9', '#FFDDDD', '#FCF7BD'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    setMarkBgColor(randomColor);
-
-    // 设置5秒定时器自动播放动画
-    animationInterval.current = setInterval(() => {
-      playMarkAnimation();
-    }, 5000);
-
-    // 组件卸载时清除定时器
-    return () => {
-      if (animationInterval.current) {
-        clearInterval(animationInterval.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -2595,23 +2373,23 @@ export default function Schedule({ theme }) {
     <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
       <div className="pt-4 pb-1 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-[120] flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start spring-scale-in">
-          <PeelableStickerSvg
-            label="撕下顶部标记"
-            className="peelable-sticker-mark"
-            onActivate={handleMarkClick}
+          <button
+            type="button"
+            aria-label="切换顶部标记颜色"
+            onClick={handleMarkClick}
+            className="block cursor-default appearance-none border-0 bg-transparent p-0 outline-none"
           >
-            <svg width="46" height="42" viewBox="0 0 46 42" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg width="46" height="42" viewBox="0 0 46 42" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <path 
                 d="M25.0947 11C26.6053 11 27.8799 12.1235 28.0703 13.6221C28.1317 14.1055 28.0749 14.5737 27.9238 15H30.541C32.4238 15 34.0516 16.3131 34.4502 18.1533C34.9899 20.6457 33.0911 23 30.541 23H33.2275C35.5595 23 37.5817 24.6124 38.1015 26.8857C38.8172 30.0162 36.4387 33 33.2275 33H12.7724C9.56118 33 7.18272 30.0162 7.8984 26.8857C8.41825 24.6124 10.4404 23 12.7724 23H15.4589C12.9088 23 11.0101 20.6457 11.5498 18.1533C11.9483 16.3132 13.5761 15 15.4589 15H18.0761C17.925 14.5737 17.8673 14.1055 17.9287 13.6221C18.1191 12.1234 19.3946 11 20.9052 11H25.0947Z" 
-                fill={markBgColor || '#FFDDDD'} 
-                style={{ transition: 'fill 0.1s ease' }} 
+                fill={markBgColor}
               />
               <path 
                 d="M21.7417 27.353H16.4292C16.2922 27.353 16.2238 27.353 16.1662 27.3463C15.7054 27.2927 15.3421 26.9293 15.2884 26.4686C15.2817 26.411 15.2817 26.3425 15.2817 26.2055C15.2817 26.0685 15.2817 26 15.2884 25.9424C15.3421 25.4817 15.7054 25.1183 16.1662 25.0647C16.2238 25.058 16.2922 25.058 16.4292 25.058H21.7417V24.157H18.2737C18.192 24.157 18.1512 24.157 18.1167 24.1546C17.6188 24.1201 17.2226 23.7239 17.1881 23.2261C17.1857 23.1916 17.1857 23.1507 17.1857 23.069C17.1857 22.9873 17.1857 22.9464 17.1881 22.9119C17.2226 22.4141 17.6188 22.0179 18.1167 21.9834C18.1512 21.981 18.192 21.981 18.2737 21.981H21.7417V21.131H17.5342C17.3972 21.131 17.3288 21.131 17.2712 21.1243C16.8104 21.0707 16.4471 20.7073 16.3934 20.2466C16.3867 20.189 16.3867 20.1205 16.3867 19.9835C16.3867 19.8465 16.3867 19.778 16.3934 19.7204C16.4471 19.2597 16.8104 18.8963 17.2712 18.8427C17.3288 18.836 17.3972 18.836 17.5342 18.836H19.0217C18.9725 18.767 18.9479 18.7326 18.9319 18.7071C18.5595 18.1133 18.8976 17.3307 19.5852 17.1948C19.6147 17.189 19.6567 17.1833 19.7407 17.1719L20.0221 17.1336C20.1547 17.1156 20.221 17.1066 20.2834 17.106C20.5657 17.103 20.8361 17.2195 21.0278 17.4268C21.0702 17.4725 21.1092 17.5269 21.1871 17.6357L22.0477 18.836H24.2067L24.5637 18.292C24.7465 18.0125 24.9101 17.7688 25.0546 17.5606C25.1054 17.4875 25.1308 17.4509 25.1708 17.4059C25.3527 17.2016 25.659 17.0668 25.9325 17.0708C25.9927 17.0717 26.0462 17.079 26.1533 17.0935L26.3505 17.1203C26.4572 17.1348 26.5105 17.142 26.5641 17.1554C27.2168 17.3188 27.5264 18.1393 27.1444 18.6932C27.1131 18.7387 27.085 18.7711 27.0287 18.836H28.4652C28.6022 18.836 28.6707 18.836 28.7283 18.8427C29.189 18.8963 29.5524 19.2597 29.606 19.7204C29.6127 19.778 29.6127 19.8465 29.6127 19.9835C29.6127 20.1205 29.6127 20.189 29.606 20.2466C29.5524 20.7073 29.189 21.0707 28.7283 21.1243C28.6707 21.131 28.6022 21.131 28.4652 21.131H24.2747V21.981H27.7257C27.8075 21.981 27.8483 21.981 27.8828 21.9834C28.3807 22.0179 28.7769 22.4141 28.8114 22.9119C28.8137 22.9464 28.8137 22.9873 28.8137 23.069C28.8137 23.1507 28.8137 23.1916 28.8114 23.2261C28.7769 23.7239 28.3807 24.1201 27.8828 24.1546C27.8483 24.157 27.8075 24.157 27.7257 24.157H24.2747V25.058H29.5702C29.7072 25.058 29.7757 25.058 29.8333 25.0647C30.294 25.1183 30.6574 25.4817 30.711 25.9424C30.7177 26 30.7177 26.0685 30.7177 26.2055C30.7177 26.3425 30.7177 26.411 30.711 26.4686C30.6574 26.9293 30.294 27.2927 29.8333 27.3463C29.7757 27.353 29.7072 27.353 29.5702 27.353H24.2747V28.4835C24.2747 28.7312 24.2747 28.855 24.2529 28.9578C24.1708 29.3442 23.8689 29.6461 23.4825 29.7282C23.3798 29.75 23.2559 29.75 23.0082 29.75C22.7605 29.75 22.6367 29.75 22.534 29.7282C22.1475 29.6461 21.8456 29.3442 21.7636 28.9578C21.7417 28.855 21.7417 28.7312 21.7417 28.4835V27.353Z" 
                 fill="#3A3A3A" 
               />
             </svg>
-          </PeelableStickerSvg>
+          </button>
         </div>
       </div>
 
@@ -2636,14 +2414,15 @@ export default function Schedule({ theme }) {
           </div>
         </div>
         <div className="mx-auto w-full max-w-[440px] min-[860px]:max-w-[860px] px-5">
-        <div className="relative z-[110] flex flex-col items-center justify-start spring-scale-in mb-5">
-          <PeelableStickerSvg
-            label="撕下首页标题"
-            className="peelable-sticker-title"
-            onActivate={handleTitleClick}
+        <div key={titleReplayKey} className="relative z-[110] flex flex-col items-center justify-start spring-scale-in mb-5">
+          <button
+            type="button"
+            aria-label="重播标题入场动效"
+            onClick={handleTitleClick}
+            className="block cursor-default appearance-none border-0 bg-transparent p-0 outline-none"
           >
-            <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
-          </PeelableStickerSvg>
+            <img src="/assets/title.svg" alt="mickywa title" draggable={false} className="w-[225px] h-auto title-svg" />
+          </button>
         </div>
         {(loading || slowFetch || error) && schedule.length > 0 && (
           <div className="mb-4 rounded-[14px] bg-[#3A3A3A]/6 dark:bg-[#FFFFFF]/8 px-3 py-2 text-center text-[12px] leading-relaxed text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60">
@@ -2667,7 +2446,7 @@ export default function Schedule({ theme }) {
         )}
 
         {(
-          <div key={contentKey} className="pb-10 overflow-visible min-[860px]:grid min-[860px]:grid-cols-[minmax(0,440px)_minmax(0,340px)] min-[860px]:items-start min-[860px]:justify-center min-[860px]:gap-6">
+          <div className="pb-10 overflow-visible min-[860px]:grid min-[860px]:grid-cols-[minmax(0,440px)_minmax(0,340px)] min-[860px]:items-start min-[860px]:justify-center min-[860px]:gap-6">
             <div className="min-[860px]:flex min-[860px]:flex-col min-[860px]:gap-6">
             <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
               <div className="h-8 mb-4 px-2 relative inline-block" ref={calendarTitleRef}>
@@ -3058,8 +2837,6 @@ export default function Schedule({ theme }) {
             </div>
             <KnowHowSection
               currentKnowHow={currentKnowHow}
-              knowHowIndex={knowHowIndex}
-              total={KNOW_HOW_TOPICS.length}
               onRandom={randomKnowHow}
               className="mt-6 hidden min-[860px]:mt-0 min-[860px]:block"
             />
@@ -3135,8 +2912,6 @@ export default function Schedule({ theme }) {
               {/* 泛泛而谈板块 */}
               <KnowHowSection
                 currentKnowHow={currentKnowHow}
-                knowHowIndex={knowHowIndex}
-                total={KNOW_HOW_TOPICS.length}
                 onRandom={randomKnowHow}
                 className="mt-6 min-[860px]:hidden"
               />
