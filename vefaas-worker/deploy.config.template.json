@@ -1,0 +1,16 @@
+{
+  "name": "mickywa-calendar-worker",
+  "registry": {
+    "url": "REPLACE_WITH_VOLC_REGISTRY_URL",
+    "namespace": "REPLACE_WITH_VOLC_REGISTRY_NAMESPACE"
+  },
+  "services": {
+    "calendar": {
+      "functionId": "REPLACE_WITH_VEFAAS_FUNCTION_ID",
+      "dockerfile": "Dockerfile",
+      "context": ".",
+      "imageName": "mickywa-calendar-worker",
+      "platform": "linux/amd64"
+    }
+  }
+}

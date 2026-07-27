@@ -87,6 +87,9 @@ Miky-index/
 │   ├── utils/          # 工具函数
 │   ├── index.css       # 全局样式
 │   └── main.jsx        # 入口文件
+├── api/                # Vercel Functions，当前生产日历数据主路径
+├── scripts/            # 构建前检查与静态日程快照生成
+├── vefaas-worker/      # 火山 veFaaS 日历 worker，作为备用回退链路
 ├── index.html          # HTML 模板
 ├── vite.config.js      # Vite 配置
 └── package.json        # 项目配置
@@ -104,6 +107,9 @@ Miky-index/
 - 本地开发时，可能需要设置代理来避免 CORS 问题
 - 确保图片资源放在 `public/assets/` 目录下
 - 时区使用 UTC+8 (北京/上海时间)
+- 生产运行依赖已与构建工具分离：`vite`、`@vitejs/plugin-react`、Tailwind/PostCSS 只放在 `devDependencies`。
+- `npm audit --omit=dev` 应保持 0 漏洞；普通 `npm audit` 目前仍会提示 Vite/esbuild 开发服务器漏洞，需单独评估 Vite 大版本升级。
+- 工作区清理规则：`sync-conflict`、`.DS_Store`、`._*` 均应被忽略或删除，不进入提交。
 
 ---
 

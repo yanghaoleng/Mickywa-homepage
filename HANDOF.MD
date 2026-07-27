@@ -60,3 +60,13 @@
 - 目标：去掉“一起 Vibe”里的“日程展示站”链接，并在“随便聊”里增加微信复制入口。
 - 已完成：删除 GitHub 日程展示站按钮；新增“微信”按钮，确认后复制 `yanghaoleng`，toast 显示“已复制微信号”。
 - 已验证：`npm run build` 已通过，本地预览仍在 `http://127.0.0.1:5173/`。
+
+## 2026-07-27 项目清理与代码审计
+
+- 目标：在不改变当前线上效果的前提下清理工作区，并审计依赖与重构空间。
+- 已完成：删除工作区里的 `sync-conflict` 文件、`.DS_Store`、`._*` 等机器生成垃圾，并在 `.gitignore` 增加防护规则。
+- 已完成：保留并纳入 `vefaas-worker` 的 Docker 部署资料；删除/忽略构建产物和本地 veFaaS 配置，作为日历备用链路维护。
+- 已完成：移除未使用依赖 `date-fns`；将 `vite`、`@vitejs/plugin-react` 从生产依赖移动到 `devDependencies`；`npm audit fix` 更新 Babel/PostCSS 相关 transitive lock。
+- 已验证：`npm audit --omit=dev` 为 0 漏洞，`npm run build` 通过。
+- 仍需评估：普通 `npm audit` 仍提示 Vite/esbuild 开发服务器漏洞，修复需 `vite@8` 级别大版本升级，不在本次稳定清理中强推。
+- 重构建议：`src/components/Schedule.jsx` 约 3100 行，是主要复杂度来源；后续优先拆分日历数据状态、顶部品牌反馈、泛泛而谈、预约半弹窗、智能推荐等模块。

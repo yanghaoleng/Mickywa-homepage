@@ -125,6 +125,11 @@
 | 首屏加载状态 / 转圈失败页 | `loading` / `error` / `loadingWatchdogError` | 只允许驱动日历区轻提示，不再控制整页正文是否渲染 |
 | 静态日程快照 | `/schedule-snapshot.json` / `STATIC_SCHEDULE_JSON_URL` | 构建前生成的 21 天日程快照，首屏后台读取 |
 | 处理推荐点击 | `handleRecommendationClick` | 点击智能推荐时的处理 |
+| Vercel 日历云函数 | `api/schedule.js` | 当前生产日历数据主路径 |
+| 火山日历备用 worker | `vefaas-worker/server.js` / `vefaas-worker/Dockerfile` | veFaaS 回退链路，Docker 部署资料随项目保留 |
+| 依赖安全审计 | `npm audit --omit=dev` | 生产依赖审计，应保持 0 漏洞 |
+| 工作区冲突垃圾 | `*.sync-conflict-*` / `.sync-conflict-*` / `.DS_Store` / `._*` | 同步冲突与系统文件，应忽略或删除 |
+| 主要重构对象 | `src/components/Schedule.jsx` | 当前最大组件，后续优先拆分为日历、顶部反馈、泛泛而谈、预约弹窗等模块 |
 
 ---
 
