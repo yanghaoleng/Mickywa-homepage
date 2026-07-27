@@ -70,3 +70,12 @@
 - 已验证：`npm audit --omit=dev` 为 0 漏洞，`npm run build` 通过。
 - 仍需评估：普通 `npm audit` 仍提示 Vite/esbuild 开发服务器漏洞，修复需 `vite@8` 级别大版本升级，不在本次稳定清理中强推。
 - 重构建议：`src/components/Schedule.jsx` 约 3100 行，是主要复杂度来源；后续优先拆分日历数据状态、顶部品牌反馈、泛泛而谈、预约半弹窗、智能推荐等模块。
+
+## 2026-07-27 前三项重构优化
+
+- 目标：优化代码审计中前三项，并测试一轮；最后单独解释 Vite/esbuild 开发服务器漏洞。
+- 已完成：新增 `src/hooks/useScheduleData.js`，把日历缓存读取、云端刷新、慢请求提示、自动重试、后台轮询从 `Schedule.jsx` 拆出。
+- 已完成：新增 `src/hooks/useTopBrandFeedback.js`，把顶部 mark 定时变色、点击变色、标题点击重播入场动效集中管理，并补齐定时器清理。
+- 已完成：前端 `src/utils/ical.js`、`api/schedule.js`、veFaaS worker 统一复用 `vefaas-worker/ical-core.js` 的排班核心；共享核心补回 JSON 快照兼容解析。
+- 保留说明：`api/calendar.js` 仍保留自己的事件接口解析逻辑，因为它输出 UID、ISO、本地时间、时区等更丰富的 JSON 元数据，不属于排班生成主链路。
+- 后续建议：`Schedule.jsx` 仍可继续拆 `KnowHowSection`、`HalfModal`、智能推荐按钮状态机，进一步降低单文件体量。

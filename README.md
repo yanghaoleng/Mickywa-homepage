@@ -28,7 +28,7 @@
 
 浏览器本地缓存只会秒显 2 分钟内的真实日程数据；更旧的数据只在短时间刷新失败时兜底，不会长期冒充最新日程。
 
-首屏不再等待日历请求完成：页面会先渲染静态内容，日历区读取本地缓存或 `/schedule-snapshot.json` 后自动补齐；如果快照、云函数或 iCloud 临时变慢，只影响日历区，不应出现全屏“加载中”或“获取日程失败”。
+首屏不再等待日历请求完成：页面会先渲染静态内容，日历区读取本地缓存或 `/schedule-snapshot.json` 后自动补齐；如果快照、云函数或 iCloud 临时变慢，只影响日历区，不应出现全屏“加载中”或“获取日程失败”。前端日历同步状态集中在 `src/hooks/useScheduleData.js`，排班解析核心集中在 `vefaas-worker/ical-core.js`，前端、`api/schedule` 与 veFaaS worker 复用同一套日程生成逻辑。
 
 要把生产环境速度推到极限，请配置：
 
@@ -84,6 +84,7 @@ Miky-index/
 ├── src/
 │   ├── components/     # 组件
 │   ├── config/         # 配置与内容 Markdown
+│   ├── hooks/          # 首页日历数据、顶部 SVG 反馈等状态逻辑
 │   ├── utils/          # 工具函数
 │   ├── index.css       # 全局样式
 │   └── main.jsx        # 入口文件
@@ -97,7 +98,7 @@ Miky-index/
 
 ## 自定义修改
 
-- **日程数据源**：修改 `src/utils/ical.js` 中的日历链接
+- **日程数据源**：修改 `src/utils/ical.js` 中的日历链接；排班算法修改请优先改 `vefaas-worker/ical-core.js`
 - **颜色方案**：修改 `src/index.css` 中的颜色定义
 - **动画效果**：修改 `src/index.css` 中的动画关键帧
 - **布局样式**：调整 Tailwind CSS 类名

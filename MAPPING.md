@@ -12,7 +12,7 @@
 | 日程组件（核心） | `Schedule` | [src/components/Schedule.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/Schedule.jsx#L338) | 主功能组件，包含日历、推荐等 |
 | 可拖拽贴纸组件 | `DraggableStickers` | [src/components/DraggableStickers.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/DraggableStickers.jsx#L251) | 贴纸功能主组件 |
 | 独立贴纸浮层 | `DetachedStickersOverlay` | [src/components/DraggableStickers.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/DraggableStickers.jsx#L79) | 拖出后的贴纸展示层 |
-| 顶部静态 SVG 标识 | 顶部内联 SVG / `/assets/title.svg` | `src/components/Schedule.jsx` | 首页顶部 mark 和 title 保留旧版点击/定时反馈，无 hover 或拖放反馈 |
+| 顶部静态 SVG 标识 | 顶部内联 SVG / `/assets/title.svg` / `useTopBrandFeedback` | `src/components/Schedule.jsx` / `src/hooks/useTopBrandFeedback.js` | 首页顶部 mark 和 title 保留旧版点击/定时反馈，无 hover 或拖放反馈 |
 
 ---
 
@@ -24,8 +24,8 @@
 | 日历区域 / 月历区域 | `schedule` 相关渲染代码 | 变量 | 日程数据数组 |
 | 板块 / 彩色板块 | 各 section（找我耍、一起Vibe等） | 元素 | 页面上的各个彩色区块 |
 | 泛泛而谈 / 灰色知识板块 / 羊石坨坨 Know-how | `KnowHowSection` / `KNOW_HOW_TOPICS` / `currentKnowHow` | 组件/数据 | 移动端在联系入口上方，桌面端在日历栏下方 |
-| 顶部云朵 / mark / 小羊石图标 | 顶部内联 SVG / `markBgColor` / `playMarkAnimation` / `handleMarkClick` / `animationInterval` | 元素/状态/函数/ref | 页面最顶部静态 SVG，5 秒定时变色，点击播放一轮变色 |
-| 首页标题 / 羊石坨坨字样 | `/assets/title.svg` / `.title-svg` / `contentKey` / `handleTitleClick` | 元素/CSS 类/状态/函数 | 静态标题图，点击重播主内容区入场动效，暗色模式通过滤镜换色 |
+| 顶部云朵 / mark / 小羊石图标 | 顶部内联 SVG / `useTopBrandFeedback` / `markBgColor` / `handleMarkClick` | 元素/hook/状态/函数 | 页面最顶部静态 SVG，5 秒定时变色，点击播放一轮变色 |
+| 首页标题 / 羊石坨坨字样 | `/assets/title.svg` / `.title-svg` / `useTopBrandFeedback` / `contentKey` / `handleTitleClick` | 元素/CSS 类/hook/状态/函数 | 静态标题图，点击重播主内容区入场动效，暗色模式通过滤镜换色 |
 | 信息流 / 内容流 | 主要滚动容器 | 容器 | 包含所有内容的滚动区域 |
 | 底部信息栏 / 预约条 | `showBookingBar` 相关 | 状态 | 选中日期后底部弹出的预约栏 |
 | 半弹窗 / 模态框 / 预约弹窗 | `showHalfModal` / `HalfModal` | 状态/组件 | 预约确认弹窗 |
@@ -55,7 +55,7 @@
 | 弹跳效果 / 按压弹跳 | `press-jump` | CSS 类 | 按钮被点击时的弹跳效果 |
 | 彩虹背景 / 选中变色效果 | `animate-color-change` | CSS 类 | 按钮被选中时的彩虹渐变动画 |
 | 贴纸气泡弹出效果 | `bubble-in` | CSS 类 | 贴纸出现时的气泡动画 |
-| 顶部 SVG 旧版反馈 | `playMarkAnimation` / `handleMarkClick` / `handleTitleClick` / `contentKey` | 函数/状态 | 云朵定时和点击播放变色，标题点击重播主内容区入场动效；无贴纸、hover 或拖放反馈 |
+| 顶部 SVG 旧版反馈 | `useTopBrandFeedback` / `handleMarkClick` / `handleTitleClick` / `contentKey` | Hook/函数/状态 | 云朵定时和点击播放变色，标题点击重播主内容区入场动效；无贴纸、hover 或拖放反馈 |
 | 日历卡片回弹效果 | `triggerCalendarCardBounce` | 函数 | 收起日历时的回弹动画 |
 | 软模糊入场效果 | `soft-blur-in` | CSS 类 | 备用的柔和入场动画 |
 | 文字律动 / 文字切换动画 | `BottomUpLettersSwap` | 组件 | 逐字上下切换的文字动画 |
@@ -118,18 +118,19 @@
 |-----------|--------|------|
 | 打开预约弹窗 | `打开半弹窗` 相关逻辑 | 选中日期后打开预约确认 |
 | 发送预约短信 | `sendSmartIMessage` | 发送 iMessage 预约 |
-| 获取日历数据 | `fetchData` / `getCalendarsWithCache` | 加载日程数据 |
+| 获取日历数据 | `useScheduleData` / `fetchData` / `getCalendarsWithCache` | 加载日程数据；组件只消费 hook 返回值 |
 | 切换泛泛而谈内容 | `randomKnowHow` | 随机切换到另一篇 |
 | 计算从业天数 | `getKnowHowCareerDays` | 生成“xxxx天的从业心得” |
 | 复制微信号 | `copyWechatId` / `copyText` | 复制 `yanghaoleng`，toast 提示“已复制微信号” |
-| 首屏加载状态 / 转圈失败页 | `loading` / `error` / `loadingWatchdogError` | 只允许驱动日历区轻提示，不再控制整页正文是否渲染 |
+| 首屏加载状态 / 转圈失败页 | `useScheduleData` / `loading` / `error` / `loadingWatchdogError` | 只允许驱动日历区轻提示，不再控制整页正文是否渲染 |
 | 静态日程快照 | `/schedule-snapshot.json` / `STATIC_SCHEDULE_JSON_URL` | 构建前生成的 21 天日程快照，首屏后台读取 |
+| 共享排班核心 | `vefaas-worker/ical-core.js` / `parseICS` / `buildScheduleData` | 前端、`api/schedule`、veFaaS worker 共同使用的日历解析和排班逻辑 |
 | 处理推荐点击 | `handleRecommendationClick` | 点击智能推荐时的处理 |
 | Vercel 日历云函数 | `api/schedule.js` | 当前生产日历数据主路径 |
 | 火山日历备用 worker | `vefaas-worker/server.js` / `vefaas-worker/Dockerfile` | veFaaS 回退链路，Docker 部署资料随项目保留 |
 | 依赖安全审计 | `npm audit --omit=dev` | 生产依赖审计，应保持 0 漏洞 |
 | 工作区冲突垃圾 | `*.sync-conflict-*` / `.sync-conflict-*` / `.DS_Store` / `._*` | 同步冲突与系统文件，应忽略或删除 |
-| 主要重构对象 | `src/components/Schedule.jsx` | 当前最大组件，后续优先拆分为日历、顶部反馈、泛泛而谈、预约弹窗等模块 |
+| 主要重构对象 | `src/components/Schedule.jsx` | 已拆出日历数据和顶部反馈；后续可继续拆泛泛而谈、预约弹窗、智能推荐等模块 |
 
 ---
 

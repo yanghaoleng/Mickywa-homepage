@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import DraggableStickers, { DetachedStickersOverlay } from './DraggableStickers';
-import { getCalendarsWithCache, readFreshScheduleCache } from '../utils/ical';
 import { formatRelativeDate } from '../utils/time';
 import { estimateDuration, estimatePrice, formatDuration } from '../config/estimateConfig';
+import useScheduleData from '../hooks/useScheduleData';
+import useTopBrandFeedback from '../hooks/useTopBrandFeedback';
 import smartActivitiesMd from '../config/smartActivities.md?raw';
 import knowHowMd from '../config/knowHow.md?raw';
 
@@ -94,7 +95,6 @@ const KNOW_HOW_CLOSING_PUNCTUATION = '，。！？；：、,.!?;:)]}）】》」
 const KNOW_HOW_OPENING_PUNCTUATION = '([{（【《「『“‘';
 const KNOW_HOW_CAREER_START_DATE = new Date(2013, 4, 16);
 const DAY_MS = 24 * 60 * 60 * 1000;
-const MARK_COLORS = ['#D3F1FF', '#CFEDD9', '#FFDDDD', '#FCF7BD'];
 
 const getKnowHowCareerDays = (date = new Date()) => {
   const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -607,21 +607,6 @@ function SimpleActionButton({ title, actionText, onClick, textClass = "text-[#08
 }
 
 export default function Schedule({ theme }) {
-  const [schedule, setSchedule] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-  const [isMock, setIsMock] = useState(false);
-  const [calendarSource, setCalendarSource] = useState('cloud');
-  const [calendarReason, setCalendarReason] = useState('');
-  const baseContentReadyAtRef = useRef(typeof performance !== 'undefined' ? performance.now() : Date.now());
-  const [cloudFetchDeltaMs, setCloudFetchDeltaMs] = useState(null);
-  const [slowFetch, setSlowFetch] = useState(false);
-  const [loadingWatchdogError, setLoadingWatchdogError] = useState('');
-  const fetchSeqRef = useRef(0);
-  const fetchTimeoutRef = useRef(null);
-  const fetchFailSafeRef = useRef(null);
-  const loadingWatchdogRef = useRef(null);
-  
   const [showBackToday, setShowBackToday] = useState(false);
   
   // Selection state
@@ -643,15 +628,27 @@ export default function Schedule({ theme }) {
   });
   const [bookingText, setBookingText] = useState('');
   const [toast, setToast] = useState(null); // { message, type }
-  const [markBgColor, setMarkBgColor] = useState('');
-  const [contentKey, setContentKey] = useState(0);
-  const [countdown, setCountdown] = useState(0);
+  const {
+    calendarReason,
+    error,
+    fetchData,
+    isMock,
+    loading,
+    recNonce,
+    schedule,
+    slowFetch
+  } = useScheduleData({ setToast });
+  const {
+    contentKey,
+    handleMarkClick,
+    handleTitleClick,
+    markBgColor
+  } = useTopBrandFeedback();
   const [pressedSlotId, setPressedSlotId] = useState(null);
   const [selectedSmartId, setSelectedSmartId] = useState(null);
   const [fadingSmartId, setFadingSmartId] = useState(null);
   const [isCalendarExpanded, setIsCalendarExpanded] = useState(true);
   const [isCalendarCollapsing, setIsCalendarCollapsing] = useState(false);
-  const [recNonce, setRecNonce] = useState(0);
   const [smartActivityById, setSmartActivityById] = useState({});
   const [smartAnimEnabledById, setSmartAnimEnabledById] = useState({});
   const [pullDistance, setPullDistance] = useState(0);
@@ -662,7 +659,6 @@ export default function Schedule({ theme }) {
   });
 
   const dayRefs = useRef({});
-  const animationInterval = useRef(null);
   const pressTimeoutRef = useRef(null);
   const rootRef = useRef(null);
   const calendarCardRef = useRef(null);
@@ -681,7 +677,6 @@ export default function Schedule({ theme }) {
   const smartRecRefs = useRef({});
   const mockToastShownRef = useRef(false);
   const smartSwapTimersRef = useRef({ timeouts: [], intervals: [] });
-  const scheduleReadyRef = useRef(false);
 
   const [showBookingBar, setShowBookingBar] = useState(false);
   const [showHalfModal, setShowHalfModal] = useState(false);
@@ -729,10 +724,6 @@ export default function Schedule({ theme }) {
       }
     });
     setCalendarItemKeys(keys);
-  }, [schedule]);
-
-  useEffect(() => {
-    scheduleReadyRef.current = schedule.length > 0;
   }, [schedule]);
 
   const triggerSlotPress = (slotId) => {
@@ -1500,253 +1491,14 @@ export default function Schedule({ theme }) {
     window.location.href = `sms:yanghaoleng@icloud.com?body=${encodedText}`;
   };
 
-  const fetchData = async ({ isAuto = false, silent = false, backgroundOnly = false, forceRefresh = false } = {}) => {
-    const seq = ++fetchSeqRef.current;
-    let hasCache = false;
-    const maybeRecordCloudFetch = (data) => {
-      if (!data || data.isMock) return;
-      if ((data.calendarSource || 'cloud') !== 'cloud') return;
-      const actualElapsed = Number(data.calendarFetchElapsedMs);
-      if (Number.isFinite(actualElapsed) && actualElapsed >= 0) {
-        setCloudFetchDeltaMs(actualElapsed);
-        return;
-      }
-      if (cloudFetchDeltaMs !== null) return;
-      if (typeof baseContentReadyAtRef.current !== 'number') return;
-      const delta = performance.now() - baseContentReadyAtRef.current;
-      setCloudFetchDeltaMs(delta);
-    };
-
-    if (!isAuto && !silent && !backgroundOnly) {
-      setSlowFetch(false);
-      setLoadingWatchdogError('');
-      if (fetchTimeoutRef.current) clearTimeout(fetchTimeoutRef.current);
-      fetchTimeoutRef.current = setTimeout(() => {
-        if (fetchSeqRef.current !== seq) return;
-        setSlowFetch(true);
-        if (!hasCache) {
-          setLoadingWatchdogError('日历同步比预期慢，仍在等待准确数据。');
-        }
-        setCountdown(c => (c > 0 ? c : 3));
-      }, 5000);
-    }
-    
-    // 先尝试同步读取缓存，快速显示
-    if (!backgroundOnly) {
-      try {
-        const cached = readFreshScheduleCache();
-        if (cached?.data) {
-          const res = cached.data;
-          const now = new Date();
-          const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-          const endExclusive = new Date(startOfToday);
-          endExclusive.setDate(endExclusive.getDate() + 22);
-
-          const nextDays = (res.schedule || [])
-            .filter(day => day?.date instanceof Date || typeof day.date === 'string')
-            .map(day => {
-              if (typeof day.date === 'string') {
-                day.date = new Date(day.date);
-              }
-              return day;
-            })
-            .filter(day => day.date >= startOfToday && day.date < endExclusive)
-            .sort((a, b) => a.date - b.date);
-
-          setSchedule(nextDays);
-          setRecNonce(n => n + 1);
-          setIsMock(!!res.isMock);
-          setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
-          setCalendarReason(res.calendarReason || '');
-          maybeRecordCloudFetch(res);
-          hasCache = true;
-          if (!isAuto && !silent) {
-            setLoading(false);
-            setError(false);
-            setLoadingWatchdogError('');
-            setSlowFetch(false);
-          }
-          if (fetchTimeoutRef.current) {
-            clearTimeout(fetchTimeoutRef.current);
-            fetchTimeoutRef.current = null;
-          }
-          if (fetchFailSafeRef.current) {
-            clearTimeout(fetchFailSafeRef.current);
-            fetchFailSafeRef.current = null;
-          }
-        }
-      } catch (e) {
-        // 缓存读取失败，继续
-      }
-    }
-    
-    // 没有缓存时也只标记日历同步状态，正文始终先渲染。
-    if (!isAuto && !silent && !hasCache && !backgroundOnly) {
-      setLoading(true);
-      setError(false);
-      setLoadingWatchdogError('');
-      if (fetchFailSafeRef.current) clearTimeout(fetchFailSafeRef.current);
-      fetchFailSafeRef.current = setTimeout(() => {
-        if (fetchSeqRef.current !== seq) return;
-        setLoading(false);
-        setError(true);
-        setSlowFetch(true);
-        setCalendarReason('日历请求超时，已停止等待本次同步返回');
-        setCountdown(c => (c > 0 ? c : 3));
-      }, 12000);
-    }
-    
-    try {
-      // 后台刷新数据，forceRefresh 只有手动刷新时才设为 true
-      const liveRefresh = isAuto && !forceRefresh;
-      const res = await getCalendarsWithCache({ forceMock: false, forceRefresh, liveRefresh });
-      if (fetchSeqRef.current !== seq) return;
-      
-      const now = new Date();
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const endExclusive = new Date(startOfToday);
-      endExclusive.setDate(endExclusive.getDate() + 22);
-
-      const nextDays = (res.schedule || [])
-        .filter(day => day?.date instanceof Date)
-        .filter(day => day.date >= startOfToday && day.date < endExclusive)
-        .sort((a, b) => a.date - b.date);
-
-      setSchedule(nextDays);
-      setRecNonce(n => n + 1);
-      setIsMock(!!res.isMock);
-      setCalendarSource(res.calendarSource || (res.isMock ? 'mock' : 'cloud'));
-      setCalendarReason(res.calendarReason || '');
-      maybeRecordCloudFetch(res);
-      if (!isAuto && !silent && !hasCache) setLoading(false);
-      if (!silent) setError(false);
-      if (fetchSeqRef.current === seq) {
-        if (fetchTimeoutRef.current) {
-          clearTimeout(fetchTimeoutRef.current);
-          fetchTimeoutRef.current = null;
-        }
-        if (fetchFailSafeRef.current) {
-          clearTimeout(fetchFailSafeRef.current);
-          fetchFailSafeRef.current = null;
-        }
-        if (loadingWatchdogRef.current) {
-          clearTimeout(loadingWatchdogRef.current);
-          loadingWatchdogRef.current = null;
-        }
-        setSlowFetch(false);
-      }
-    } catch (e) {
-      console.error(e);
-      const reason = String(e?.calendarReason || e?.message || e || '');
-      if (reason) setCalendarReason(reason);
-      if (!isAuto && !silent && !hasCache) {
-        setLoading(false);
-        setError(true);
-      } else if (!isAuto && !silent) {
-        // 有缓存但刷新失败，不显示 error 状态
-      } else {
-        setToast({ message: '刷新失败，请稍后重试', type: 'error' });
-      }
-      if (fetchSeqRef.current === seq) {
-        if (fetchTimeoutRef.current) {
-          clearTimeout(fetchTimeoutRef.current);
-          fetchTimeoutRef.current = null;
-        }
-        if (fetchFailSafeRef.current) {
-          clearTimeout(fetchFailSafeRef.current);
-          fetchFailSafeRef.current = null;
-        }
-        if (loadingWatchdogRef.current) {
-          clearTimeout(loadingWatchdogRef.current);
-          loadingWatchdogRef.current = null;
-        }
-      }
-    }
-  };
-
-  useEffect(() => {
-    const raf = requestAnimationFrame(() => {
-      baseContentReadyAtRef.current = performance.now();
-    });
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-    const liveRefreshTimer = setTimeout(() => {
-      if (scheduleReadyRef.current) {
-        fetchData({ isAuto: true, silent: true });
-      }
-    }, 2500);
-    const timer = setInterval(() => {
-      if (scheduleReadyRef.current) {
-        fetchData({ isAuto: true, silent: true });
-      }
-    }, 10 * 60 * 1000);
-    return () => {
-      clearTimeout(liveRefreshTimer);
-      clearInterval(timer);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (loading) {
-      if (loadingWatchdogRef.current) clearTimeout(loadingWatchdogRef.current);
-      loadingWatchdogRef.current = setTimeout(() => {
-        setSlowFetch(true);
-        setLoadingWatchdogError('日历同步比预期慢，静态内容已先显示。');
-      }, 5000);
-      return () => {
-        if (loadingWatchdogRef.current) {
-          clearTimeout(loadingWatchdogRef.current);
-          loadingWatchdogRef.current = null;
-        }
-      };
-    }
-    setLoadingWatchdogError('');
-    if (loadingWatchdogRef.current) {
-      clearTimeout(loadingWatchdogRef.current);
-      loadingWatchdogRef.current = null;
-    }
-  }, [loading]);
-
   useEffect(() => {
     return () => {
       if (pressTimeoutRef.current) {
         clearTimeout(pressTimeoutRef.current);
         pressTimeoutRef.current = null;
       }
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-        fetchTimeoutRef.current = null;
-      }
-      if (fetchFailSafeRef.current) {
-        clearTimeout(fetchFailSafeRef.current);
-        fetchFailSafeRef.current = null;
-      }
-      if (loadingWatchdogRef.current) {
-        clearTimeout(loadingWatchdogRef.current);
-        loadingWatchdogRef.current = null;
-      }
     };
   }, []);
-
-  // 倒计时逻辑
-  useEffect(() => {
-    if (countdown > 0) {
-      const timer = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            fetchData({ forceRefresh: true });
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [countdown]);
 
 
   const handleScroll = () => {
@@ -2226,57 +1978,6 @@ export default function Schedule({ theme }) {
       resetPullRefresh();
     }
   };
-
-  const playMarkAnimation = () => {
-    let index = 0;
-    const interval = window.setInterval(() => {
-      setMarkBgColor(MARK_COLORS[index]);
-      index = (index + 1) % MARK_COLORS.length;
-    }, 100);
-
-    window.setTimeout(() => {
-      window.clearInterval(interval);
-      const randomColor = MARK_COLORS[Math.floor(Math.random() * MARK_COLORS.length)];
-      setMarkBgColor(randomColor);
-    }, 600 + MARK_COLORS.length * 100);
-  };
-
-  const handleMarkClick = (e) => {
-    const svgElement = e.currentTarget.querySelector('svg');
-    if (svgElement) {
-      svgElement.classList.add('spring-click');
-      window.setTimeout(() => {
-        svgElement.classList.remove('spring-click');
-      }, 400);
-    }
-    playMarkAnimation();
-  };
-
-  const handleTitleClick = (e) => {
-    const imgElement = e.currentTarget.querySelector('img');
-    if (imgElement) {
-      imgElement.classList.add('spring-click');
-      window.setTimeout(() => {
-        imgElement.classList.remove('spring-click');
-      }, 400);
-    }
-    setContentKey(key => key + 1);
-  };
-
-  useEffect(() => {
-    const randomColor = MARK_COLORS[Math.floor(Math.random() * MARK_COLORS.length)];
-    setMarkBgColor(randomColor);
-
-    animationInterval.current = window.setInterval(() => {
-      playMarkAnimation();
-    }, 5000);
-
-    return () => {
-      if (animationInterval.current) {
-        window.clearInterval(animationInterval.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;

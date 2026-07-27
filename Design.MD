@@ -21,8 +21,11 @@
 | `Design.MD` | 主设计系统文档，记录全站规范、token、状态和复用建议 |
 | `src/config/design.md` | 已合并到本文，保留迁移说明和入口 |
 | `src/index.css` | CSS 动效、字体、滚动条、全局工具类 |
-| `src/components/Schedule.jsx` | 日程、推荐按钮、半弹窗、键盘交互、按钮状态机 |
+| `src/components/Schedule.jsx` | 日程渲染、推荐按钮、半弹窗、键盘交互、按钮状态机 |
 | `src/components/DraggableStickers.jsx` | 贴纸拖拽、删除区、贴纸生成动效 |
+| `src/hooks/useScheduleData.js` | 日历缓存、云端刷新、慢请求提示、自动重试等数据状态 |
+| `src/hooks/useTopBrandFeedback.js` | 顶部 mark 定时变色、点击变色、标题点击重播入场动效 |
+| `vefaas-worker/ical-core.js` | 共享 iCal/JSON 解析、上海日期窗口和日程排班逻辑 |
 | `tailwind.config.js` | Tailwind 基础配置，目前只保留少量扩展色 |
 
 ## 3. 色彩系统

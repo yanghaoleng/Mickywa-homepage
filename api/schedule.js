@@ -1,10 +1,8 @@
-import { parseICS, hashPrivateValue } from './calendar.js'
-import { buildScheduleData } from '../vefaas-worker/ical-core.js'
+import { hashPrivateValue } from './calendar.js'
+import { SHANGHAI_OFFSET_MS, buildScheduleData, parseICS } from '../vefaas-worker/ical-core.js'
 
 const DEFAULT_TTL_SECONDS = 30
 const DEFAULT_STALE_SECONDS = 600
-const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000
-
 let memoryCache = {
   data: null,
   fetchedAtMs: 0,

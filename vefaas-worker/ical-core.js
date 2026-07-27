@@ -1,7 +1,7 @@
-const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
+export const SHANGHAI_OFFSET_MS = 8 * 60 * 60 * 1000;
 export const SCHEDULE_DAYS = 21;
 
-function parseICalDateToTimestamp(str) {
+export function parseICalDateToTimestamp(str) {
   if (!str) return null;
   let s = String(str).trim();
 
@@ -38,6 +38,33 @@ function splitICalLines(text) {
 
 export function parseICS(text) {
   if (!text) return [];
+  const trimmed = String(text).trim();
+
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const payload = JSON.parse(trimmed);
+      const items = Array.isArray(payload) ? payload : payload?.items;
+      if (Array.isArray(items)) {
+        return items
+          .map(item => {
+            const start = parseICalDateToTimestamp(item?.start);
+            let end = parseICalDateToTimestamp(item?.end);
+            if (start === null) return null;
+            if (end === null) end = start;
+            const duration = end - start;
+            const isDateOnly = String(item?.start || '').trim().length === 8;
+            const startShanghai = new Date(start + SHANGHAI_OFFSET_MS);
+            const isMidnightShanghai = startShanghai.getUTCHours() === 0 && startShanghai.getUTCMinutes() === 0;
+            const isAllDay = isDateOnly || (isMidnightShanghai && duration >= 24 * 60 * 60 * 1000);
+            return { start, end, isAllDay };
+          })
+          .filter(Boolean);
+      }
+    } catch (_) {
+      // Not JSON; fall back to ICS parsing.
+    }
+  }
+
   const lines = splitICalLines(text);
   const events = [];
   let current = null;
@@ -86,7 +113,7 @@ export function parseICS(text) {
   return events;
 }
 
-function getShanghaiTodayComponents(nowMs = Date.now()) {
+export function getShanghaiTodayComponents(nowMs = Date.now()) {
   const d = new Date(nowMs + SHANGHAI_OFFSET_MS);
   return {
     y: d.getUTCFullYear(),
@@ -95,7 +122,7 @@ function getShanghaiTodayComponents(nowMs = Date.now()) {
   };
 }
 
-function getDateRangeDays(days, nowMs = Date.now()) {
+export function getDateRangeDays(days, nowMs = Date.now()) {
   const res = [];
   const start = getShanghaiTodayComponents(nowMs);
   const base = Date.UTC(start.y, start.m - 1, start.d, 0, 0, 0);
