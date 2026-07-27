@@ -4,6 +4,7 @@ import { getCalendarsWithCache, readFreshScheduleCache } from '../utils/ical';
 import { formatRelativeDate } from '../utils/time';
 import { estimateDuration, estimatePrice, formatDuration } from '../config/estimateConfig';
 import smartActivitiesMd from '../config/smartActivities.md?raw';
+import knowHowMd from '../config/knowHow.md?raw';
 
 const parseActivitiesByTime = (md) => {
   const res = { daytime: [], evening: [], allday: [] };
@@ -46,12 +47,450 @@ const parseActivitiesByTime = (md) => {
 
 const ENTERTAINMENT_ACTIVITIES_BY_TIME = parseActivitiesByTime(smartActivitiesMd);
 
+const parseKnowHowTopics = (md) => {
+  if (!md) return [];
+  const sections = [];
+  const lines = md.split(/\r?\n/);
+  let current = null;
+
+  lines.forEach(line => {
+    const heading = /^##\s+(\d+)\.\s+(.+?)\s*$/.exec(line);
+    if (heading) {
+      if (current && current.lines.length) sections.push(current);
+      current = {
+        id: heading[1],
+        title: heading[2].trim(),
+        lines: []
+      };
+      return;
+    }
+
+    if (/^#{1,6}\s+/.test(line)) {
+      if (current && current.lines.length) sections.push(current);
+      current = null;
+      return;
+    }
+
+    if (!current) return;
+    if (/^---+\s*$/.test(line)) return;
+    current.lines.push(line);
+  });
+
+  if (current && current.lines.length) sections.push(current);
+
+  return sections
+    .map(section => ({
+      ...section,
+      body: section.lines.join('\n').trim()
+    }))
+    .filter(section => section.body);
+};
+
+const KNOW_HOW_TOPICS = parseKnowHowTopics(knowHowMd);
+const KNOW_HOW_FRAME_MIN_HEIGHT = 238;
+const KNOW_HOW_FRAME_MAX_HEIGHT = 420;
+const KNOW_HOW_TEXT_ANIMATION_MS = 800;
+const KNOW_HOW_CLOSING_PUNCTUATION = '，。！？；：、,.!?;:)]}）】》」』”’…';
+const KNOW_HOW_OPENING_PUNCTUATION = '([{（【《「『“‘';
+
+const splitKnowHowTextUnits = (text) => {
+  const chars = Array.from(String(text || ''));
+  const units = [];
+
+  for (let i = 0; i < chars.length; i += 1) {
+    const ch = chars[i];
+    if (ch === '\n') {
+      units.push('\n');
+      continue;
+    }
+
+    if (KNOW_HOW_CLOSING_PUNCTUATION.includes(ch) && units.length && units[units.length - 1] !== '\n') {
+      units[units.length - 1] += ch;
+      continue;
+    }
+
+    if (KNOW_HOW_OPENING_PUNCTUATION.includes(ch) && i + 1 < chars.length && chars[i + 1] !== '\n') {
+      units.push(ch + chars[i + 1]);
+      i += 1;
+      continue;
+    }
+
+    units.push(ch);
+  }
+
+  return units;
+};
+
+const getKnowHowBlocks = (body) => {
+  return String(body || '')
+    .split(/\n{2,}/)
+    .map(block => block.trim())
+    .filter(Boolean)
+    .map(block => {
+      const lines = block.split(/\n/).map(line => line.trim()).filter(Boolean);
+      const isList = lines.every(line => /^([-*]|\d+\.)\s+/.test(line));
+      if (isList) {
+        return {
+          type: 'list',
+          items: lines.map(line => line.replace(/^([-*]|\d+\.)\s+/, ''))
+        };
+      }
+      return {
+        type: 'paragraph',
+        text: block.replace(/^>\s?/gm, '')
+      };
+    });
+};
+
+function AnimatedKnowHowChars({ text, nextChar }) {
+  return splitKnowHowTextUnits(text).map((unit, unitIdx) => {
+    if (unit === '\n') return <br key={unitIdx} />;
+    const delay = nextChar();
+    return (
+      <span
+        key={`${unitIdx}-${unit}`}
+        className="know-how-char"
+        style={{
+          animationDelay: `${delay}ms`,
+          animationDuration: '220ms'
+        }}
+      >
+        {unit === ' ' ? '\u00A0' : unit}
+      </span>
+    );
+  });
+}
+
+function AnimatedKnowHowText({ body }) {
+  const blocks = useMemo(() => getKnowHowBlocks(body), [body]);
+  const charCount = blocks.reduce((sum, block) => {
+    if (block.type === 'list') {
+      return sum + block.items.reduce((itemSum, item) => itemSum + 1 + splitKnowHowTextUnits(item).filter(unit => unit !== '\n').length, 0);
+    }
+    return sum + splitKnowHowTextUnits(block.text).filter(unit => unit !== '\n').length;
+  }, 0);
+  const charDuration = 220;
+  const maxDelay = Math.max(0, KNOW_HOW_TEXT_ANIMATION_MS - charDuration);
+  const delayStep = charCount > 1 ? Math.min(18, maxDelay / (charCount - 1)) : 0;
+  let charIndex = 0;
+  const nextChar = () => {
+    const delay = charIndex * delayStep;
+    charIndex += 1;
+    return delay;
+  };
+
+  return (
+    <div className="know-how-text space-y-3 text-[14px] leading-[1.75] text-[#3A3A3A]/78 dark:text-[#FFFFFF]/76">
+      {blocks.map((block, idx) => (
+        block.type === 'list' ? (
+          <ul key={idx} className="space-y-1.5">
+            {block.items.map((item, itemIdx) => (
+              <li key={itemIdx} className="flex items-start gap-2">
+                <span
+                  className="know-how-char mt-[0.12em] shrink-0 text-[15px] leading-[1.75]"
+                  style={{
+                    animationDelay: `${nextChar()}ms`,
+                    animationDuration: '220ms'
+                  }}
+                  aria-hidden="true"
+                >
+                  •
+                </span>
+                <span className="min-w-0 flex-1">
+                  <AnimatedKnowHowChars text={item} nextChar={nextChar} />
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p key={idx} className="whitespace-pre-line">
+            <AnimatedKnowHowChars text={block.text} nextChar={nextChar} />
+          </p>
+        )
+      ))}
+    </div>
+  );
+}
+
+function ShuffleIcon({ className = '' }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M16 3h5v5" />
+      <path d="M4 20L21 3" />
+      <path d="M21 16v5h-5" />
+      <path d="M15 15l6 6" />
+      <path d="M4 4l5 5" />
+    </svg>
+  );
+}
+
+function KnowHowSection({
+  currentKnowHow,
+  knowHowIndex,
+  total,
+  onRandom,
+  className = ''
+}) {
+  const contentRef = useRef(null);
+  const [frameHeight, setFrameHeight] = useState(KNOW_HOW_FRAME_MIN_HEIGHT);
+
+  useEffect(() => {
+    const updateHeight = () => {
+      const nextHeight = contentRef.current?.scrollHeight || KNOW_HOW_FRAME_MIN_HEIGHT;
+      setFrameHeight(Math.max(KNOW_HOW_FRAME_MIN_HEIGHT, Math.min(KNOW_HOW_FRAME_MAX_HEIGHT, Math.ceil(nextHeight))));
+    };
+
+    updateHeight();
+    const frame = requestAnimationFrame(updateHeight);
+    const done = window.setTimeout(updateHeight, KNOW_HOW_TEXT_ANIMATION_MS + 80);
+    window.addEventListener('resize', updateHeight);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(done);
+      window.removeEventListener('resize', updateHeight);
+    };
+  }, [currentKnowHow?.id, currentKnowHow?.body]);
+
+  return (
+    <div className={[
+      "spring-scale-in bg-[#E8E8E8] dark:bg-[#FFFFFF]/10 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-hidden shadow-[0_0_72px_0_rgba(255,255,255,0.62)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.08)_inset]",
+      className
+    ].filter(Boolean).join(' ')}>
+      <div className="h-8 mb-4 px-2 relative inline-block">
+        <img
+          src="/assets/泛泛而谈.svg"
+          alt="泛泛而谈"
+          className="h-full w-auto dark:opacity-0"
+        />
+        <div className="absolute inset-y-0 left-2 right-0 hidden dark:block bg-[#E8E8E8] pointer-events-none" style={{ WebkitMaskImage: 'url(/assets/泛泛而谈.svg)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'left center', maskImage: 'url(/assets/泛泛而谈.svg)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'left center' }}></div>
+      </div>
+      <div className="bg-[#FFFFFF] dark:bg-[#333333] border border-[#3A3A3A]/10 dark:border-[#FFFFFF]/12 rounded-[18px] pt-4 pb-3.5 px-4 overflow-hidden transition-[background-color,border-color] duration-300">
+        {currentKnowHow ? (
+          <div className="space-y-4">
+            <div
+              className="overflow-y-auto pr-1 custom-scrollbar transition-[height,border-color,background-color] duration-[420ms] ease-out"
+              style={{ height: `${frameHeight}px` }}
+            >
+              <div ref={contentRef}>
+                <AnimatedKnowHowText key={currentKnowHow.id} body={currentKnowHow.body} />
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3 pt-1">
+              <span className="h-8 w-8" aria-hidden="true" />
+              <span className="text-[12px] tabular-nums text-[#3A3A3A]/46 dark:text-[#FFFFFF]/42">
+                {knowHowIndex + 1}/{total}
+              </span>
+              <button
+                type="button"
+                aria-label="随机一篇"
+                onClick={onRandom}
+                className="px-1.5 py-1 text-[22px] leading-none text-[#3A3A3A]/46 transition-all duration-200 hover:text-[#3A3A3A]/72 active:translate-y-px dark:text-[#FFFFFF]/42 dark:hover:text-[#FFFFFF]/70"
+              >
+                <ShuffleIcon className="h-[18px] w-[18px]" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="text-[14px] leading-[1.75] text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60">
+            暂时没有可展示的内容。
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Options configuration
 const LENGTH_OPTIONS = ['本甲', '短甲', '中长', '长甲', '延长', '待定'];
 const STYLE_OPTIONS = ['纯色', '跳色', '法式', '猫眼', '渐变', '设计', '待定'];
 const REMOVE_OPTIONS = ['需要', '不需要', '待定'];
 const PULL_REFRESH_THRESHOLD = 72;
 const PULL_REFRESH_MAX = 96;
+const PEEL_DETACH_THRESHOLD = 20;
+const PEEL_RESTICK_DELAY = 1000;
+
+function PeelableStickerSvg({
+  children,
+  label,
+  className = '',
+  contentClassName = '',
+  onActivate
+}) {
+  const wrapRef = useRef(null);
+  const surfaceRef = useRef(null);
+  const dragRef = useRef({
+    startX: 0,
+    startY: 0,
+    x: 0,
+    y: 0,
+    detached: false,
+    pointerId: null
+  });
+  const timersRef = useRef([]);
+  const [phase, setPhase] = useState('idle');
+
+  const clearTimers = () => {
+    timersRef.current.forEach(timer => window.clearTimeout(timer));
+    timersRef.current = [];
+  };
+
+  const setTransform = (x, y, dragging = false) => {
+    const root = wrapRef.current;
+    const el = surfaceRef.current;
+    if (!el) return;
+    const distance = Math.hypot(x, y);
+    const progress = Math.min(1, distance / 120);
+    const rotation = Math.max(-16, Math.min(16, x * 0.08));
+    const tiltX = Math.max(-14, Math.min(14, -y * 0.06));
+    const tiltY = Math.max(-12, Math.min(12, x * 0.05));
+    const lift = dragging ? 1.04 : 1;
+    if (root) {
+      root.style.setProperty('--peel-progress', progress.toFixed(3));
+      root.style.setProperty('--peel-shadow-y', `${Math.round(8 + progress * 18)}px`);
+      root.style.setProperty('--peel-shadow-blur', `${Math.round(10 + progress * 18)}px`);
+      root.style.setProperty('--peel-origin-x', x >= 0 ? '0%' : '100%');
+      root.style.setProperty('--peel-origin-y', y >= 0 ? '0%' : '100%');
+      root.dataset.peelSide = x < 0 ? 'left' : 'right';
+      root.dataset.peelVertical = y < 0 ? 'top' : 'bottom';
+    }
+    el.style.transform = `translate3d(${x}px, ${y}px, 0) rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(${rotation}deg) scale(${lift})`;
+  };
+
+  const restick = () => {
+    const root = wrapRef.current;
+    const el = surfaceRef.current;
+    if (!el) return;
+    setPhase('returning');
+    el.style.transform = 'translate3d(0px, 0px, 0) rotate(0deg) scale(1)';
+    const done = window.setTimeout(() => {
+      setPhase('idle');
+      dragRef.current.x = 0;
+      dragRef.current.y = 0;
+      dragRef.current.detached = false;
+      root?.style.removeProperty('--peel-progress');
+      root?.style.removeProperty('--peel-shadow-y');
+      root?.style.removeProperty('--peel-shadow-blur');
+      root?.style.removeProperty('--peel-origin-x');
+      root?.style.removeProperty('--peel-origin-y');
+      if (root?.dataset) {
+        delete root.dataset.peelSide;
+        delete root.dataset.peelVertical;
+      }
+    }, 560);
+    timersRef.current.push(done);
+  };
+
+  useEffect(() => () => clearTimers(), []);
+
+  const handlePointerDown = (e) => {
+    if (e.button !== undefined && e.button !== 0) return;
+    if (phase === 'returning') return;
+    e.preventDefault();
+    clearTimers();
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      x: 0,
+      y: 0,
+      detached: false,
+      pointerId: e.pointerId
+    };
+    setPhase('pressing');
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+
+  const handlePointerMove = (e) => {
+    if (dragRef.current.pointerId !== e.pointerId) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    const distance = Math.hypot(dx, dy);
+
+    if (!dragRef.current.detached && distance < PEEL_DETACH_THRESHOLD) return;
+
+    if (!dragRef.current.detached) {
+      dragRef.current.detached = true;
+      setPhase('dragging');
+    }
+
+    dragRef.current.x = dx;
+    dragRef.current.y = dy;
+    setTransform(dx, dy, true);
+  };
+
+  const handlePointerUp = (e) => {
+    if (dragRef.current.pointerId !== e.pointerId) return;
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    dragRef.current.pointerId = null;
+
+    if (!dragRef.current.detached) {
+      setPhase('clicked');
+      onActivate?.(e);
+      const done = window.setTimeout(() => setPhase('idle'), 420);
+      timersRef.current.push(done);
+      return;
+    }
+
+    setPhase('detached');
+    setTransform(dragRef.current.x, dragRef.current.y, false);
+    const returnTimer = window.setTimeout(restick, PEEL_RESTICK_DELAY);
+    timersRef.current.push(returnTimer);
+  };
+
+  const handlePointerCancel = (e) => {
+    if (dragRef.current.pointerId !== e.pointerId) return;
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    dragRef.current.pointerId = null;
+    restick();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    setPhase('clicked');
+    onActivate?.(e);
+    const done = window.setTimeout(() => setPhase('idle'), 420);
+    timersRef.current.push(done);
+  };
+
+  return (
+    <div
+      ref={wrapRef}
+      className={[
+        'peelable-sticker',
+        phase !== 'idle' ? `peelable-sticker-${phase}` : '',
+        className
+      ].filter(Boolean).join(' ')}
+      role="button"
+      tabIndex={0}
+      aria-label={label}
+      data-peel-phase={phase}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+      onKeyDown={handleKeyDown}
+    >
+      <span className="peelable-sticker-origin" aria-hidden="true">
+        {children}
+      </span>
+      <span
+        ref={surfaceRef}
+        className={['peelable-sticker-surface', contentClassName].filter(Boolean).join(' ')}
+      >
+        {children}
+      </span>
+    </div>
+  );
+}
 
 function BottomUpLettersSwap({ text, active }) {
   const [displayText, setDisplayText] = useState(text ?? '');
@@ -388,6 +827,10 @@ export default function Schedule({ theme }) {
   const [smartAnimEnabledById, setSmartAnimEnabledById] = useState({});
   const [pullDistance, setPullDistance] = useState(0);
   const [isPullRefreshing, setIsPullRefreshing] = useState(false);
+  const [knowHowIndex, setKnowHowIndex] = useState(() => {
+    if (!KNOW_HOW_TOPICS.length) return 0;
+    return Math.floor(Math.random() * KNOW_HOW_TOPICS.length);
+  });
 
   const dayRefs = useRef({});
   const animationInterval = useRef(null);
@@ -430,6 +873,14 @@ export default function Schedule({ theme }) {
   const [focusArea, setFocusArea] = useState('smart'); // 'smart' 或 'calendar'
   const calendarItemRefs = useRef({});
   const [calendarItemKeys, setCalendarItemKeys] = useState([]);
+  const currentKnowHow = KNOW_HOW_TOPICS[knowHowIndex] || null;
+  const randomKnowHow = () => {
+    if (KNOW_HOW_TOPICS.length <= 1) return;
+    setKnowHowIndex(prev => {
+      const next = Math.floor(Math.random() * (KNOW_HOW_TOPICS.length - 1));
+      return next >= prev ? next + 1 : next;
+    });
+  };
 
   useEffect(() => { selectedSmartIdRef.current = selectedSmartId; }, [selectedSmartId]);
   useEffect(() => { fadingSmartIdRef.current = fadingSmartId; }, [fadingSmartId]);
@@ -2087,6 +2538,32 @@ export default function Schedule({ theme }) {
     setTimeout(() => setToast(null), 2000);
   };
 
+  const copyText = async (text) => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const input = document.createElement('textarea');
+    input.value = text;
+    input.setAttribute('readonly', '');
+    input.style.position = 'fixed';
+    input.style.top = '-9999px';
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+  };
+
+  const copyWechatId = async () => {
+    try {
+      await copyText('yanghaoleng');
+      showToast('已复制微信号');
+    } catch (err) {
+      showToast('复制失败，请手动复制 yanghaoleng');
+    }
+  };
+
   useEffect(() => {
     if (!loading && !error && isMock && !mockToastShownRef.current) {
       mockToastShownRef.current = true;
@@ -2116,9 +2593,13 @@ export default function Schedule({ theme }) {
 
   return (
     <div className="h-full overflow-hidden flex flex-col dark:text-[#FFFFFF] text-[#3A3A3A] dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300">
-      <div className="pt-4 pb-1 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-50 flex flex-col items-center justify-start">
+      <div className="pt-4 pb-1 dark:bg-[#333333] bg-[#FFFFFF] transition-colors duration-300 relative z-[120] flex flex-col items-center justify-start">
         <div className="flex flex-col items-center justify-start spring-scale-in">
-          <div onClick={handleMarkClick} style={{ cursor: 'pointer' }}>
+          <PeelableStickerSvg
+            label="撕下顶部标记"
+            className="peelable-sticker-mark"
+            onActivate={handleMarkClick}
+          >
             <svg width="46" height="42" viewBox="0 0 46 42" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path 
                 d="M25.0947 11C26.6053 11 27.8799 12.1235 28.0703 13.6221C28.1317 14.1055 28.0749 14.5737 27.9238 15H30.541C32.4238 15 34.0516 16.3131 34.4502 18.1533C34.9899 20.6457 33.0911 23 30.541 23H33.2275C35.5595 23 37.5817 24.6124 38.1015 26.8857C38.8172 30.0162 36.4387 33 33.2275 33H12.7724C9.56118 33 7.18272 30.0162 7.8984 26.8857C8.41825 24.6124 10.4404 23 12.7724 23H15.4589C12.9088 23 11.0101 20.6457 11.5498 18.1533C11.9483 16.3132 13.5761 15 15.4589 15H18.0761C17.925 14.5737 17.8673 14.1055 17.9287 13.6221C18.1191 12.1234 19.3946 11 20.9052 11H25.0947Z" 
@@ -2130,7 +2611,7 @@ export default function Schedule({ theme }) {
                 fill="#3A3A3A" 
               />
             </svg>
-          </div>
+          </PeelableStickerSvg>
         </div>
       </div>
 
@@ -2155,10 +2636,14 @@ export default function Schedule({ theme }) {
           </div>
         </div>
         <div className="mx-auto w-full max-w-[440px] min-[860px]:max-w-[860px] px-5">
-        <div className="flex flex-col items-center justify-start spring-scale-in mb-5">
-          <div onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
+        <div className="relative z-[110] flex flex-col items-center justify-start spring-scale-in mb-5">
+          <PeelableStickerSvg
+            label="撕下首页标题"
+            className="peelable-sticker-title"
+            onActivate={handleTitleClick}
+          >
             <img src="/assets/title.svg" alt="mickywa title" className="w-[225px] h-auto title-svg" />
-          </div>
+          </PeelableStickerSvg>
         </div>
         {(loading || slowFetch || error) && schedule.length > 0 && (
           <div className="mb-4 rounded-[14px] bg-[#3A3A3A]/6 dark:bg-[#FFFFFF]/8 px-3 py-2 text-center text-[12px] leading-relaxed text-[#3A3A3A]/60 dark:text-[#FFFFFF]/60">
@@ -2183,6 +2668,7 @@ export default function Schedule({ theme }) {
 
         {(
           <div key={contentKey} className="pb-10 overflow-visible min-[860px]:grid min-[860px]:grid-cols-[minmax(0,440px)_minmax(0,340px)] min-[860px]:items-start min-[860px]:justify-center min-[860px]:gap-6">
+            <div className="min-[860px]:flex min-[860px]:flex-col min-[860px]:gap-6">
             <div className="spring-scale-in bg-[#D3F1FF] dark:bg-[#083A8E]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
               <div className="h-8 mb-4 px-2 relative inline-block" ref={calendarTitleRef}>
                 <img
@@ -2570,6 +3056,14 @@ export default function Schedule({ theme }) {
                 </div>
               </div>
             </div>
+            <KnowHowSection
+              currentKnowHow={currentKnowHow}
+              knowHowIndex={knowHowIndex}
+              total={KNOW_HOW_TOPICS.length}
+              onRandom={randomKnowHow}
+              className="mt-6 hidden min-[860px]:mt-0 min-[860px]:block"
+            />
+            </div>
 
             <div className="min-[860px]:flex min-[860px]:flex-col min-[860px]:gap-6">
               {/* 一起vibe板块 */}
@@ -2584,10 +3078,6 @@ export default function Schedule({ theme }) {
                 </div>
                 <div className="bg-[#FFFFFF] dark:bg-[#333333] rounded-[18px] pt-3.5 pb-3.5 px-3.5 overflow-visible">
                   <div className="space-y-2">
-                    <SimpleActionButton actionText="去github" title="日程展示站"
-                      onClick={() => { window.open("https://github.com/yanghaoleng/Mickywa-homepage", "_blank"); }}
-                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
-                    />
                     <SimpleActionButton actionText="打开" title="叫叫收藏夹"
                       onClick={() => { window.open("https://jojodemos.mikeywa.icu", "_blank"); }} 
                       textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
@@ -2642,6 +3132,15 @@ export default function Schedule({ theme }) {
                 </div>
               </div>
 
+              {/* 泛泛而谈板块 */}
+              <KnowHowSection
+                currentKnowHow={currentKnowHow}
+                knowHowIndex={knowHowIndex}
+                total={KNOW_HOW_TOPICS.length}
+                onRandom={randomKnowHow}
+                className="mt-6 min-[860px]:hidden"
+              />
+
               {/* 随便聊板块 */}
               <div className="spring-scale-in mt-6 min-[860px]:mt-0 bg-[#E6F4EA] dark:bg-[#088E3A]/25 rounded-[28px] pt-5 pb-3.5 px-3.5 overflow-visible shadow-[0_0_72px_0_rgba(255,255,255,0.70)_inset] dark:shadow-[0_0_72px_0_rgba(255,255,255,0.12)_inset]">
                 <div className="h-8 mb-4 px-2 relative inline-block">
@@ -2656,6 +3155,10 @@ export default function Schedule({ theme }) {
                   <div className="space-y-2">
                     <SimpleActionButton actionText="发送消息" title="iMessage" 
                       onClick={() => { window.location.href = "sms:yanghaoleng@icloud.com"; }} 
+                      textClass="text-[#088E3A] dark:text-[#D3FFD3]" 
+                    />
+                    <SimpleActionButton actionText="复制" title="微信" 
+                      onClick={copyWechatId} 
                       textClass="text-[#088E3A] dark:text-[#D3FFD3]" 
                     />
                   </div>
