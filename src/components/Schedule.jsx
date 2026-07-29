@@ -2685,6 +2685,16 @@ export default function Schedule({ theme }) {
             </div>
           </div>
         )}
+        <footer className="mt-8 pb-8 text-center text-[12px] text-[#3A3A3A]/45 dark:text-[#FFFFFF]/45">
+          <a
+            href="https://beian.miit.gov.cn/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="transition-opacity hover:opacity-75"
+          >
+            蜀ICP备2026042534号
+          </a>
+        </footer>
         </div>
       </div>
 
