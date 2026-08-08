@@ -19,6 +19,11 @@
       "source": "/eyestra",
       "destination": "/eyestra/",
       "permanent": false
+    },
+    {
+      "source": "/qh5day",
+      "destination": "/qh5day/",
+      "permanent": false
     }
   ],
   "rewrites": [
@@ -47,7 +52,11 @@
       "destination": "/eyestra/index.html"
     },
     {
-      "source": "/((?!JOJO/|jojopractice/|Brilliant/|eyestra/).*)",
+      "source": "/qh5day/",
+      "destination": "/qh5day/index.html"
+    },
+    {
+      "source": "/((?!JOJO/|jojopractice/|Brilliant/|eyestra/|qh5day/).*)",
       "destination": "/index.html"
     }
   ]
