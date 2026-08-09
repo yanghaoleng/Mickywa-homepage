@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#0a1d37" />
+  <meta name="description" content="Jennie 与 Mikey 的青海五日自驾旅行计划，从西宁出发，经过青海湖、茶卡、祁连与张掖。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Jennie&amp;Mikey的青海5日游" />
+  <meta property="og:description" content="开着 YU7 追湖光，让高原天使骑马经过草原。" />
+  <meta property="og:url" content="https://mikeywa.icu/qh5day/" />
+  <meta property="og:image" content="https://mikeywa.icu/qh5day/assets/og-qh5day-feltchibi.png" />
+  <meta property="og:image:secure_url" content="https://mikeywa.icu/qh5day/assets/og-qh5day-feltchibi.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Mikey 驾驶蓝色 YU7，Jennie 戴着天使翅膀骑马" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Jennie&amp;Mikey的青海5日游" />
+  <meta name="twitter:image" content="https://mikeywa.icu/qh5day/assets/og-qh5day-feltchibi.png" />
   <title>Jennie&amp;Mikey的青海5日游</title>
   <style>
     :root {
@@ -77,27 +91,11 @@
     .muted { color: var(--muted); }
 
     .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: color-mix(in srgb, var(--paper) 88%, transparent);
-      backdrop-filter: blur(18px);
+      position: relative;
+      z-index: 10;
+      background: var(--paper);
       border-bottom: 1px solid var(--line);
     }
-    .scroll-progress {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: -1px;
-      height: 2px;
-      background: var(--blue);
-      transform: scaleX(0);
-      transform-origin: left center;
-      animation: read-progress linear both;
-      animation-timeline: scroll(root);
-      z-index: 3;
-    }
-    @keyframes read-progress { to { transform: scaleX(1); } }
     .topbar-inner { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
     .brand { display: flex; align-items: baseline; gap: 10px; font-weight: 900; letter-spacing: -.03em; }
     .brand small { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: 0; }
@@ -117,7 +115,49 @@
     .hero-media { position: absolute; inset: 0; }
     .hero-media img { width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: .9; }
     .hero-media::after { content: ""; position: absolute; inset: 0; background: rgba(3, 13, 25, .3); }
-    .hero-content { position: relative; z-index: 2; min-height: 720px; display: grid; align-content: center; grid-template-columns: 1.05fr .7fr; gap: 9vw; padding-block: 100px 76px; }
+    .hero-stickers { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; }
+    .hero-sticker { position: absolute; height: auto; filter: drop-shadow(0 18px 28px rgba(1, 9, 18, .32)); will-change: transform, opacity; }
+    .hero-sticker.mikey {
+      --sticker-rotate: -2deg;
+      --chase-left: -54px;
+      --chase-mid: -28px;
+      --chase-right: 24px;
+      width: clamp(380px, 38vw, 650px);
+      right: 3vw;
+      bottom: 3%;
+      animation: hero-sticker-in-mikey .9s cubic-bezier(.16, 1, .3, 1) .32s both, hero-chase-mikey 5.6s ease-in-out 1.4s infinite;
+    }
+    .hero-sticker.jennie {
+      --sticker-rotate: 2deg;
+      --chase-left: -44px;
+      --chase-mid: -20px;
+      --chase-right: 30px;
+      width: clamp(320px, 32vw, 540px);
+      right: 7vw;
+      top: 2%;
+      animation: hero-sticker-in-jennie .9s cubic-bezier(.16, 1, .3, 1) .16s both, hero-chase-jennie 5.6s ease-in-out 1.18s infinite;
+    }
+    @keyframes hero-sticker-in-jennie {
+      from { opacity: 0; transform: translate3d(-90px, 22px, 0) scale(.82) rotate(var(--sticker-rotate)); }
+      to { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(var(--sticker-rotate)); }
+    }
+    @keyframes hero-sticker-in-mikey {
+      from { opacity: 0; transform: translate3d(100px, 30px, 0) scale(.82) rotate(var(--sticker-rotate)); }
+      to { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(var(--sticker-rotate)); }
+    }
+    @keyframes hero-chase-jennie {
+      0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--sticker-rotate)); }
+      22% { transform: translate3d(var(--chase-left), -8px, 0) rotate(1deg); }
+      48% { transform: translate3d(var(--chase-mid), 5px, 0) rotate(2.5deg); }
+      74% { transform: translate3d(var(--chase-right), -4px, 0) rotate(1.4deg); }
+    }
+    @keyframes hero-chase-mikey {
+      0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--sticker-rotate)); }
+      30% { transform: translate3d(var(--chase-left), 5px, 0) rotate(-1.2deg); }
+      56% { transform: translate3d(var(--chase-mid), -6px, 0) rotate(-2.7deg); }
+      82% { transform: translate3d(var(--chase-right), 4px, 0) rotate(-1.4deg); }
+    }
+    .hero-content { position: relative; z-index: 2; min-height: 720px; display: grid; align-content: center; grid-template-columns: 1fr; padding-block: 100px 76px; }
     .hero-copy { max-width: 720px; }
     .hero-copy > * { animation: hero-in .8s cubic-bezier(.22,.8,.2,1) both; }
     .hero-copy > *:nth-child(2) { animation-delay: .08s; }
@@ -125,12 +165,8 @@
     @keyframes hero-in { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
     .hero h1 { margin: 12px 0 20px; max-width: 760px; font-family: Georgia, "Songti SC", serif; font-size: clamp(54px, 8vw, 112px); line-height: .9; letter-spacing: -.07em; text-wrap: balance; }
     .hero p { max-width: 560px; margin: 0; color: rgba(245, 248, 252, .82); font-size: clamp(16px, 2vw, 20px); }
-    .hero-stamp { align-self: end; justify-self: end; width: min(320px, 100%); padding: 24px; border: 1px solid rgba(255,255,255,.42); background: rgba(4, 22, 42, .76); transform: rotate(2deg); box-shadow: var(--shadow); }
-    .hero-stamp strong { display: block; font-family: Georgia, serif; font-size: 36px; line-height: 1; margin-bottom: 12px; }
-    .hero-stamp span { display: block; color: rgba(255,255,255,.75); font-size: 13px; }
-
     .quick-strip { position: relative; z-index: 4; margin-top: -44px; }
-    .quick-grid { display: grid; grid-template-columns: repeat(4, 1fr); background: var(--paper); border: 1px solid var(--line); box-shadow: var(--shadow); }
+    .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--paper); border: 1px solid var(--line); box-shadow: var(--shadow); }
     .quick-item { padding: 22px 24px; border-right: 1px solid var(--line); }
     .quick-item:last-child { border-right: 0; }
     .quick-item b { display: block; font-size: 22px; letter-spacing: -.04em; }
@@ -175,14 +211,63 @@
     .stay { padding: 14px 16px; margin-top: 18px; background: var(--paper-2); border-left: 4px solid var(--blue); font-size: 14px; }
     .stay a { font-weight: 800; text-underline-offset: 3px; }
 
-    .scene { position: relative; margin: 32px 0 10px; min-height: 360px; overflow: hidden; box-shadow: var(--shadow); background: var(--night); }
-    .scene > img { width: 100%; height: 420px; object-fit: cover; }
-    .scene-note { position: absolute; left: 18px; bottom: 18px; max-width: 300px; padding: 12px 14px; background: rgba(6, 19, 34, .82); color: #f6f8fb; font-size: 12px; }
-    .sticker-crop { position: absolute; right: 18px; bottom: 12px; width: clamp(135px, 21vw, 220px); aspect-ratio: 1.2; overflow: hidden; transform: rotate(3deg); filter: drop-shadow(0 12px 20px rgba(0,0,0,.28)); }
-    .sticker-crop img { position: absolute; height: 100%; width: 300%; max-width: none; object-fit: cover; object-position: center; }
-    .sticker-crop.s0 img { left: 0; }
-    .sticker-crop.s1 img { left: -100%; }
-    .sticker-crop.s2 img { left: -200%; }
+    .knowledge-list { display: grid; gap: 8px; margin: 18px 0; }
+    .knowledge-item { display: grid; grid-template-columns: minmax(84px, .34fr) 1fr; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line); }
+    .knowledge-item b { color: var(--ink); font-size: 13px; }
+    .knowledge-item span { color: var(--muted); font-size: 13px; line-height: 1.55; }
+
+    .day-gallery { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(230px, .55fr); grid-template-rows: auto 1fr; gap: 16px; margin: 32px 0 10px; }
+    .scene-stack { position: relative; grid-row: 1 / span 2; min-height: 590px; padding: 18px 88px 78px 16px; isolation: isolate; }
+    .scene-frame { position: relative; min-height: 500px; margin: 0; overflow: hidden; border: 1px solid rgba(143, 184, 255, .42); border-radius: 14px; box-shadow: var(--shadow); background: var(--night); transform: translateY(18px) rotate(var(--main-tilt, -1.2deg)); opacity: 0; transition: opacity .78s cubic-bezier(.16, 1, .3, 1), transform .78s cubic-bezier(.16, 1, .3, 1); z-index: 1; }
+    .day.visible .scene-frame { opacity: 1; transform: translateY(0) rotate(var(--main-tilt, -1.2deg)); }
+    .scene-main-image { display: block; width: 100%; height: 100%; min-height: 500px; object-fit: cover; }
+    .scene-stack.layout-b { padding: 28px 16px 76px 92px; }
+    .scene-stack.layout-b .scene-frame { --main-tilt: 1.25deg; }
+    .scene-stack.layout-c { padding: 12px 72px 88px 56px; }
+    .scene-stack.layout-c .scene-frame { --main-tilt: -.45deg; }
+    .scene-aux { --aux-rotate: 3deg; --aux-enter-x: 24px; position: absolute; width: clamp(150px, 31%, 220px); aspect-ratio: 4 / 3; margin: 0; overflow: hidden; border: 2px solid rgba(233, 240, 248, .92); border-radius: 12px; background: var(--night); box-shadow: 0 18px 42px rgba(1, 9, 18, .3); opacity: 0; transform: translate3d(var(--aux-enter-x), 18px, 0) rotate(calc(var(--aux-rotate) + 4deg)); transition: opacity .62s cubic-bezier(.16, 1, .3, 1) var(--aux-delay, 260ms), transform .74s cubic-bezier(.16, 1, .3, 1) var(--aux-delay, 260ms); z-index: 3; }
+    .scene-aux img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .day.visible .scene-aux { opacity: 1; transform: translate3d(0, 0, 0) rotate(var(--aux-rotate)); }
+    .layout-a .scene-aux.aux-1 { right: 0; top: 56px; --aux-rotate: 4.5deg; }
+    .layout-a .scene-aux.aux-2 { right: 12px; bottom: 18px; --aux-rotate: -3deg; }
+    .layout-b .scene-aux.aux-1 { left: 0; top: 70px; --aux-enter-x: -24px; --aux-rotate: -4deg; }
+    .layout-b .scene-aux.aux-2 { left: 18px; bottom: 16px; --aux-enter-x: -24px; --aux-rotate: 3.5deg; }
+    .layout-c .scene-aux.aux-1 { right: 0; top: 34px; --aux-rotate: 3deg; }
+    .layout-c .scene-aux.aux-2 { left: 0; bottom: 20px; --aux-enter-x: -24px; --aux-rotate: -4.5deg; }
+    .visual-copy { align-self: start; padding: 22px; background: var(--paper-2); border-top: 4px solid var(--blue); }
+    .visual-copy small { color: var(--blue); font-size: 11px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+    .visual-copy h4 { margin: 9px 0 6px; font-size: 22px; line-height: 1.05; }
+    .visual-copy p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+    .food-figure { align-self: end; margin: 0; background: var(--paper-2); box-shadow: var(--shadow); }
+    .food-figure img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+    .food-figure figcaption { padding: 13px 15px 15px; }
+    .food-figure b { display: block; font-size: 15px; margin-bottom: 2px; }
+    .food-figure span { color: var(--muted); font-size: 11px; line-height: 1.45; }
+    .scene-note { margin-top: 12px; padding: 12px 14px; background: var(--night); color: #f6f8fb; font-size: 12px; }
+    .sticker-stage { --sticker-rotate: 2deg; --sticker-enter-x: 32px; --sticker-enter-y: -18px; position: absolute; width: clamp(128px, 18vw, 190px); opacity: 0; transform: translate3d(var(--sticker-enter-x), var(--sticker-enter-y), 0) scale(.74) rotate(calc(var(--sticker-rotate) + 8deg)); transition: opacity .55s ease .22s, transform .82s cubic-bezier(.16, 1, .3, 1) .22s; pointer-events: none; z-index: 4; }
+    .day.visible .sticker-stage { opacity: 1; transform: translate3d(0, 0, 0) scale(1) rotate(var(--sticker-rotate)); }
+    .sticker-crop { display: block; width: 100%; height: auto; filter: drop-shadow(0 12px 20px rgba(0,0,0,.28)); will-change: transform; }
+    .sticker-arrival { left: 5%; top: 6%; --sticker-rotate: -5deg; --sticker-enter-x: -38px; }
+    .sticker-lake { right: 4%; top: 8%; --sticker-rotate: 5deg; }
+    .sticker-chaka { left: 7%; bottom: 7%; --sticker-rotate: -4deg; --sticker-enter-x: -32px; --sticker-enter-y: 24px; }
+    .sticker-qilian { right: 4%; bottom: 8%; --sticker-rotate: 3deg; --sticker-enter-y: 28px; }
+    .sticker-zhangye { left: 5%; top: 10%; --sticker-rotate: -3deg; --sticker-enter-x: -34px; }
+    .sticker-return { right: 5%; bottom: 9%; --sticker-rotate: 4deg; --sticker-enter-y: 26px; }
+    .sticker-farewell { right: 8%; top: 7%; --sticker-rotate: -2deg; }
+    .day.visible .sticker-arrival .sticker-crop { animation: sticker-hop 4.2s ease-in-out 1.1s infinite; }
+    .day.visible .sticker-lake .sticker-crop { animation: sticker-look 5s ease-in-out 1.2s infinite; }
+    .day.visible .sticker-chaka .sticker-crop { animation: sticker-wind 4.6s ease-in-out 1.15s infinite; }
+    .day.visible .sticker-qilian .sticker-crop { animation: sticker-breathe 5.4s ease-in-out 1.2s infinite; }
+    .day.visible .sticker-zhangye .sticker-crop { animation: sticker-taste 4.4s ease-in-out 1.2s infinite; }
+    .day.visible .sticker-return .sticker-crop { animation: sticker-drift 5.2s ease-in-out 1.2s infinite; }
+    .day.visible .sticker-farewell .sticker-crop { animation: sticker-highfive 4s ease-in-out 1.15s infinite; }
+    @keyframes sticker-hop { 0%,100% { transform: translate3d(0,0,0) rotate(0); } 42% { transform: translate3d(0,-8px,0) rotate(-1.5deg); } 58% { transform: translate3d(0,-3px,0) rotate(1deg); } }
+    @keyframes sticker-look { 0%,100% { transform: translate3d(0,0,0) rotate(0); } 50% { transform: translate3d(-7px,-4px,0) rotate(-2deg); } }
+    @keyframes sticker-wind { 0%,100% { transform: translate3d(0,0,0) rotate(0); } 30% { transform: translate3d(5px,-3px,0) rotate(2deg); } 68% { transform: translate3d(-4px,2px,0) rotate(-1.5deg); } }
+    @keyframes sticker-breathe { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(0,-3px,0) scale(1.025); } }
+    @keyframes sticker-taste { 0%,100% { transform: translate3d(0,0,0) rotate(0); } 45% { transform: translate3d(0,-5px,0) rotate(1.8deg); } 60% { transform: translate3d(0,-2px,0) rotate(-1deg); } }
+    @keyframes sticker-drift { 0%,100% { transform: translate3d(0,0,0) rotate(0); } 50% { transform: translate3d(-8px,3px,0) rotate(-1.6deg); } }
+    @keyframes sticker-highfive { 0%,100% { transform: translate3d(0,0,0) scale(1); } 44% { transform: translate3d(0,-6px,0) scale(1.035); } 58% { transform: translate3d(0,-2px,0) scale(1.01); } }
 
     .booking-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
     .booking-card { background: var(--paper-2); border: 1px solid var(--line); padding: 26px; min-height: 260px; }
@@ -194,21 +279,18 @@
     .booking-card.car p, .booking-card.car li { color: rgba(242,247,251,.68); }
     .booking-card ul { margin: 0; padding-left: 18px; }
     .booking-card a { font-weight: 800; text-underline-offset: 3px; }
-    .price-tag { display: inline-block; margin-top: 12px; color: var(--blue); font-size: 30px; font-weight: 900; letter-spacing: -.05em; }
-
-    .budget { background: var(--night); color: #edf4fb; }
-    .budget .section-head p { color: rgba(237,244,251,.64); }
-    .budget-table { border-top: 1px solid rgba(255,255,255,.25); }
-    .budget-row { display: grid; grid-template-columns: 1.4fr .8fr .8fr; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,.14); gap: 18px; }
-    .budget-row span { color: rgba(255,255,255,.62); }
-    .budget-row b:last-child { text-align: right; }
-    .budget-total { display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: end; padding-top: 34px; }
-    .budget-total strong { font-family: Georgia, serif; font-size: clamp(48px, 8vw, 92px); line-height: .9; letter-spacing: -.07em; color: #fff; }
-    .budget-total p { margin: 0; max-width: 420px; color: rgba(255,255,255,.64); }
-
-    .sticker-showcase { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .sticker-sheet { background: #f7f2e9; padding: 16px; border: 1px solid var(--line); transform: rotate(-1deg); box-shadow: var(--shadow); }
-    .sticker-sheet:nth-child(2) { transform: rotate(1.3deg); }
+    .shoot-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; }
+    .shoot-card { position: relative; overflow: hidden; min-height: 540px; background: var(--night); box-shadow: var(--shadow); }
+    .shoot-card.wide { grid-column: span 7; }
+    .shoot-card.tall { grid-column: span 5; }
+    .shoot-card img { width: 100%; height: 540px; object-fit: cover; }
+    .shoot-card figcaption { position: absolute; left: 18px; right: 18px; bottom: 18px; padding: 16px; color: #f4f7fb; background: rgba(4, 15, 27, .82); }
+    .shoot-card figcaption b { display: block; font-size: 18px; margin-bottom: 3px; }
+    .shoot-card figcaption span { font-size: 12px; color: rgba(244,247,251,.72); }
+    .shot-notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; }
+    .shot-note { padding: 22px; border-top: 4px solid var(--blue); background: var(--paper-2); }
+    .shot-note b { display: block; margin-bottom: 8px; font-size: 18px; }
+    .shot-note p { margin: 0; color: var(--muted); font-size: 13px; }
 
     .checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
     .checklist-box { border-top: 5px solid var(--blue); padding-top: 18px; }
@@ -226,8 +308,6 @@
     .reveal.is-visible { opacity: 1; transform: none; }
     .booking-card:nth-child(2n) { --reveal-delay: 70ms; }
     .booking-card:nth-child(3n) { --reveal-delay: 120ms; }
-    .sticker-sheet:nth-child(2) { --reveal-delay: 90ms; }
-
     footer { padding: 54px 0 70px; border-top: 1px solid var(--line); }
     .footer-inner { display: flex; justify-content: space-between; gap: 30px; align-items: end; }
     .footer-inner strong { font-family: Georgia, "Songti SC", serif; font-size: 28px; }
@@ -237,20 +317,20 @@
       section { padding-block: 64px; }
       .topbar .nav-btn { display: none; }
       .brand small { display: none; }
-      .hero, .hero-content { min-height: 690px; }
-      .hero-content { grid-template-columns: 1fr; align-content: end; gap: 34px; }
-      .hero h1 { font-size: clamp(39px, 10.5vw, 48px); line-height: .96; max-width: 520px; letter-spacing: -.065em; }
-      .hero p { font-size: 15px; }
-      .hero-stamp { justify-self: start; transform: rotate(-1deg); }
-      .quick-grid { grid-template-columns: 1fr 1fr; }
-      .quick-item:nth-child(2) { border-right: 0; }
-      .quick-item:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .hero { padding-block: 0; }
+      .hero, .hero-content { min-height: 60vh; min-height: 60dvh; }
+      .hero-content { align-content: end; padding-block: 150px 58px; }
+      .hero-sticker.mikey { --chase-left: -18px; --chase-mid: -10px; --chase-right: 10px; width: 185px; right: 12px; top: 74px; bottom: auto; }
+      .hero-sticker.jennie { --chase-left: -14px; --chase-mid: -7px; --chase-right: 12px; width: 168px; left: 18px; right: auto; top: 16px; }
+      .hero h1 { margin-bottom: 12px; font-size: clamp(34px, 9.4vw, 43px); line-height: .96; max-width: 520px; letter-spacing: -.065em; }
+      .hero p { font-size: 14px; line-height: 1.5; }
+      .quick-grid { grid-template-columns: repeat(3, 1fr); }
       .quick-item { padding: 16px; }
       .quick-item b { font-size: 18px; }
       .section-head, .route-board { grid-template-columns: 1fr; gap: 20px; }
       .section-head { margin-bottom: 28px; }
       .section-head h2 { font-size: clamp(38px, 12vw, 56px); }
-      .branch-bar { position: sticky; top: 70px; z-index: 25; width: 100%; margin-bottom: 28px; box-shadow: 0 10px 26px color-mix(in srgb, var(--night) 16%, transparent); }
+      .branch-bar { position: relative; width: 100%; margin-bottom: 28px; }
       .branch-tab { flex: 1; padding-inline: 10px; }
       .route-map { min-height: 300px; padding: 18px; }
       .route-map svg { height: 240px; }
@@ -262,18 +342,43 @@
       .day { grid-template-columns: 1fr; gap: 10px; padding-left: 48px; }
       .day-date { text-align: left; }
       .day::before { left: 14px; top: 10px; }
-      .scene { min-height: 300px; margin-top: 24px; }
-      .scene > img { height: 300px; }
-      .scene-note { max-width: 210px; }
-      .sticker-crop { width: 145px; right: 8px; bottom: 8px; }
+      .scene-note { width: 100%; }
+      .knowledge-item { grid-template-columns: 1fr; gap: 3px; }
+      .day-gallery { grid-template-columns: 1fr; grid-template-rows: none; gap: 12px; }
+      .scene-stack, .scene-stack.layout-b, .scene-stack.layout-c { grid-row: auto; min-height: 505px; padding: 0 0 118px; }
+      .scene-frame { min-height: 360px; border-radius: 12px; }
+      .scene-main-image { min-height: 360px; height: 58vh; max-height: 520px; }
+      .scene-aux { width: 46%; max-width: 176px; border-radius: 10px; }
+      .layout-a .scene-aux.aux-1, .layout-b .scene-aux.aux-1, .layout-c .scene-aux.aux-1 { left: 7px; right: auto; top: auto; bottom: 10px; --aux-enter-x: -18px; --aux-rotate: -3.5deg; }
+      .layout-a .scene-aux.aux-2, .layout-b .scene-aux.aux-2, .layout-c .scene-aux.aux-2 { left: auto; right: 23px; top: auto; bottom: 43px; --aux-enter-x: 18px; --aux-rotate: 3deg; }
+      .visual-copy { padding: 18px; }
+      .food-figure { display: grid; grid-template-columns: 44% 1fr; align-items: center; }
+      .food-figure img { height: 100%; min-height: 150px; aspect-ratio: auto; }
+      .food-figure figcaption { padding: 14px; }
+      .sticker-stage { width: 122px; }
+      .sticker-arrival { left: 3%; top: 4%; }
+      .sticker-lake { right: 3%; top: 5%; }
+      .sticker-chaka { left: 4%; bottom: 5%; }
+      .sticker-qilian { right: 3%; bottom: 5%; }
+      .sticker-zhangye { left: 3%; top: 6%; }
+      .sticker-return { right: 3%; bottom: 5%; }
+      .sticker-farewell { right: 5%; top: 5%; }
       .booking-card.flight, .booking-card.car, .booking-card.hotel { grid-column: span 12; }
       .booking-card { min-height: auto; padding: 22px; }
-      .sticker-showcase, .checklist { grid-template-columns: 1fr; }
-      .budget-row { grid-template-columns: 1.2fr .8fr; }
-      .budget-row span { display: none; }
-      .budget-total { grid-template-columns: 1fr; }
+      .checklist { grid-template-columns: 1fr; }
+      .shoot-card.wide, .shoot-card.tall { grid-column: span 12; }
+      .shoot-card, .shoot-card img { min-height: 430px; height: 430px; }
+      .shot-notes { grid-template-columns: 1fr; }
       .footer-inner { align-items: start; flex-direction: column; }
       .reveal { transform: translateY(22px); }
+    }
+
+    @media (max-width: 800px) and (max-height: 740px) {
+      .hero-content { padding-block: 128px 54px; }
+      .hero-sticker.mikey { width: 155px; top: 58px; }
+      .hero-sticker.jennie { width: 140px; top: 16px; }
+      .hero h1 { font-size: clamp(32px, 9vw, 38px); }
+      .hero p { font-size: 13px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -284,7 +389,6 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="scroll-progress" aria-hidden="true"></div>
     <div class="wrap topbar-inner">
       <div class="brand">青甘小环线 <small>2026.09.03 - 09.08</small></div>
       <div class="top-actions">
@@ -298,16 +402,16 @@
   <main>
     <section class="hero">
       <div class="hero-media"><img src="assets/hero-zine.png" alt="青海湖、茶卡盐湖、祁连山和张掖丹霞拼贴" /></div>
+      <div class="hero-stickers" aria-hidden="true">
+        <img class="hero-sticker jennie" src="assets/home-sticker-jennie-horse-feltchibi.webp" alt="" />
+        <img class="hero-sticker mikey" src="assets/home-sticker-mikey-yu7-feltchibi.webp" alt="" />
+      </div>
       <div class="wrap hero-content">
         <div class="hero-copy">
           <div class="eyebrow" style="color:#8fb8ff">成都出发 · 两个人 · 一辆 YU7</div>
           <h1>Jennie&amp;Mikey的<br />青海5日游</h1>
           <p>9 月 3 日晚飞西宁，9 月 8 日晚回成都。默认走张掖版小环线，也准备一条少开车的 4 日轻松线。</p>
         </div>
-        <aside class="hero-stamp">
-          <strong>Thu → Tue</strong>
-          <span>请假建议：周五、周一、周二，共 3 天。周四下班后出发，不占白天假期。</span>
-        </aside>
       </div>
     </section>
 
@@ -316,14 +420,13 @@
         <div class="quick-item"><b id="quickDays">5 日</b><span>落地后自驾</span></div>
         <div class="quick-item"><b id="quickKm">约 1,420 km</b><span>全程里程</span></div>
         <div class="quick-item"><b>2 人</b><span>成都往返</span></div>
-        <div class="quick-item"><b id="quickBudget">约 ¥14,500</b><span>舒适预算</span></div>
       </div>
     </div>
 
     <section id="timeline">
       <div class="wrap">
         <div class="section-head">
-          <div><div class="eyebrow">Choose the pace</div><h2>同一段假期，<br />两种节奏。</h2></div>
+          <div><div class="eyebrow">Choose the pace</div><h2>同一段旅程，<br />两种节奏。</h2></div>
           <p>主线把张掖七彩丹霞纳入环线，风景层次最完整。轻松线删去张掖，把时间留给青海湖北岸和祁连，日均驾驶更友好。</p>
         </div>
 
@@ -366,7 +469,7 @@
       <div class="wrap">
         <div class="section-head">
           <div><div class="eyebrow">Book smart</div><h2>先锁交通，<br />再锁睡眠。</h2></div>
-          <p>航班时刻来自当前可查的夏秋航季信息，票价和最终班次会动态变化。页面给出适合你们下班出发的时段与入手线，不把缓存价格冒充实时成交价。</p>
+          <p>航班时刻来自当前可查的夏秋航季信息，最终班次仍可能调整。页面只保留适合下班出发的时段和预订顺序。</p>
         </div>
 
         <div class="booking-grid">
@@ -375,18 +478,18 @@
             <h3>成都天府 → 西宁曹家堡</h3>
             <p>首选 17:25 左右出发、19:10 左右落地的直飞。若下班赶不及，就筛选 18:00 后直飞，以到达不晚于 21:00 为佳。</p>
             <ul>
-              <li>目标价：含税不高于 ¥850/人/程可以下手</li>
-              <li>两人往返合理区间：¥2,800 - ¥4,400</li>
+              <li>优先直飞，避开到达时间过晚的中转组合</li>
+              <li>购票时同时比较天府与双流的回程时段</li>
               <li>去程优先 TFU，回程同时比较 TFU 与 CTU</li>
             </ul>
-            <a class="price-tag" href="https://flights.ctrip.com/online/list/oneway-ctu-xnn?depdate=2026-09-03" target="_blank" rel="noreferrer">打开 9/3 搜索 ↗</a>
+            <p><a href="https://flights.ctrip.com/online/list/oneway-ctu-xnn?depdate=2026-09-03" target="_blank" rel="noreferrer">打开 9/3 航班搜索 ↗</a></p>
           </article>
           <article class="booking-card car">
             <div class="eyebrow" style="color:#8fb8ff">Car · 9/4</div>
             <h3>机场取 YU7，别租 9/3 晚上</h3>
             <p>9 月 4 日 08:00 取车，主线 9 月 8 日 15:30 前还车；轻松线可 9 月 7 日晚在西宁还车，次日打车去机场。</p>
             <ul>
-              <li>主线含基础保险估算 ¥3,600 - ¥4,500</li>
+              <li>下单前确认保险范围与异地救援方式</li>
               <li>核对不限里程、轮胎玻璃、底盘与拖车责任</li>
               <li>西宁、茶卡、祁连、张掖到店就补能，电量别低于 30%</li>
             </ul>
@@ -412,9 +515,9 @@
           </article>
           <article class="booking-card hotel">
             <div class="eyebrow">9/6 · 张掖</div>
-            <h3>全季张掖西站店</h3>
-            <p>符合你们的品牌偏好，评价量大、停车方便。若想住景区旁，可切换一路亚朵。</p>
-            <a href="https://hotels.ctrip.com/hotels/46021255.html" target="_blank" rel="noreferrer">查看全季 ↗</a>
+            <h3>张掖高铁西站希尔顿欢朋酒店</h3>
+            <p>已预订。2024 年开业，位于丹霞东路 66 号，停车、早餐和第二天出城都方便。</p>
+            <a href="https://hotels.ctrip.com/hotels/123349794.html" target="_blank" rel="noreferrer">查看酒店 ↗</a>
           </article>
           <article class="booking-card hotel">
             <div class="eyebrow">9/7 · 西宁</div>
@@ -432,29 +535,26 @@
       </div>
     </section>
 
-    <section class="budget" id="budget">
+    <section id="shooting">
       <div class="wrap">
         <div class="section-head">
-          <div><div class="eyebrow" style="color:#8fb8ff">For two</div><h2>花费不低估，<br />也不虚高。</h2></div>
-          <p>默认按 YU7、舒适型连锁酒店、正常吃当地特色、主要景区都进计算。购物和临时升级房型不含在内。</p>
+          <div><div class="eyebrow">Angel project</div><h2>给 Jennie，<br />拍一支高原天使。</h2></div>
+          <p>一组在湖边或草原展开，一组进入祁连云杉林。想完整拍完两组，优先选 4 日轻松版；张掖版当天只保留其中一组。主视觉穿夏秋薄裙，保暖层留在镜头外。</p>
         </div>
-        <div class="budget-table" id="budgetRows"></div>
-        <div class="budget-total">
-          <div><div class="eyebrow" style="color:#8fb8ff">舒适落点</div><strong id="budgetTotal">¥14,500</strong></div>
-          <p id="budgetNote">主线建议准备 ¥15,500 的总额度，多出的约 ¥1,000 作为机票波动、临时停车和高原路线调整缓冲。</p>
+        <div class="shoot-grid">
+          <figure class="shoot-card wide">
+            <img src="assets/angel-horse.png" alt="Jennie 穿轻薄夏秋长裙与天使翅膀骑马经过高原湖畔的效果模拟" />
+            <figcaption><b>湖畔奔跑的天使</b><span>最适合轻松版 9 月 6 日祁连草原，侧逆光，无人机做平行跟拍。</span></figcaption>
+          </figure>
+          <figure class="shoot-card tall">
+            <img src="assets/angel-forest.png" alt="Jennie 穿轻薄长裙与天使翅膀站在暗调云杉林中的效果模拟" />
+            <figcaption><b>云杉林里的静默天使</b><span>用冷雾、深绿和林间光束制造雨林感，不使用明火或烟饼。</span></figcaption>
+          </figure>
         </div>
-      </div>
-    </section>
-
-    <section>
-      <div class="wrap">
-        <div class="section-head">
-          <div><div class="eyebrow">Our reactions</div><h2>还没出发，<br />表情先到了。</h2></div>
-          <p>从你们的合照提取人物特征，换成高原旅行服装，按当天体验制作了六组双人反应贴纸。时间线里的贴纸会随路线分支一起切换。</p>
-        </div>
-        <div class="sticker-showcase">
-          <figure class="sticker-sheet"><img src="assets/stickers-happy.png" alt="兴奋、惊讶和大风中的情侣旅行表情贴纸" /></figure>
-          <figure class="sticker-sheet"><img src="assets/stickers-rest.png" alt="困倦、吃面和击掌的情侣旅行表情贴纸" /></figure>
+        <div class="shot-notes">
+          <div class="shot-note"><b>骑马顺序</b><p>先静态肖像，再由牵马员带领慢走，确认马匹适应翅膀后才小跑。高速奔驰镜头不背大翅膀，安全比画面更重要。</p></div>
+          <div class="shot-note"><b>翅膀与服装</b><p>使用轻量、可快速脱离的背带。Jennie 主镜头穿薄长裙或衬衫裙，车里备薄冲锋衣和轻羽绒，拍摄间隙马上加衣。</p></div>
+          <div class="shot-note"><b>无人机机位</b><p>以侧后方平行移动和高位拉远为主，不低空追马、不从马头正面逼近。飞前核对 UOM 空域、景区和马场许可。</p></div>
         </div>
       </div>
     </section>
@@ -487,8 +587,8 @@
 
   <footer>
     <div class="wrap footer-inner">
-      <strong>下一站，西宁。</strong>
-      <div class="tiny">行程版本 2026.08.08 · 航班、房价、景区开放与道路状态以出发前实时页面为准</div>
+      <strong>准备出发。</strong>
+      <div class="tiny">行程版本 2026.08.09 · 航班、酒店库存、景区开放与道路状态以出发前实时页面为准</div>
     </div>
   </footer>
 
@@ -497,9 +597,61 @@
       airport: 'https://hotels.ctrip.com/hotels/131780998.html',
       chaka: 'https://hotels.ctrip.com/hotels/109716089.html',
       qilian: 'https://hotels.corporatetravel.ctrip.com/hotels/76641270.html',
-      zhangye: 'https://hotels.ctrip.com/hotels/46021255.html',
+      zhangye: 'https://hotels.ctrip.com/hotels/123349794.html',
       xining: 'https://hotels.ctrip.com/hotels/123673439.html',
       gangcha: 'https://hotels.ctrip.com/hotels/1199191.html'
+    };
+
+    const media = {
+      arrival: {
+        scene:'assets/scene-0903-airport.webp', sceneAlt:'蓝调时刻的西宁曹家堡机场与远山',
+        sceneAux:[{src:'assets/scene-0903-airport-aux1.webp',alt:'蓝调时刻从机场进场路望向航站楼'},{src:'assets/scene-0903-airport-aux2.webp',alt:'从航站楼内望向夜色中的机坪'}], galleryLayout:'layout-a', stickerMotion:'sticker-arrival',
+        sceneTitle:'落地西宁', sceneDesc:'冷蓝的高原夜色，和航站楼透出的暖光。',
+        food:'assets/food-yogurt.webp', foodAlt:'带金黄奶皮的青海老酸奶', foodTitle:'青海老酸奶', foodDesc:'凝固型酸奶带一层奶皮，作为落地后的温和小食。',
+        knowledge:[['河湟谷地','西宁位于湟水谷地，历史上的青海道在此衔接河西走廊与高原腹地。']]
+      },
+      lake: {
+        scene:'assets/scene-0904-qinghai-lake.webp', sceneAlt:'小米 YU7 行驶在青海湖畔公路',
+        sceneAux:[{src:'assets/scene-0904-qinghai-lake-aux1.webp',alt:'从低机位草岸望向青海湖与雪山'},{src:'assets/scene-0904-qinghai-lake-aux2.webp',alt:'从高处俯瞰青海湖畔弯曲的公路'}], galleryLayout:'layout-b', stickerMotion:'sticker-lake',
+        sceneTitle:'青海湖蓝', sceneDesc:'湖面、草原和公路在九月初的强光里拉开层次。',
+        food:'assets/food-kangguo-lamb.webp', foodAlt:'青海烕锅羊肉', foodTitle:'烕锅羊肉', foodDesc:'羊排、土豆、洋葱与辣椒同锅焖炒，适合开车一天后分食。',
+        knowledge:[['青海湖','它是构造断陷湖，早期曾与黄河水系相通，后来封闭并逐渐咸化。'],['黑马河','位于湖西岸，开阔湖面能直观感受青海湖湖盆的尺度。']]
+      },
+      chaka: {
+        scene:'assets/scene-0905-chaka.webp', sceneAlt:'晨光中的茶卡盐湖镜面与红色小火车',
+        sceneAux:[{src:'assets/scene-0905-chaka-aux1.webp',alt:'低机位拍摄茶卡盐湖的盐晶与镜面'},{src:'assets/scene-0905-chaka-aux2.webp',alt:'茶卡盐湖红色小火车与雪山远景'}], galleryLayout:'layout-c', stickerMotion:'sticker-chaka',
+        sceneTitle:'盐湖镜面', sceneDesc:'日出前后风小、人少，水面更容易出现完整倒影。',
+        food:'assets/food-yak-soup.webp', foodAlt:'清汤牶牛肉汤', foodTitle:'牶牛肉汤', foodDesc:'清汤、厚切牶牛肉和香菜，适合冷早晨吃得简单。',
+        knowledge:[['茶卡盐湖','它是柴达木盆地四大盐湖之一，湖盐开采史已超过 3000 年。'],['环湖西路','湖滨湿地、草原与沙地在青海湖西岸的短距离内交替。']]
+      },
+      qilian: {
+        scene:'assets/scene-0906-qilian.webp', sceneAlt:'卓尔山红岩、云杉林与祁连雪山',
+        sceneAux:[{src:'assets/scene-0906-qilian-aux1.webp',alt:'从空中俯瞰祁连草原、红岩与河谷'},{src:'assets/scene-0906-qilian-aux2.webp',alt:'从云杉林间望向卓尔山红岩与雪峰'}], galleryLayout:'layout-a', stickerMotion:'sticker-qilian',
+        sceneTitle:'祁连的垂直风景', sceneDesc:'红岩、草地、云杉林和雪峰被压缩在同一幅画里。',
+        food:'assets/food-qingke.webp', foodAlt:'青稞饼与奶茶', foodTitle:'青稞饼与奶茶', foodDesc:'青稞饼麦香明显，配温热奶茶，作为草原拍摄间隙加餐。',
+        knowledge:[['祁连山','冰雪融水孕育石羊河、黑河、疏勒河等水系，支撑了河西走廊绿洲。'],['卓尔山','红色岩层与草原、云杉林并置，能看到祁连山明显的垂直景观差异。']]
+      },
+      zhangye: {
+        scene:'assets/scene-0906-zhangye.webp', sceneAlt:'金色日落下的张掖七彩丹霞',
+        sceneAux:[{src:'assets/scene-0906-zhangye-aux1.webp',alt:'低角度日光下七彩丹霞的岩层纹理'},{src:'assets/scene-0906-zhangye-aux2.webp',alt:'从空中俯瞰张掖七彩丹霞的起伏丘陵'}], galleryLayout:'layout-b', stickerMotion:'sticker-zhangye',
+        sceneTitle:'丹霞色谱', sceneDesc:'日落前的低角度光线，会让彩色丘陵的层理更立体。',
+        food:'assets/food-cuoyu.webp', foodAlt:'张掖搓鱼面', foodTitle:'张掖搓鱼面', foodDesc:'两头尖、中间粗的手搓短面，用番茄、青椒和牛肉汁拌食。',
+        knowledge:[['峨堡通道','青海道北线曾经门源穿越祁连山，在张掖并入丝绸之路主道。'],['七彩丹霞','彩色丘陵主体由约 1.35 亿至 9600 万年前的早白垩世湖相岩层构成。']]
+      },
+      returnRoad: {
+        scene:'assets/scene-0907-menyuan.webp', sceneAlt:'九月的门源河谷、达坂山和弯曲公路',
+        sceneAux:[{src:'assets/scene-0907-menyuan-aux1.webp',alt:'从低机位看门源河谷通往雪山的公路'},{src:'assets/scene-0907-menyuan-aux2.webp',alt:'从达坂山高处俯瞰门源河谷与远山'}], galleryLayout:'layout-c', stickerMotion:'sticker-return',
+        sceneTitle:'越过门源回西宁', sceneDesc:'九月油菜花已过，金绿田野和远处雪山更接近真实秋色。',
+        food:'assets/food-hand-lamb.webp', foodAlt:'青海手抓羊肉', foodTitle:'手抓羊肉', foodDesc:'清煮带骨羊肉配大蒜、盐和干辣椒，重点是肉本身的香气。',
+        knowledge:[['门源','历史上的青海道北线经门源穿越祁连山，连接张掖和河西走廊。'],['达坂山','翻越山口时，能直观看到高原河谷与祁连山地之间的巨大高差。']]
+      },
+      farewell: {
+        scene:'assets/scene-0908-taer.webp', sceneAlt:'晨光中的塔尔寺外观与远山',
+        sceneAux:[{src:'assets/scene-0908-taer-aux1.webp',alt:'塔尔寺金顶、彩色屋檐与经幡细节'},{src:'assets/scene-0908-taer-aux2.webp',alt:'清晨光线下安静的塔尔寺院落小巷'}], galleryLayout:'layout-a', stickerMotion:'sticker-farewell',
+        sceneTitle:'最后的河湟早晨', sceneDesc:'把最后半天留给寺院建筑，或者西宁街巷里的慢节奏。',
+        food:'assets/food-yangchang-noodles.webp', foodAlt:'西宁羊肠面', foodTitle:'西宁羊肠面', foodDesc:'细面、清羊汤和羊肠切片，辣油另放，适合返程前吃一碗。',
+        knowledge:[['塔尔寺','始建于明代，是藏传佛教格鲁派六大寺院之一，也是宗喀巴诞生地。']]
+      }
     };
 
     const commonArrival = {
@@ -507,50 +659,32 @@
       title: '下班以后，去高原过夜',
       intro: '选 17:25 左右或 18:00 后的成都天府直飞。落地后坐酒店接驳，不在黑夜里第一次适应高原道路。',
       stops: ['成都天府机场', '西宁曹家堡机场', '机场酒店'],
-      stay: `住：<a href="${hotelLinks.airport}" target="_blank" rel="noreferrer">星程西宁曹家堡机场酒店</a>，预计 ¥320 - ¥480`,
-      scene: 'assets/hero-zine.png', sceneAlt: '青甘旅行场景拼贴', sticker: ['assets/stickers-happy.png', 's0'], note: '第一晚的任务只有一个：好好睡觉。'
+      stay: `住：<a href="${hotelLinks.airport}" target="_blank" rel="noreferrer">星程西宁曹家堡机场酒店</a>，有机场接送，方便次日取车`,
+      ...media.arrival, sticker: 'assets/sticker-happy-1.webp', note: '第一晚的任务只有一个：好好睡觉。'
     };
 
     const routes = {
       full: {
         days: [
           commonArrival,
-          { date:'9/4', week:'周五', tags:['约 320 km', '驾驶约 4.5h'], title:'YU7 的第一段，是青海湖蓝', intro:'08:00 机场取车。午前抵达青海湖东岸，二郎剑不必久留，把傍晚留给茶卡镇与盐湖边的风。', stops:['曹家堡机场取车','青海湖二郎剑','黑马河观景','茶卡镇'], stay:`住：<a href="${hotelLinks.chaka}" target="_blank" rel="noreferrer">星程酒店茶卡镇店</a>，预计 ¥350 - ¥550`, scene:'assets/yu7-road.png', sceneAlt:'小米 YU7 行驶在青海湖畔公路', sticker:['assets/stickers-happy.png','s1'], note:'补能点：取车后先充满，茶卡入住后再补到 90% 以上。' },
-          { date:'9/5', week:'周六', tags:['约 440 km', '驾驶约 6.5h'], title:'盐湖镜面，转场雪山草原', intro:'早开门进茶卡盐湖，10:30 前离开。经环湖西路、刚察去祁连，今天是全程最长的一段，沿途只做短停。', stops:['茶卡盐湖','环湖西路','刚察短停','大冬树山垭口','祁连县'], stay:`住：<a href="${hotelLinks.qilian}" target="_blank" rel="noreferrer">宜必思尚品祁连卓尔山店</a>，预计 ¥380 - ¥600`, scene:'assets/hero-zine.png', sceneAlt:'盐湖与祁连山旅行拼贴', sticker:['assets/stickers-happy.png','s2'], note:'海拔变化大的一天。不要安排夜路，也不要为了多打卡绕远。' },
-          { date:'9/6', week:'周日', tags:['约 270 km', '驾驶约 4h'], title:'从卓尔山红岩，开进丹霞色谱', intro:'清晨看卓尔山，午前经峨堡与扁都口南下。下午进入七彩丹霞，日落前两小时是最适合拍照的时间。', stops:['卓尔山','峨堡古城','扁都口','张掖七彩丹霞'], stay:`住：<a href="${hotelLinks.zhangye}" target="_blank" rel="noreferrer">全季酒店张掖西站店</a>，预计 ¥350 - ¥520`, scene:'assets/hero-zine.png', sceneAlt:'张掖丹霞与祁连山拼贴', sticker:['assets/stickers-rest.png','s1'], note:'晚饭回张掖市区吃，别在景区周边把时间耗在排队。' },
-          { date:'9/7', week:'周一', tags:['约 350 km', '驾驶约 5.5h'], title:'翻回青海，把车停在西宁夜色里', intro:'睡到自然醒再出发。经扁都口、门源回西宁，9 月油菜花已过季，门源作为补能与舒展停留，不为花海专门绕行。', stops:['张掖','扁都口','门源','达坂山观景','西宁还车'], stay:`住：<a href="${hotelLinks.xining}" target="_blank" rel="noreferrer">全季酒店西宁火车站广场西店</a>，预计 ¥360 - ¥520`, scene:'assets/yu7-road.png', sceneAlt:'高原公路上的小米 YU7', sticker:['assets/stickers-rest.png','s0'], note:'如果还车价按 5 天算更划算，就保留到 9/8；否则今晚还车省一天。' },
-          { date:'9/8', week:'周二', tags:['城市半日', '18:00 后返程'], title:'给最后一天留一点空白', intro:'状态好就去塔尔寺，想松一点就在市区吃碗羊肠面、逛市场。根据航班提前 2.5 至 3 小时到机场。', stops:['塔尔寺或西宁市区','曹家堡机场','成都'], stay:'返程：筛选 18:00 后西宁直飞成都，两人单程目标 ¥1,400 - ¥2,200', scene:'assets/hero-zine.png', sceneAlt:'青甘旅行回忆拼贴', sticker:['assets/stickers-rest.png','s2'], note:'不把最后一天塞满，是这趟路线能够稳定回家的关键。' }
+          { date:'9/4', week:'周五', tags:['约 320 km', '驾驶约 4.5h'], title:'YU7 的第一段，是青海湖蓝', intro:'08:00 机场取车。午前抵达青海湖东岸，二郎剑不必久留，把傍晚留给茶卡镇与盐湖边的风。', stops:['曹家堡机场取车','青海湖二郎剑','黑马河观景','茶卡镇'], stay:`住：<a href="${hotelLinks.chaka}" target="_blank" rel="noreferrer">星程酒店茶卡镇店</a>，停车与供氧设施适合自驾`, ...media.lake, sticker:'assets/sticker-happy-2.webp', note:'补能点：取车后先充满，茶卡入住后再补到 90% 以上。' },
+          { date:'9/5', week:'周六', tags:['约 440 km', '驾驶约 6.5h'], title:'盐湖镜面，转场雪山草原', intro:'早开门进茶卡盐湖，10:30 前离开。经环湖西路、刚察去祁连，今天是全程最长的一段，沿途只做短停。', stops:['茶卡盐湖','环湖西路','刚察短停','大冬树山垭口','祁连县'], stay:`住：<a href="${hotelLinks.qilian}" target="_blank" rel="noreferrer">宜必思尚品祁连卓尔山店</a>，靠近卓尔山且方便停车`, ...media.chaka, sticker:'assets/sticker-happy-3.webp', note:'海拔变化大的一天。不要安排夜路，也不要为了多打卡绕远。' },
+          { date:'9/6', week:'周日', tags:['约 270 km', '驾驶约 4h'], title:'从卓尔山红岩，开进丹霞色谱', intro:'清晨看卓尔山，午前经峨堡与扁都口南下。下午进入七彩丹霞，日落前两小时是最适合拍照的时间。', stops:['卓尔山','峨堡古城','扁都口','张掖七彩丹霞'], stay:`住：<a href="${hotelLinks.zhangye}" target="_blank" rel="noreferrer">张掖高铁西站希尔顿欢朋酒店</a>，已预订，停车和次日出城都方便`, ...media.zhangye, sticker:'assets/sticker-rest-2.webp', note:'晚饭回张掖市区吃，别在景区周边把时间耗在排队。' },
+          { date:'9/7', week:'周一', tags:['约 350 km', '驾驶约 5.5h'], title:'翻回青海，把车停在西宁夜色里', intro:'睡到自然醒再出发。经扁都口、门源回西宁，9 月油菜花已过季，门源作为补能与舒展停留，不为花海专门绕行。', stops:['张掖','扁都口','门源','达坂山观景','西宁还车'], stay:`住：<a href="${hotelLinks.xining}" target="_blank" rel="noreferrer">全季酒店西宁火车站广场西店</a>，还车后休息更轻松`, ...media.returnRoad, sticker:'assets/sticker-rest-1.webp', note:'今晚还车更从容，第二天直接打车去机场。' },
+          { date:'9/8', week:'周二', tags:['城市半日', '18:00 后返程'], title:'给最后一天留一点空白', intro:'状态好就去塔尔寺，想松一点就在市区吃碗羊肠面、逛市场。根据航班提前 2.5 至 3 小时到机场。', stops:['塔尔寺或西宁市区','曹家堡机场','成都'], stay:'返程：筛选 18:00 后西宁直飞成都，给还车与值机留足时间', ...media.farewell, sticker:'assets/sticker-rest-3.webp', note:'不把最后一天塞满，是这趟路线能够稳定回家的关键。' }
         ],
-        meta: {title:'张掖版小环线', desc:'湖泊、盐湖、雪山草原、丹霞一次集齐。5 个驾驶日里只有茶卡至祁连偏长，其余留得出拍照和吃饭时间。', days:'5 日', km:'约 1,420 km', budget:'约 ¥14,500', drive:'约 22h', longest:'约 6.5h', stops:'15+'},
-        budget: [
-          ['成都往返西宁机票','4 张经济舱','¥2,800 - ¥4,400'],
-          ['小米 YU7 租车与基础保险','9/4 早至 9/8 下午','¥3,600 - ¥4,500'],
-          ['住宿','5 晚，连锁舒适型','¥2,000 - ¥2,800'],
-          ['正餐与路餐','两人 6 天','¥1,500 - ¥2,200'],
-          ['门票与景区交通','青海湖、茶卡、卓尔山、丹霞等','¥1,200 - ¥1,800'],
-          ['电费、过路、停车','约 1,420 km','¥800 - ¥1,300']
-        ],
-        total:'¥14,500', note:'主线建议准备 ¥15,500 的总额度，多出的约 ¥1,000 作为机票波动、临时停车和高原路线调整缓冲。'
+        meta: {title:'张掖版小环线', desc:'湖泊、盐湖、雪山草原、丹霞一次集齐。5 个驾驶日里只有茶卡至祁连偏长，其余留得出拍照和吃饭时间。', days:'5 日', km:'约 1,420 km', drive:'约 22h', longest:'约 6.5h', stops:'15+'}
       },
       lite: {
         days: [
           commonArrival,
-          { date:'9/4', week:'周五', tags:['约 320 km', '驾驶约 4.5h'], title:'沿青海湖去茶卡，不追赶日落', intro:'机场取车后走青海湖东岸。二郎剑停留约两小时，傍晚抵达茶卡，想休息就把盐湖放到第二天早上。', stops:['曹家堡机场取车','青海湖二郎剑','黑马河','茶卡镇'], stay:`住：<a href="${hotelLinks.chaka}" target="_blank" rel="noreferrer">星程酒店茶卡镇店</a>，预计 ¥350 - ¥550`, scene:'assets/yu7-road.png', sceneAlt:'小米 YU7 行驶在青海湖畔公路', sticker:['assets/stickers-happy.png','s1'], note:'第一天只做湖边停留，不赶着进盐湖。' },
-          { date:'9/5', week:'周六', tags:['约 300 km', '驾驶约 4.5h'], title:'早上的盐湖，晚上的刚察', intro:'早场进茶卡，午后沿环湖西路北上。把原本赶去祁连的长途拆开，住在刚察，傍晚还能去沙柳河散步。', stops:['茶卡盐湖','环湖西路','鸟岛路段','刚察县'], stay:`住：<a href="${hotelLinks.gangcha}" target="_blank" rel="noreferrer">刚察海滨假日宾馆</a>，预计 ¥260 - ¥420`, scene:'assets/hero-zine.png', sceneAlt:'茶卡盐湖和青海湖旅行拼贴', sticker:['assets/stickers-happy.png','s2'], note:'轻松线的价值就在这里：每天少开两小时，照片和晚饭都从容。' },
-          { date:'9/6', week:'周日', tags:['约 210 km', '驾驶约 3.5h'], title:'慢慢翻山，下午只留给祁连', intro:'从刚察经大冬树山垭口进祁连。下午游卓尔山，日落后直接回县城，不再向甘肃转场。', stops:['刚察','大冬树山垭口','祁连草原','卓尔山'], stay:`住：<a href="${hotelLinks.qilian}" target="_blank" rel="noreferrer">宜必思尚品祁连卓尔山店</a>，预计 ¥380 - ¥600`, scene:'assets/hero-zine.png', sceneAlt:'祁连山与草原旅行拼贴', sticker:['assets/stickers-rest.png','s1'], note:'今天里程最短，适合把精力留给卓尔山步道。' },
-          { date:'9/7', week:'周一', tags:['约 300 km', '驾驶约 5h'], title:'经门源回西宁，晚上结束自驾', intro:'上午离开祁连，经峨堡、门源、达坂山回西宁。到市区后还车，晚上吃顿安心的手抓羊肉。', stops:['祁连','峨堡','门源','达坂山','西宁还车'], stay:`住：<a href="${hotelLinks.xining}" target="_blank" rel="noreferrer">全季酒店西宁火车站广场西店</a>，预计 ¥360 - ¥520`, scene:'assets/yu7-road.png', sceneAlt:'高原公路上的小米 YU7', sticker:['assets/stickers-rest.png','s0'], note:'今晚还车，租车按 4 天计算的机会更大。' },
-          { date:'9/8', week:'周二', tags:['自由半日', '18:00 后返程'], title:'不再开车，睡醒再决定去哪', intro:'早上看身体状态决定塔尔寺或市区闲逛，下午打车去机场。轻松版的最后一天完全没有驾驶任务。', stops:['西宁市区或塔尔寺','曹家堡机场','成都'], stay:'返程：筛选 18:00 后西宁直飞成都，两人单程目标 ¥1,400 - ¥2,200', scene:'assets/hero-zine.png', sceneAlt:'旅行回忆拼贴', sticker:['assets/stickers-rest.png','s2'], note:'如果只想玩 4 天，9/7 晚也可以直接飞回成都。' }
+          { date:'9/4', week:'周五', tags:['约 320 km', '驾驶约 4.5h'], title:'沿青海湖去茶卡，不追赶日落', intro:'机场取车后走青海湖东岸。二郎剑停留约两小时，傍晚抵达茶卡，想休息就把盐湖放到第二天早上。', stops:['曹家堡机场取车','青海湖二郎剑','黑马河','茶卡镇'], stay:`住：<a href="${hotelLinks.chaka}" target="_blank" rel="noreferrer">星程酒店茶卡镇店</a>，停车与供氧设施适合自驾`, ...media.lake, sticker:'assets/sticker-happy-2.webp', note:'第一天只做湖边停留，不赶着进盐湖。' },
+          { date:'9/5', week:'周六', tags:['约 300 km', '驾驶约 4.5h'], title:'早上的盐湖，晚上的刚察', intro:'早场进茶卡，午后沿环湖西路北上。把原本赶去祁连的长途拆开，住在刚察，傍晚还能去沙柳河散步。', stops:['茶卡盐湖','环湖西路','鸟岛路段','刚察县'], stay:`住：<a href="${hotelLinks.gangcha}" target="_blank" rel="noreferrer">刚察海滨假日宾馆</a>，县城停留方便`, ...media.chaka, sticker:'assets/sticker-happy-3.webp', note:'轻松线的价值就在这里：每天少开两小时，照片和晚饭都从容。' },
+          { date:'9/6', week:'周日', tags:['约 210 km', '驾驶约 3.5h'], title:'慢慢翻山，下午只留给祁连', intro:'从刚察经大冬树山垭口进祁连。下午游卓尔山，日落后直接回县城，不再向甘肃转场。', stops:['刚察','大冬树山垭口','祁连草原','卓尔山'], stay:`住：<a href="${hotelLinks.qilian}" target="_blank" rel="noreferrer">宜必思尚品祁连卓尔山店</a>，靠近卓尔山且方便停车`, ...media.qilian, sticker:'assets/sticker-rest-2.webp', note:'今天里程最短，适合把精力留给卓尔山步道。' },
+          { date:'9/7', week:'周一', tags:['约 300 km', '驾驶约 5h'], title:'经门源回西宁，晚上结束自驾', intro:'上午离开祁连，经峨堡、门源、达坂山回西宁。到市区后还车，晚上吃顿安心的手抓羊肉。', stops:['祁连','峨堡','门源','达坂山','西宁还车'], stay:`住：<a href="${hotelLinks.xining}" target="_blank" rel="noreferrer">全季酒店西宁火车站广场西店</a>，还车后休息更轻松`, ...media.returnRoad, sticker:'assets/sticker-rest-1.webp', note:'今晚还车，第二天不再安排驾驶。' },
+          { date:'9/8', week:'周二', tags:['自由半日', '18:00 后返程'], title:'不再开车，睡醒再决定去哪', intro:'早上看身体状态决定塔尔寺或市区闲逛，下午打车去机场。轻松版的最后一天完全没有驾驶任务。', stops:['西宁市区或塔尔寺','曹家堡机场','成都'], stay:'返程：筛选 18:00 后西宁直飞成都，轻松留出值机时间', ...media.farewell, sticker:'assets/sticker-rest-3.webp', note:'如果只想玩 4 天，9/7 晚也可以直接飞回成都。' }
         ],
-        meta: {title:'青海祁连轻松线', desc:'删掉张掖，把茶卡至祁连的长路拆开。每天驾驶更均匀，9 月 7 日晚还车后，最后一天不再碰方向盘。', days:'4 日', km:'约 1,130 km', budget:'约 ¥12,500', drive:'约 17.5h', longest:'约 5h', stops:'12+'},
-        budget: [
-          ['成都往返西宁机票','4 张经济舱','¥2,800 - ¥4,400'],
-          ['小米 YU7 租车与基础保险','9/4 早至 9/7 晚','¥3,000 - ¥3,800'],
-          ['住宿','5 晚，含一晚刚察','¥1,800 - ¥2,600'],
-          ['正餐与路餐','两人 5 至 6 天','¥1,300 - ¥1,900'],
-          ['门票与景区交通','青海湖、茶卡、卓尔山等','¥800 - ¥1,200'],
-          ['电费、过路、停车','约 1,130 km','¥650 - ¥1,000']
-        ],
-        total:'¥12,500', note:'轻松线舒服落点约 ¥12,500。若 9/7 晚直接返成都，可再省一晚酒店与次日市内花费，但晚班机价格可能抵消部分节省。'
+        meta: {title:'青海祁连轻松线', desc:'删掉张掖，把茶卡至祁连的长路拆开。每天驾驶更均匀，9 月 7 日晚还车后，最后一天不再碰方向盘。', days:'4 日', km:'约 1,130 km', drive:'约 17.5h', longest:'约 5h', stops:'12+'}
       }
     };
 
@@ -570,7 +704,7 @@
         if (reduceMotion) el.classList.add('visible');
         else revealObserver.observe(el);
       });
-      scope.querySelectorAll('.section-head, .route-board, .booking-card, .sticker-sheet, .checklist-box, .budget-row, .budget-total').forEach(el => {
+      scope.querySelectorAll('.section-head, .route-board, .booking-card, .shoot-card, .shot-note, .checklist-box').forEach(el => {
         if (el.dataset.revealBound) return;
         el.dataset.revealBound = 'true';
         el.classList.add('reveal');
@@ -578,6 +712,8 @@
         else revealObserver.observe(el);
       });
     }
+
+    const stickerFeltChibi = path => path.replace(/(?:-3d)?\.webp$/, '-feltchibi.webp');
 
     function renderTimeline(key) {
       const data = routes[key];
@@ -589,13 +725,32 @@
             <h3>${day.title}</h3>
             <p class="muted">${day.intro}</p>
             <div class="stops">${day.stops.map(stop => `<span>${stop}</span>`).join('')}</div>
+            <div class="knowledge-list">${day.knowledge.map(item => `<div class="knowledge-item"><b>${item[0]}</b><span>${item[1]}</span></div>`).join('')}</div>
             <div class="stay">${day.stay}</div>
-            ${index === 0 || index > 0 ? `
-              <div class="scene">
-                <img src="${day.scene}" alt="${day.sceneAlt}" />
-                <div class="scene-note">${day.note}</div>
-                <div class="sticker-crop ${day.sticker[1]}"><img src="${day.sticker[0]}" alt="当天的双人旅行表情贴纸" /></div>
-              </div>` : ''}
+            <div class="day-gallery">
+              <div class="scene-stack ${day.galleryLayout}">
+                <figure class="scene-frame">
+                  <img class="scene-main-image" src="${day.scene}" alt="${day.sceneAlt}" loading="lazy" />
+                  <span class="sticker-stage ${day.stickerMotion}">
+                    <img class="sticker-crop" src="${stickerFeltChibi(day.sticker)}" alt="当天的两头身毛毡质感双人旅行贴纸" loading="lazy" />
+                  </span>
+                </figure>
+                ${day.sceneAux.map((shot, auxIndex) => `
+                  <figure class="scene-aux aux-${auxIndex + 1}" style="--aux-delay:${280 + auxIndex * 130}ms">
+                    <img src="${shot.src}" alt="${shot.alt}" loading="lazy" />
+                  </figure>`).join('')}
+              </div>
+              <div class="visual-copy">
+                <small>Today's scene</small>
+                <h4>${day.sceneTitle}</h4>
+                <p>${day.sceneDesc}</p>
+              </div>
+              <figure class="food-figure">
+                <img src="${day.food}" alt="${day.foodAlt}" loading="lazy" />
+                <figcaption><b>${day.foodTitle}</b><span>${day.foodDesc}</span></figcaption>
+              </figure>
+            </div>
+            <div class="scene-note">${day.note}</div>
           </div>
         </article>`).join('');
 
@@ -603,13 +758,9 @@
       document.querySelector('#routeDesc').textContent = data.meta.desc;
       document.querySelector('#quickDays').textContent = data.meta.days;
       document.querySelector('#quickKm').textContent = data.meta.km;
-      document.querySelector('#quickBudget').textContent = data.meta.budget;
       document.querySelector('#metricDrive').textContent = data.meta.drive;
       document.querySelector('#metricLongest').textContent = data.meta.longest;
       document.querySelector('#metricStops').textContent = data.meta.stops;
-      document.querySelector('#budgetRows').innerHTML = data.budget.map(row => `<div class="budget-row"><b>${row[0]}</b><span>${row[1]}</span><b>${row[2]}</b></div>`).join('');
-      document.querySelector('#budgetTotal').textContent = data.total;
-      document.querySelector('#budgetNote').textContent = data.note;
 
       const zDot = document.querySelector('#zhangyeDot');
       const zText = document.querySelector('#zhangyeText');
