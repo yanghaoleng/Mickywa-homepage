@@ -2685,25 +2685,7 @@ export default function Schedule({ theme }) {
             </div>
           </div>
         )}
-        <footer className="mt-8 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 pb-8 text-center text-[12px] text-[#3A3A3A]/45 dark:text-[#FFFFFF]/45">
-          <a
-            href="https://beian.mps.gov.cn/#/query/webSearch?code=51019002010103"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 transition-opacity hover:opacity-75"
-          >
-            <img
-              src="/assets/police-filing-badge.svg"
-              alt=""
-              width="20"
-              height="20"
-              className="h-5 w-5 shrink-0"
-              loading="lazy"
-              decoding="async"
-            />
-            <span>川公网安备 51019002010103号</span>
-          </a>
-          <span aria-hidden="true">·</span>
+        <footer className="mt-8 pb-8 text-center text-[12px] text-[#3A3A3A]/45 dark:text-[#FFFFFF]/45">
           <a
             href="https://beian.miit.gov.cn/"
             target="_blank"
