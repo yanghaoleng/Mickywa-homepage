@@ -39,6 +39,7 @@
 | 智能推荐预约按钮 | `SmartRecButton` | 组件 | [src/components/Schedule.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/Schedule.jsx#L179) | 顶部智能推荐列表中的按钮 |
 | 日历中的预约按钮 / 可预约日期格 | 日历中的 `slot.status === 'free'` 元素 | 元素 | 月历中可点击的日期格子 |
 | 普通操作按钮 / 链接按钮 | `SimpleActionButton` | 组件 | [src/components/Schedule.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/Schedule.jsx#L268) | 板块中的通用按钮 |
+| 一起 Vibe 工具链接 | `SimpleActionButton` 列表 | 元素 | `Schedule.jsx` 一起 Vibe 板块 | 叫叫收藏夹、蛐蛐模拟器、NCM→MP3转换器、Rive预览台、通用压缩机 |
 | 展开/收起日历按钮 | `handleToggleCalendar` | 函数 | [src/components/Schedule.jsx](file:///Users/jojo/Documents/编程/Mikey-index/src/components/Schedule.jsx#L637) | 控制日历展开收起的按钮 |
 | 刷新按钮 | 刷新相关的按钮元素 | 元素 | 重新加载日历数据的按钮 |
 | 泛泛而谈随机按钮 | `ShuffleIcon` / `randomKnowHow` | 组件/函数 | 右侧乱序播放图标随机一篇；不提供上一条或下一条 |

@@ -79,3 +79,12 @@
 - 已完成：前端 `src/utils/ical.js`、`api/schedule.js`、veFaaS worker 统一复用 `vefaas-worker/ical-core.js` 的排班核心；共享核心补回 JSON 快照兼容解析。
 - 保留说明：`api/calendar.js` 仍保留自己的事件接口解析逻辑，因为它输出 UID、ISO、本地时间、时区等更丰富的 JSON 元数据，不属于排班生成主链路。
 - 后续建议：`Schedule.jsx` 仍可继续拆 `KnowHowSection`、`HalfModal`、智能推荐按钮状态机，进一步降低单文件体量。
+
+## 2026-08-13 一起 Vibe 链接同步
+
+- [x] 从首页“一起 Vibe”板块移除“我带你玩”短信入口。
+- [x] “MP3下载器”改名为“NCM→MP3转换器”，链接仍指向 `https://ncm.mikeywa.icu`。
+- [x] 新增“Rive预览台”入口，链接 `https://mikeywa.site/rive-viewer/`。
+- [x] 新增“通用压缩机”入口，链接 `https://compreesor.mikeywa.icu/`。
+- [x] `npm run build` 已通过。
+- [ ] 提交并同步推送国内 `.site` 与国际 `.icu` 站点。

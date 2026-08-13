@@ -2606,21 +2606,17 @@ export default function Schedule({ theme }) {
                       onClick={() => { window.open("https://ququ.mikeywa.icu", "_blank"); }}
                       textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
                     />
-                    <SimpleActionButton actionText="打开" title="MP3下载器"
+                    <SimpleActionButton actionText="打开" title="NCM→MP3转换器"
                       onClick={() => { window.open("https://ncm.mikeywa.icu", "_blank"); }}
                       textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
                     />
-                    <SimpleActionButton actionText="一周掌握/2300¥" title="我带你玩" 
-                      onClick={() => { 
-                        const messages = [
-                          "你好老杨，我想让你带我玩儿Vibe Coding，价钱还可以便宜点吗？包学会吗？",
-                          "你好，老羊，我没有看错吧？你亲自带我玩Vibe Coding，整整一周，手把手指导，传授你所有最新的宝贵技能和心得，让我在AI时代完成从User到Builder的转变，竟然只需要一件大衣的钱。快把收款码发过来！！"
-                        ];
-                        const message = messages[Math.floor(Math.random() * messages.length)];
-                        const encodedText = encodeURIComponent(message);
-                        window.location.href = `sms:yanghaoleng@icloud.com?body=${encodedText}`;
-                      }} 
-                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]" 
+                    <SimpleActionButton actionText="打开" title="Rive预览台"
+                      onClick={() => { window.open("https://mikeywa.site/rive-viewer/", "_blank"); }}
+                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
+                    />
+                    <SimpleActionButton actionText="打开" title="通用压缩机"
+                      onClick={() => { window.open("https://compreesor.mikeywa.icu/", "_blank"); }}
+                      textClass="text-[#8E6A08] dark:text-[#FFF4D3]"
                     />
                   </div>
                 </div>
