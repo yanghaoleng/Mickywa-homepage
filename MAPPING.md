@@ -27,6 +27,7 @@
 | 顶部云朵 / mark / 小羊石图标 | 顶部内联 SVG / `useTopBrandFeedback` / `markBgColor` / `handleMarkClick` | 元素/hook/状态/函数 | 页面最顶部静态 SVG，5 秒定时变色，点击播放一轮变色 |
 | 首页标题 / 羊石坨坨字样 | `/assets/title.svg` / `.title-svg` / `useTopBrandFeedback` / `contentKey` / `handleTitleClick` | 元素/CSS 类/hook/状态/函数 | 静态标题图，点击重播主内容区入场动效，暗色模式通过滤镜换色 |
 | 信息流 / 内容流 | 主要滚动容器 | 容器 | 包含所有内容的滚动区域 |
+| 页脚备案 / 备案信息 | 国内站 footer 备案链接 | 元素 | `.icu` 不展示备案；`.site` 展示 ICP 备案和公安备案 |
 | 底部信息栏 / 预约条 | `showBookingBar` 相关 | 状态 | 选中日期后底部弹出的预约栏 |
 | 半弹窗 / 模态框 / 预约弹窗 | `showHalfModal` / `HalfModal` | 状态/组件 | 预约确认弹窗 |
 
