@@ -1,0 +1,127 @@
+{
+  "reviewed": "2026-11-08",
+  "scope": "Original notices from the native-source versions referenced by matching jSquash package gitHead build recipes. This identifies the selected source notices, not proof of a full reproducible npm build or an exhaustive binary inventory.",
+  "build_recipes": [
+    {
+      "url": "https://github.com/jamsinclair/jSquash/blob/b7fa9ac9ec02f224847ad23d19d115f9e296a368/packages/avif/codec/Makefile",
+      "git_blob_sha1": "c9aba389e1baae0d48db4925855c952a35f90a1c",
+      "package_gitHead": "b7fa9ac9ec02f224847ad23d19d115f9e296a368"
+    },
+    {
+      "url": "https://github.com/jamsinclair/jSquash/blob/1b1964194611ece3ec984ab91c04726d1088f05e/packages/jxl/codec/Makefile",
+      "git_blob_sha1": "c062aca087a9fd0c4be5b1189420d0c6200df6db",
+      "package_gitHead": "1b1964194611ece3ec984ab91c04726d1088f05e"
+    },
+    {
+      "url": "https://github.com/jamsinclair/jSquash/blob/1f62015f53e28bd18b2d7c8a3ca3326577efc445/packages/jpeg/codec/Makefile",
+      "git_blob_sha1": "b0449606ee3ead45495e66e5725e5a4657de07b8",
+      "package_gitHead": "1f62015f53e28bd18b2d7c8a3ca3326577efc445"
+    }
+  ],
+  "libjxl_submodules": {
+    "brotli": "35ef5c554d888bef217d449346067de05e269b30",
+    "highway": "e69083a12a05caf037cabecdf1b248b7579705a5",
+    "skcms": "64374756e03700d649f897dbd98c95e78c30c7da"
+  },
+  "files": [
+    {
+      "path": "licenses/native/libavif/LICENSE",
+      "source_url": "https://github.com/AOMediaCodec/libavif/blob/v1.0.1/LICENSE",
+      "source_ref": "v1.0.1",
+      "source_blob_sha1": "734b2b602676195e7bab089ff1c9fdd6c2027c0a",
+      "sha256": "10952217a6d404de8bf8a997fbea9b88f682df1fe98cb9b9f467ade641525639",
+      "bytes": 18799
+    },
+    {
+      "path": "licenses/native/libjxl/LICENSE",
+      "source_url": "https://github.com/libjxl/libjxl/blob/9f544641ec83f6abd9da598bdd08178ee8a003e0/LICENSE",
+      "source_ref": "9f544641ec83f6abd9da598bdd08178ee8a003e0",
+      "source_blob_sha1": "c66034b105f23d108a51b45c846d5b5c194cc229",
+      "sha256": "8405932022a556380c2d8c272eff154a923feb197233f348ce5f7334fb0a5ede",
+      "bytes": 1508
+    },
+    {
+      "path": "licenses/native/libjxl/PATENTS",
+      "source_url": "https://github.com/libjxl/libjxl/blob/9f544641ec83f6abd9da598bdd08178ee8a003e0/PATENTS",
+      "source_ref": "9f544641ec83f6abd9da598bdd08178ee8a003e0",
+      "source_blob_sha1": "c95b8f4105f210ceb06fe638d033d13b24e227a2",
+      "sha256": "91915f8ae056a68a3c5bdf05d9f6f78bb6903e27a8ca3a8434c9e4ac87300575",
+      "bytes": 1333
+    },
+    {
+      "path": "licenses/native/libjxl/AUTHORS",
+      "source_url": "https://github.com/libjxl/libjxl/blob/9f544641ec83f6abd9da598bdd08178ee8a003e0/AUTHORS",
+      "source_ref": "9f544641ec83f6abd9da598bdd08178ee8a003e0",
+      "source_blob_sha1": "734518e48ed783ae1eb6bad8bfdba42e824335e8",
+      "sha256": "4dd31980ba4abe7bb240681a9806db67dc1f9770d8c2b8d9de2ecd03464202b0",
+      "bytes": 1144
+    },
+    {
+      "path": "licenses/native/mozjpeg/LICENSE.md",
+      "source_url": "https://github.com/mozilla/mozjpeg/blob/v3.3.1/LICENSE.md",
+      "source_ref": "v3.3.1",
+      "source_blob_sha1": "0572390635d944af818ebe132019722650e3ac0b",
+      "sha256": "5c08657eda60b7946a913ee22ac73603335a468a6aa95204506a1586a8d677ee",
+      "bytes": 5343
+    },
+    {
+      "path": "licenses/native/mozjpeg/README.ijg",
+      "source_url": "https://github.com/mozilla/mozjpeg/blob/v3.3.1/README.ijg",
+      "source_ref": "v3.3.1",
+      "source_blob_sha1": "9c450ceb07ce9a43325e6524b0b2da017fea8db3",
+      "sha256": "53a3e3c299e08856964f4c5986e242c3695837b73c64625092f70c774e8af5d2",
+      "bytes": 13668
+    },
+    {
+      "path": "licenses/native/brotli/LICENSE",
+      "source_url": "https://github.com/google/brotli/blob/35ef5c554d888bef217d449346067de05e269b30/LICENSE",
+      "source_ref": "35ef5c554d888bef217d449346067de05e269b30",
+      "source_blob_sha1": "33b7cdd2dbaeddce1e35aa1a13f63d71154dc42f",
+      "sha256": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94",
+      "bytes": 1084
+    },
+    {
+      "path": "licenses/native/highway/LICENSE",
+      "source_url": "https://github.com/google/highway/blob/e69083a12a05caf037cabecdf1b248b7579705a5/LICENSE",
+      "source_ref": "e69083a12a05caf037cabecdf1b248b7579705a5",
+      "source_blob_sha1": "f49a4e16e68b128803cc2dcea614603632b04eac",
+      "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
+      "bytes": 11356
+    },
+    {
+      "path": "licenses/native/skcms/LICENSE",
+      "source_url": "https://skia.googlesource.com/skcms/+/64374756e03700d649f897dbd98c95e78c30c7da/LICENSE?format=TEXT",
+      "source_ref": "64374756e03700d649f897dbd98c95e78c30c7da",
+      "sha256": "e59bb5c5c6ba426a9ac4ba9fe667ad14c5166b12aa25be8af1d122b14fbe2e36",
+      "bytes": 1635
+    },
+    {
+      "path": "licenses/native/libaom/LICENSE",
+      "source_url": "https://aomedia.googlesource.com/aom/+/v3.7.0/LICENSE?format=TEXT",
+      "source_ref": "v3.7.0",
+      "sha256": "4764a286d8b2faeaf42f4418e7d7a28d58fc8fd4d00a3d0a7f44b0a4099de7f2",
+      "bytes": 1316
+    },
+    {
+      "path": "licenses/native/libaom/PATENTS",
+      "source_url": "https://aomedia.googlesource.com/aom/+/v3.7.0/PATENTS?format=TEXT",
+      "source_ref": "v3.7.0",
+      "sha256": "661fb8e504744e95587b556b94a58343448300606a41bea8c7a9b97125696e61",
+      "bytes": 5701
+    },
+    {
+      "path": "licenses/native/libwebp-sharpyuv/COPYING",
+      "source_url": "https://chromium.googlesource.com/webm/libwebp/+/e2c85878f6a33f29948b43d3492d9cdaf801aa54/COPYING?format=TEXT",
+      "source_ref": "e2c85878f6a33f29948b43d3492d9cdaf801aa54",
+      "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf",
+      "bytes": 1496
+    },
+    {
+      "path": "licenses/native/libwebp-sharpyuv/PATENTS",
+      "source_url": "https://chromium.googlesource.com/webm/libwebp/+/e2c85878f6a33f29948b43d3492d9cdaf801aa54/PATENTS?format=TEXT",
+      "source_ref": "e2c85878f6a33f29948b43d3492d9cdaf801aa54",
+      "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c",
+      "bytes": 1436
+    }
+  ]
+}

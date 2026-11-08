@@ -40,15 +40,37 @@ their separate copyright and terms remain authoritative.
 React and ReactDOM are MIT, Copyright (c) Meta Platforms, Inc. and affiliates.
 No new noncommercial restriction is imposed on these components.
 
+## Additional native source notices
+
+The following 13 original files are now preserved from the source versions
+named by the matching package build recipes and libjxl pinned submodules.
+This includes the IJG README referenced by the JPEG notice.
+They are copied unchanged; source URLs, refs and hashes are in
+[licenses/NATIVE_SOURCES.json](licenses/NATIVE_SOURCES.json).
+These source references are not proof of a reproducible npm build or a
+complete list of all compiled code.
+
+- [licenses/native/libavif/LICENSE](licenses/native/libavif/LICENSE)
+- [licenses/native/libjxl/LICENSE](licenses/native/libjxl/LICENSE)
+- [licenses/native/libjxl/PATENTS](licenses/native/libjxl/PATENTS)
+- [licenses/native/libjxl/AUTHORS](licenses/native/libjxl/AUTHORS)
+- [licenses/native/mozjpeg/LICENSE.md](licenses/native/mozjpeg/LICENSE.md)
+- [licenses/native/mozjpeg/README.ijg](licenses/native/mozjpeg/README.ijg)
+- [licenses/native/brotli/LICENSE](licenses/native/brotli/LICENSE)
+- [licenses/native/highway/LICENSE](licenses/native/highway/LICENSE)
+- [licenses/native/skcms/LICENSE](licenses/native/skcms/LICENSE)
+- [licenses/native/libaom/LICENSE](licenses/native/libaom/LICENSE)
+- [licenses/native/libaom/PATENTS](licenses/native/libaom/PATENTS)
+- [licenses/native/libwebp-sharpyuv/COPYING](licenses/native/libwebp-sharpyuv/COPYING)
+- [licenses/native/libwebp-sharpyuv/PATENTS](licenses/native/libwebp-sharpyuv/PATENTS)
+
 ## Verification still open
 
 This is partial notice restoration, not a complete native dependency audit.
 
-- AVIF and JPEG XL packages do not ship separate native codec notices.
-  Their libavif/libaom/libsharpyuv and libjxl/Brotli/Highway/skcms inputs
-  and complete notices need separate verification.
-- JPEG's supplied notice references an IJG README absent from the npm package;
-  that original file still needs inclusion from the corresponding source.
+- Native notices for libavif, libaom, libsharpyuv, libjxl, Brotli, Highway,
+  skcms and MozJPEG/IJG have been added from the recipe references. The npm
+  binary-to-complete-build correspondence has not been independently rebuilt.
 - PNG, Oxipng, resizing and other WASM may embed more Rust/C/C++ code.
   Wrapper SPDX fields and one codec notice are not exhaustive inventories.
 - The complete provenance of bundled JavaScript, workers and UI helpers

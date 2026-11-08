@@ -536,21 +536,118 @@
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
-      "sha256": "fd39afaa36ed07793450c659279e47e0f548d09fa6e39ececbb5730f9750e519",
-      "bytes": 4468,
+      "sha256": "499f5f04982e0d5c3004dbb0dba75b6860ea83edd333c15e8e46e88800c880a0",
+      "bytes": 5758,
       "kind": "review-document"
     },
     {
       "path": "THIRD_PARTY_NOTICES.html",
-      "sha256": "200bef64027799b49fb3ac0f8dc4fd3b054c2f4dc9c4d8d03e5b97041de43f1c",
-      "bytes": 3758,
+      "sha256": "4376922a2d316b19afd7b8c294b7990b4c937668fb06a96c242261341c32e0fe",
+      "bytes": 5191,
       "kind": "review-document"
     },
     {
       "path": "DISTRIBUTION_REVIEW.md",
-      "sha256": "12f2501b637f61116b1423aa180a7b7a2d3c2ad9b07d27eb00767a3092baa463",
-      "bytes": 2059,
+      "sha256": "c53b69a141ac94106a742b8d462387280f769e0de8cbdf69b2403700a9d35303",
+      "bytes": 2345,
       "kind": "review-document"
+    },
+    {
+      "path": "licenses/native/libavif/LICENSE",
+      "sha256": "10952217a6d404de8bf8a997fbea9b88f682df1fe98cb9b9f467ade641525639",
+      "bytes": 18799,
+      "kind": "native-source-notice",
+      "source_url": "https://github.com/AOMediaCodec/libavif/blob/v1.0.1/LICENSE"
+    },
+    {
+      "path": "licenses/native/libjxl/LICENSE",
+      "sha256": "8405932022a556380c2d8c272eff154a923feb197233f348ce5f7334fb0a5ede",
+      "bytes": 1508,
+      "kind": "native-source-notice",
+      "source_url": "https://github.com/libjxl/libjxl/blob/9f544641ec83f6abd9da598bdd08178ee8a003e0/LICENSE"
+    },
+    {
+      "path": "licenses/native/libjxl/PATENTS",
+      "sha256": "91915f8ae056a68a3c5bdf05d9f6f78bb6903e27a8ca3a8434c9e4ac87300575",
+      "bytes": 1333,
+      "kind": "native-source-notice",
+      "source_url": "https://github.com/libjxl/libjxl/blob/9f544641ec83f6abd9da598bdd08178ee8a003e0/PATENTS"
+    },
+    {
+      "path": "licenses/native/libjxl/AUTHORS",
+      "sha256": "4dd31980ba4abe7bb240681a9806db67dc1f9770d8c2b8d9de2ecd03464202b0",
+      "bytes": 1144,
+      "kind": "native-source-notice",
+      "source_url": "https://github.com/libjxl/libjxl/blob/9f544641ec83f6abd9da598bdd08178ee8a003e0/AUTHORS"
+    },
+    {
+      "path": "licenses/native/mozjpeg/LICENSE.md",
+      "sha256": "5c08657eda60b7946a913ee22ac73603335a468a6aa95204506a1586a8d677ee",
+      "bytes": 5343,
+      "kind": "native-source-notice",
+      "source_url": "https://github.com/mozilla/mozjpeg/blob/v3.3.1/LICENSE.md"
+    },
+    {
+      "path": "licenses/native/mozjpeg/README.ijg",
+      "sha256": "53a3e3c299e08856964f4c5986e242c3695837b73c64625092f70c774e8af5d2",
+      "bytes": 13668,
+      "kind": "native-source-notice",
+      "source_url": "https://github.com/mozilla/mozjpeg/blob/v3.3.1/README.ijg"
+    },
+    {
+      "path": "licenses/native/brotli/LICENSE",
+      "sha256": "3d180008e36922a4e8daec11c34c7af264fed5962d07924aea928c38e8663c94",
+      "bytes": 1084,
+      "kind": "native-source-notice",
+      "source_url": "https://github.com/google/brotli/blob/35ef5c554d888bef217d449346067de05e269b30/LICENSE"
+    },
+    {
+      "path": "licenses/native/highway/LICENSE",
+      "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
+      "bytes": 11356,
+      "kind": "native-source-notice",
+      "source_url": "https://github.com/google/highway/blob/e69083a12a05caf037cabecdf1b248b7579705a5/LICENSE"
+    },
+    {
+      "path": "licenses/native/skcms/LICENSE",
+      "sha256": "e59bb5c5c6ba426a9ac4ba9fe667ad14c5166b12aa25be8af1d122b14fbe2e36",
+      "bytes": 1635,
+      "kind": "native-source-notice",
+      "source_url": "https://skia.googlesource.com/skcms/+/64374756e03700d649f897dbd98c95e78c30c7da/LICENSE?format=TEXT"
+    },
+    {
+      "path": "licenses/native/libaom/LICENSE",
+      "sha256": "4764a286d8b2faeaf42f4418e7d7a28d58fc8fd4d00a3d0a7f44b0a4099de7f2",
+      "bytes": 1316,
+      "kind": "native-source-notice",
+      "source_url": "https://aomedia.googlesource.com/aom/+/v3.7.0/LICENSE?format=TEXT"
+    },
+    {
+      "path": "licenses/native/libaom/PATENTS",
+      "sha256": "661fb8e504744e95587b556b94a58343448300606a41bea8c7a9b97125696e61",
+      "bytes": 5701,
+      "kind": "native-source-notice",
+      "source_url": "https://aomedia.googlesource.com/aom/+/v3.7.0/PATENTS?format=TEXT"
+    },
+    {
+      "path": "licenses/native/libwebp-sharpyuv/COPYING",
+      "sha256": "5aec868f669e384a22372a4e8a1a6cd7d44c64cd451f960ca69cc170d1e13acf",
+      "bytes": 1496,
+      "kind": "native-source-notice",
+      "source_url": "https://chromium.googlesource.com/webm/libwebp/+/e2c85878f6a33f29948b43d3492d9cdaf801aa54/COPYING?format=TEXT"
+    },
+    {
+      "path": "licenses/native/libwebp-sharpyuv/PATENTS",
+      "sha256": "cc3273e0694ea5896145e0677699b53471b03ea43021ddc50e7923fbb9f5023c",
+      "bytes": 1436,
+      "kind": "native-source-notice",
+      "source_url": "https://chromium.googlesource.com/webm/libwebp/+/e2c85878f6a33f29948b43d3492d9cdaf801aa54/PATENTS?format=TEXT"
+    },
+    {
+      "path": "licenses/NATIVE_SOURCES.json",
+      "sha256": "1ce701edaf7a2aba1deb7bd0f373de92e250315739ad9f61cfa83f435876dd72",
+      "bytes": 6118,
+      "kind": "source-evidence"
     }
   ]
 }

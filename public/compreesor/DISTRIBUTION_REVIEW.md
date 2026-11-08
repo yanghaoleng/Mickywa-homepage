@@ -12,6 +12,7 @@ Current Compreesor FFmpeg obligations are distinct from this old image mirror.
   React/ReactDOM MIT notices.
 - Added a static notice page and license metadata link in index.html.
 - Added a prebuild verifier for reviewed runtime and notice hashes.
+- Added 13 native-source license/patent/author files from fixed recipe references, including MozJPEG README.ijg.
 - Left all JavaScript, CSS and WASM runtime bytes unchanged.
 
 ## Build references, not a reproducible-build claim
@@ -28,8 +29,10 @@ These references do not claim that a local rebuild reproduces npm binaries.
 
 ## Still open
 
-1. Retrieve applicable native codec/submodule notices at pinned versions,
-   including the IJG README.
+1. Native source notices for the AVIF/JXL recipe inputs and MozJPEG/IJG
+   are now retained in licenses/native/; source refs/hashes are recorded in
+   licenses/NATIVE_SOURCES.json. Full reproducible-build correspondence and
+   the complete native inventory remain unverified.
 2. Reconstruct Rust crate and other native inputs whose notices are not
    exhaustively present in npm packages.
 3. Audit remaining minified JavaScript helpers/icons using original build
