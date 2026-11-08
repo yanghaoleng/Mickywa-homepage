@@ -1,0 +1,556 @@
+{
+  "reviewed": "2026-11-08",
+  "scope": "Selected verified components of the unchanged 2026-08-12 image-only mirror. Not a full native-library audit, source-delivery offer or grant of a project license.",
+  "baseline_commit": "efe205bce387d2a79fa88f56d212c5a505344226",
+  "mirror_introduction_commit": "eccbb0c6b129dcbfc09c0c5b3c6e0ec779f4e29c",
+  "comparison_lockfile": "https://github.com/yanghaoleng/compreesor/blob/693ea921c9de9cca6a813db2cb08c7de544990f4/package-lock.json",
+  "packages": [
+    {
+      "name": "@jsquash/avif",
+      "version": "2.1.1",
+      "url": "https://registry.npmjs.org/@jsquash/avif/-/avif-2.1.1.tgz",
+      "integrity": "sha512-LMRxd0fMgfCLtobDh0/sFYJMMiRJTNYSEEWvRDKXlAeZ08t3gI5V+1thIT0XjXJ+SVG7Zug9B0XPyx0Ti5VRNA==",
+      "license": "Apache-2.0",
+      "gitHead": "b7fa9ac9ec02f224847ad23d19d115f9e296a368",
+      "matches": [
+        {
+          "mirror_path": "public/compreesor/assets/avif_dec-B7YOdlSS.wasm",
+          "package_path": "codec/dec/avif_dec.wasm",
+          "git_blob_sha1": "ddc7a0ee9c0edbc267fbaf81bbaabcd90e886306",
+          "sha256": "5c35dde23dfd862088a49a6b8a9fe81f9f9a1a46aaa27de7efd7baa7611c4b47",
+          "bytes": 1170930
+        },
+        {
+          "mirror_path": "public/compreesor/assets/avif_enc_mt-DFoVXd45.wasm",
+          "package_path": "codec/enc/avif_enc_mt.wasm",
+          "git_blob_sha1": "5751e9b51ebb0a84f66c9633ac308b0e1783b4a8",
+          "sha256": "202d7ec9fb7d658df7cbf17fd85d83da724ac9551818c2d5161c858353a683a4",
+          "bytes": 3534665
+        },
+        {
+          "mirror_path": "public/compreesor/assets/avif_enc-Co4TcJko.wasm",
+          "package_path": "codec/enc/avif_enc.wasm",
+          "git_blob_sha1": "4c3da3f2ceb0e3a5a1337c48e15f89b0a46c7ff8",
+          "sha256": "d9f2a95164362af48558d176e619becfd49dd97b50b86c679b47100860522b3d",
+          "bytes": 3485872
+        }
+      ],
+      "license_files": [
+        "licenses/jsquash-avif/LICENSE"
+      ],
+      "evidence": "WASM content matches npm members by Git blob SHA-1 and SHA-256; tarball integrity matches historical lockfile."
+    },
+    {
+      "name": "@jsquash/jpeg",
+      "version": "1.6.0",
+      "url": "https://registry.npmjs.org/@jsquash/jpeg/-/jpeg-1.6.0.tgz",
+      "integrity": "sha512-zwN46Awh1VM6gXlIcALwb5WzqK5H2e6+Awcs1QP8AvS8ohsK/sbE4esvmH4jhlhW7+CgiUUww66vg0aTnlSIMA==",
+      "license": "Apache-2.0",
+      "gitHead": "1f62015f53e28bd18b2d7c8a3ca3326577efc445",
+      "matches": [
+        {
+          "mirror_path": "public/compreesor/assets/mozjpeg_dec-muSO2n8T.wasm",
+          "package_path": "codec/dec/mozjpeg_dec.wasm",
+          "git_blob_sha1": "9db79fb92732cc8691f74ee57db3763ce955b7bb",
+          "sha256": "a7c4b12169817e779ff4af137981393ae924944e167ad1bd95747c9199162d3e",
+          "bytes": 166470
+        },
+        {
+          "mirror_path": "public/compreesor/assets/mozjpeg_enc-DO-zoExo.wasm",
+          "package_path": "codec/enc/mozjpeg_enc.wasm",
+          "git_blob_sha1": "30db998db5079edc87c6ae5313de6f5e4ce749dc",
+          "sha256": "24d4177f1c4963e2058b107189249651c61fdef125570e79b1dfb63c8bb49326",
+          "bytes": 251524
+        }
+      ],
+      "license_files": [
+        "licenses/jsquash-jpeg/LICENSE",
+        "licenses/jsquash-jpeg/codec/LICENSE.codec.md"
+      ],
+      "evidence": "WASM content matches npm members by Git blob SHA-1 and SHA-256; tarball integrity matches historical lockfile."
+    },
+    {
+      "name": "@jsquash/jxl",
+      "version": "1.3.0",
+      "url": "https://registry.npmjs.org/@jsquash/jxl/-/jxl-1.3.0.tgz",
+      "integrity": "sha512-IVOPTneyOd9eBAuow+FnCYIP6wkIc7CjrCDnZGiqAPyJ63vMVxv3zoWiucGiZVh6u9vi/l40AkcS9QwkoVSAqA==",
+      "license": "Apache-2.0",
+      "gitHead": "1b1964194611ece3ec984ab91c04726d1088f05e",
+      "matches": [
+        {
+          "mirror_path": "public/compreesor/assets/jxl_dec-BE7lT9uY.wasm",
+          "package_path": "codec/dec/jxl_dec.wasm",
+          "git_blob_sha1": "9583cf24376e949c4f0cad58e5ebbb5ad8351831",
+          "sha256": "165bde0f48f3bdc39c7806365db5bb3b777df67fefff48050841fb4430062433",
+          "bytes": 849240
+        },
+        {
+          "mirror_path": "public/compreesor/assets/jxl_enc_mt_simd-dX2xfs-R.wasm",
+          "package_path": "codec/enc/jxl_enc_mt_simd.wasm",
+          "git_blob_sha1": "94c35c5b76cd20b1d6e5d07cfb9f42c80d08956f",
+          "sha256": "8b5b3a537864181465e202df1913f7bbe333a168eacc48ddf945c3ce011fdb42",
+          "bytes": 2012670
+        },
+        {
+          "mirror_path": "public/compreesor/assets/jxl_enc_mt-DeBV9omF.wasm",
+          "package_path": "codec/enc/jxl_enc_mt.wasm",
+          "git_blob_sha1": "0dd5060c40ae751f286a163f10a1a5a8466edfd8",
+          "sha256": "6bb316b4e3b76fa7df5a69bd6e2508779b1c07f135dc0a52aba592fa995c72bf",
+          "bytes": 1375371
+        },
+        {
+          "mirror_path": "public/compreesor/assets/jxl_enc-Brgqtac1.wasm",
+          "package_path": "codec/enc/jxl_enc.wasm",
+          "git_blob_sha1": "ecf6cd18a52b0582b1efd96b42a2809b81b773dd",
+          "sha256": "3c6c02df45c0dededab146888789d541b23b9a299cb16d497dce412a3a4bc7d3",
+          "bytes": 1363824
+        }
+      ],
+      "license_files": [
+        "licenses/jsquash-jxl/LICENSE"
+      ],
+      "evidence": "WASM content matches npm members by Git blob SHA-1 and SHA-256; tarball integrity matches historical lockfile."
+    },
+    {
+      "name": "@jsquash/oxipng",
+      "version": "2.3.0",
+      "url": "https://registry.npmjs.org/@jsquash/oxipng/-/oxipng-2.3.0.tgz",
+      "integrity": "sha512-aQ8wiEp6ztlTMXc+RMt/CG8crU3mEHDU+h+JYkIi6ctMhlh8+Ltj5XwQFfBuyzKYrp8NxaFW80Dp824bqjr+zA==",
+      "license": "Apache-2.0",
+      "gitHead": "68a7201e5b4d9703bf65670fb0284d16536dd145",
+      "matches": [
+        {
+          "mirror_path": "public/compreesor/assets/squoosh_oxipng_bg-BayMGzvb.wasm",
+          "package_path": "codec/pkg-parallel/squoosh_oxipng_bg.wasm",
+          "git_blob_sha1": "ca9bc463d49d486a299bd93f4d0259c949cec022",
+          "sha256": "2f579c4be8d88aaa44ee5db950df97e15c49738f92c690bb6aa9cbf49caaa8eb",
+          "bytes": 236042
+        },
+        {
+          "mirror_path": "public/compreesor/assets/squoosh_oxipng_bg-OFMN1KwG.wasm",
+          "package_path": "codec/pkg/squoosh_oxipng_bg.wasm",
+          "git_blob_sha1": "88750a78ffbffe751e9a1ce76f4bf90055b45790",
+          "sha256": "5ea3e53c0b4fc1b4e8d1511d35b89329d9376bec75a9c4d3c054774487e5f9a3",
+          "bytes": 164172
+        }
+      ],
+      "license_files": [
+        "licenses/jsquash-oxipng/LICENSE",
+        "licenses/jsquash-oxipng/codec/LICENSE.codec.md"
+      ],
+      "evidence": "WASM content matches npm members by Git blob SHA-1 and SHA-256; tarball integrity matches historical lockfile."
+    },
+    {
+      "name": "@jsquash/png",
+      "version": "3.1.1",
+      "url": "https://registry.npmjs.org/@jsquash/png/-/png-3.1.1.tgz",
+      "integrity": "sha512-C10pc+0H6j0h8fENOfnGOvkXCmvpSQTDGlfGd0sHphZhPSGTyLjIrHba0FaZZdsKqA/wlmhYicUHb92vfZphaw==",
+      "license": "Apache-2.0",
+      "gitHead": "b7fa9ac9ec02f224847ad23d19d115f9e296a368",
+      "matches": [
+        {
+          "mirror_path": "public/compreesor/assets/squoosh_png_bg-DAY7U9NW.wasm",
+          "package_path": "codec/pkg/squoosh_png_bg.wasm",
+          "git_blob_sha1": "8bf8fdfa62fa2e83a3a8ce77f2c0dd8b9bbd53fb",
+          "sha256": "263d6e658808a74b72a1a99c5cc1d619237e70c150db6e41d5d84d3d117ab9be",
+          "bytes": 181088
+        }
+      ],
+      "license_files": [
+        "licenses/jsquash-png/LICENSE",
+        "licenses/jsquash-png/codec/LICENSE.codec.md"
+      ],
+      "evidence": "WASM content matches npm members by Git blob SHA-1 and SHA-256; tarball integrity matches historical lockfile."
+    },
+    {
+      "name": "@jsquash/resize",
+      "version": "2.1.1",
+      "url": "https://registry.npmjs.org/@jsquash/resize/-/resize-2.1.1.tgz",
+      "integrity": "sha512-0R5UL1ZLHUT+carjVikcE1QfA+kfNQ2YamYyGVRmhfh4zttU5EY3bQBGxPIPtY2xIAw1P4Kgyxm2xrceRw1r2w==",
+      "license": "Apache-2.0",
+      "gitHead": "da47a2be3b302beb5a5ae164a2ab7aa21a041d90",
+      "matches": [
+        {
+          "mirror_path": "public/compreesor/assets/jsquash_magic_kernel_bg-Cq4C4bH5.wasm",
+          "package_path": "lib/magic-kernel/pkg/jsquash_magic_kernel_bg.wasm",
+          "git_blob_sha1": "a84b4fdb0c59a5c5be5f5a542fd45dce2a7b74e8",
+          "sha256": "f3d1b2e550d4de73abc2a1ed9c89adde4b0eed80009e730b4c3a0ae415f8122d",
+          "bytes": 18760
+        },
+        {
+          "mirror_path": "public/compreesor/assets/squoosh_resize_bg-YY9xfwUg.wasm",
+          "package_path": "lib/resize/pkg/squoosh_resize_bg.wasm",
+          "git_blob_sha1": "42d77982a397d9f9dd1df8e53901e7436be7ce35",
+          "sha256": "5b1f702d502c4d0a70b99f78691bd554d566ba95859e4c57af5435955a1d74a5",
+          "bytes": 34545
+        },
+        {
+          "mirror_path": "public/compreesor/assets/squooshhqx_bg-jpRtGvMp.wasm",
+          "package_path": "lib/hqx/pkg/squooshhqx_bg.wasm",
+          "git_blob_sha1": "410b933516829119537f00d8180267aa4a8afd6b",
+          "sha256": "812617712f0444b09ee61d72f9b2dab6cdd7fed3e9c74cc57e4dd6c80f4a4c80",
+          "bytes": 135082
+        }
+      ],
+      "license_files": [
+        "licenses/jsquash-resize/LICENSE",
+        "licenses/jsquash-resize/lib/hqx/LICENSE.codec.md",
+        "licenses/jsquash-resize/lib/magic-kernel/LICENSE.codec.md",
+        "licenses/jsquash-resize/lib/resize/LICENSE.codec.md"
+      ],
+      "evidence": "WASM content matches npm members by Git blob SHA-1 and SHA-256; tarball integrity matches historical lockfile."
+    },
+    {
+      "name": "@jsquash/webp",
+      "version": "1.5.0",
+      "url": "https://registry.npmjs.org/@jsquash/webp/-/webp-1.5.0.tgz",
+      "integrity": "sha512-KggLoj2MnRSfIqTeKe1EmbljTX2vuV7mh79k89PCL1pyqiDULcPM1L47twxXt0hkb68F70bXiL31MxsuoZtKFw==",
+      "license": "Apache-2.0",
+      "gitHead": "8bcd212da8c2be7c9c223e8f222eb3d9574a713b",
+      "matches": [
+        {
+          "mirror_path": "public/compreesor/assets/webp_dec-C990n7mh.wasm",
+          "package_path": "codec/dec/webp_dec.wasm",
+          "git_blob_sha1": "7cd38b7acbc4c6b01c62a9b5962491edf5d9f87e",
+          "sha256": "30fb52fa2a80166d25ba7debf902218904ba1f05ccce9f959f722beff9e2f344",
+          "bytes": 137960
+        },
+        {
+          "mirror_path": "public/compreesor/assets/webp_enc_simd-CFvKQ_80.wasm",
+          "package_path": "codec/enc/webp_enc_simd.wasm",
+          "git_blob_sha1": "a10632f75ed8a10f36d0534eaca1f1c6f8b2b4ee",
+          "sha256": "39c279269ec1163b987b6d69749458e3d5b03b9585f58b6ca5455b76b504a305",
+          "bytes": 345584
+        },
+        {
+          "mirror_path": "public/compreesor/assets/webp_enc-BpZvKflB.wasm",
+          "package_path": "codec/enc/webp_enc.wasm",
+          "git_blob_sha1": "f0521befe04339c22303ebf0a1ed8403bef5b12e",
+          "sha256": "b6085bb6702f144e9dc6016d58d230b34a84976bf0d080b7390b4b4b137d6ab7",
+          "bytes": 281261
+        }
+      ],
+      "license_files": [
+        "licenses/jsquash-webp/LICENSE",
+        "licenses/jsquash-webp/codec/LICENSE.codec.md"
+      ],
+      "evidence": "WASM content matches npm members by Git blob SHA-1 and SHA-256; tarball integrity matches historical lockfile."
+    },
+    {
+      "name": "react",
+      "version": "19.2.8",
+      "url": "https://registry.npmjs.org/react/-/react-19.2.8.tgz",
+      "integrity": "sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==",
+      "license": "MIT",
+      "gitHead": "1dd4ecbdabf826f527fc9a58c05ea70375b7d170",
+      "matches": [],
+      "license_files": [
+        "licenses/react/LICENSE"
+      ],
+      "evidence": "React/ReactDOM 19.2.8 strings occur in shipped JavaScript; minified bundle is not byte-identical to individual npm files."
+    },
+    {
+      "name": "react-dom",
+      "version": "19.2.8",
+      "url": "https://registry.npmjs.org/react-dom/-/react-dom-19.2.8.tgz",
+      "integrity": "sha512-rVprimfGBG3DR+Tq0IQG2DT5PxKth1WIGDmj5yPmlzr4YBe7uyE+Du4oVqTDXZSHGGGXRtTJEGSSePyQCMBglQ==",
+      "license": "MIT",
+      "gitHead": "1dd4ecbdabf826f527fc9a58c05ea70375b7d170",
+      "matches": [],
+      "license_files": [
+        "licenses/react-dom/LICENSE"
+      ],
+      "evidence": "React/ReactDOM 19.2.8 strings occur in shipped JavaScript; minified bundle is not byte-identical to individual npm files."
+    }
+  ],
+  "runtime_files": [
+    {
+      "path": "assets/avif_dec-B7YOdlSS.wasm",
+      "sha256": "5c35dde23dfd862088a49a6b8a9fe81f9f9a1a46aaa27de7efd7baa7611c4b47",
+      "git_blob_sha1_before_notice_link": "ddc7a0ee9c0edbc267fbaf81bbaabcd90e886306",
+      "bytes": 1170930
+    },
+    {
+      "path": "assets/avif_enc-Co4TcJko.wasm",
+      "sha256": "d9f2a95164362af48558d176e619becfd49dd97b50b86c679b47100860522b3d",
+      "git_blob_sha1_before_notice_link": "4c3da3f2ceb0e3a5a1337c48e15f89b0a46c7ff8",
+      "bytes": 3485872
+    },
+    {
+      "path": "assets/avif_enc_mt-DFoVXd45.wasm",
+      "sha256": "202d7ec9fb7d658df7cbf17fd85d83da724ac9551818c2d5161c858353a683a4",
+      "git_blob_sha1_before_notice_link": "5751e9b51ebb0a84f66c9633ac308b0e1783b4a8",
+      "bytes": 3534665
+    },
+    {
+      "path": "assets/avif_enc_mt.worker-DC1_tB7O.js",
+      "sha256": "8409ef71b1a88c05e53264abc1b6f3513f16526ae39e02ceb8c12fcd39779454",
+      "git_blob_sha1_before_notice_link": "065371d1cbaac527a158bc570c747271e2dcb557",
+      "bytes": 28173
+    },
+    {
+      "path": "assets/compressor.worker-DbL5ND21.js",
+      "sha256": "0e78bbd8afe6228004d5d380d40d3798b6099e73ced0b04ba9f0fbe235684b77",
+      "git_blob_sha1_before_notice_link": "430833d524c242c6d8c74c946ff0153d23874d92",
+      "bytes": 306897
+    },
+    {
+      "path": "assets/index-BARQe8-x.css",
+      "sha256": "0f2fa5d06ec9752b5b4f8271168da1c69568432dad77408ca68b769d082dc2cb",
+      "git_blob_sha1_before_notice_link": "45c1550e1a0f36948e95ffa81bc207c80325ac8f",
+      "bytes": 20999
+    },
+    {
+      "path": "assets/index-TFok_gyz.js",
+      "sha256": "783a2748680deb7e621e9ff7b9d610254a0547f0eadb90e0983a12002d5071e1",
+      "git_blob_sha1_before_notice_link": "2678d38a2508f185bed8670503359e0d1b6a98f7",
+      "bytes": 267833
+    },
+    {
+      "path": "assets/jsquash_magic_kernel_bg-Cq4C4bH5.wasm",
+      "sha256": "f3d1b2e550d4de73abc2a1ed9c89adde4b0eed80009e730b4c3a0ae415f8122d",
+      "git_blob_sha1_before_notice_link": "a84b4fdb0c59a5c5be5f5a542fd45dce2a7b74e8",
+      "bytes": 18760
+    },
+    {
+      "path": "assets/jxl_dec-BE7lT9uY.wasm",
+      "sha256": "165bde0f48f3bdc39c7806365db5bb3b777df67fefff48050841fb4430062433",
+      "git_blob_sha1_before_notice_link": "9583cf24376e949c4f0cad58e5ebbb5ad8351831",
+      "bytes": 849240
+    },
+    {
+      "path": "assets/jxl_enc-Brgqtac1.wasm",
+      "sha256": "3c6c02df45c0dededab146888789d541b23b9a299cb16d497dce412a3a4bc7d3",
+      "git_blob_sha1_before_notice_link": "ecf6cd18a52b0582b1efd96b42a2809b81b773dd",
+      "bytes": 1363824
+    },
+    {
+      "path": "assets/jxl_enc_mt-DeBV9omF.wasm",
+      "sha256": "6bb316b4e3b76fa7df5a69bd6e2508779b1c07f135dc0a52aba592fa995c72bf",
+      "git_blob_sha1_before_notice_link": "0dd5060c40ae751f286a163f10a1a5a8466edfd8",
+      "bytes": 1375371
+    },
+    {
+      "path": "assets/jxl_enc_mt.worker-CNSncAjI.js",
+      "sha256": "1441333012a72950ac5bc09e8c70085c3938c09acf2e3fae868571321c27a437",
+      "git_blob_sha1_before_notice_link": "d570f76f0e529fd740a04fcad12e5d6dca5496b6",
+      "bytes": 34968
+    },
+    {
+      "path": "assets/jxl_enc_mt_simd-dX2xfs-R.wasm",
+      "sha256": "8b5b3a537864181465e202df1913f7bbe333a168eacc48ddf945c3ce011fdb42",
+      "git_blob_sha1_before_notice_link": "94c35c5b76cd20b1d6e5d07cfb9f42c80d08956f",
+      "bytes": 2012670
+    },
+    {
+      "path": "assets/jxl_enc_mt_simd.worker-DySOwtoB.js",
+      "sha256": "ef285230d8d0e01356e92cec812a01030ffa9fcbd04253955846453e27f18255",
+      "git_blob_sha1_before_notice_link": "9503ffaf2ea171368e82ae930d64c42a61999a37",
+      "bytes": 34953
+    },
+    {
+      "path": "assets/mozjpeg_dec-muSO2n8T.wasm",
+      "sha256": "a7c4b12169817e779ff4af137981393ae924944e167ad1bd95747c9199162d3e",
+      "git_blob_sha1_before_notice_link": "9db79fb92732cc8691f74ee57db3763ce955b7bb",
+      "bytes": 166470
+    },
+    {
+      "path": "assets/mozjpeg_enc-DO-zoExo.wasm",
+      "sha256": "24d4177f1c4963e2058b107189249651c61fdef125570e79b1dfb63c8bb49326",
+      "git_blob_sha1_before_notice_link": "30db998db5079edc87c6ae5313de6f5e4ce749dc",
+      "bytes": 251524
+    },
+    {
+      "path": "assets/squoosh_oxipng_bg-BayMGzvb.wasm",
+      "sha256": "2f579c4be8d88aaa44ee5db950df97e15c49738f92c690bb6aa9cbf49caaa8eb",
+      "git_blob_sha1_before_notice_link": "ca9bc463d49d486a299bd93f4d0259c949cec022",
+      "bytes": 236042
+    },
+    {
+      "path": "assets/squoosh_oxipng_bg-OFMN1KwG.wasm",
+      "sha256": "5ea3e53c0b4fc1b4e8d1511d35b89329d9376bec75a9c4d3c054774487e5f9a3",
+      "git_blob_sha1_before_notice_link": "88750a78ffbffe751e9a1ce76f4bf90055b45790",
+      "bytes": 164172
+    },
+    {
+      "path": "assets/squoosh_png_bg-DAY7U9NW.wasm",
+      "sha256": "263d6e658808a74b72a1a99c5cc1d619237e70c150db6e41d5d84d3d117ab9be",
+      "git_blob_sha1_before_notice_link": "8bf8fdfa62fa2e83a3a8ce77f2c0dd8b9bbd53fb",
+      "bytes": 181088
+    },
+    {
+      "path": "assets/squoosh_resize_bg-YY9xfwUg.wasm",
+      "sha256": "5b1f702d502c4d0a70b99f78691bd554d566ba95859e4c57af5435955a1d74a5",
+      "git_blob_sha1_before_notice_link": "42d77982a397d9f9dd1df8e53901e7436be7ce35",
+      "bytes": 34545
+    },
+    {
+      "path": "assets/squooshhqx_bg-jpRtGvMp.wasm",
+      "sha256": "812617712f0444b09ee61d72f9b2dab6cdd7fed3e9c74cc57e4dd6c80f4a4c80",
+      "git_blob_sha1_before_notice_link": "410b933516829119537f00d8180267aa4a8afd6b",
+      "bytes": 135082
+    },
+    {
+      "path": "assets/webp_dec-C990n7mh.wasm",
+      "sha256": "30fb52fa2a80166d25ba7debf902218904ba1f05ccce9f959f722beff9e2f344",
+      "git_blob_sha1_before_notice_link": "7cd38b7acbc4c6b01c62a9b5962491edf5d9f87e",
+      "bytes": 137960
+    },
+    {
+      "path": "assets/webp_enc-BpZvKflB.wasm",
+      "sha256": "b6085bb6702f144e9dc6016d58d230b34a84976bf0d080b7390b4b4b137d6ab7",
+      "git_blob_sha1_before_notice_link": "f0521befe04339c22303ebf0a1ed8403bef5b12e",
+      "bytes": 281261
+    },
+    {
+      "path": "assets/webp_enc_simd-CFvKQ_80.wasm",
+      "sha256": "39c279269ec1163b987b6d69749458e3d5b03b9585f58b6ca5455b76b504a305",
+      "git_blob_sha1_before_notice_link": "a10632f75ed8a10f36d0534eaca1f1c6f8b2b4ee",
+      "bytes": 345584
+    },
+    {
+      "path": "assets/workerHelpers.worker-vuY2XzUK.js",
+      "sha256": "8402067e99497ce100ba78dd2a9fa8c853588c7dcf4f66edb2f595f8b42ae8f8",
+      "git_blob_sha1_before_notice_link": "4eb8ec777cd328f383d074b3ca17e8ecb31470d7",
+      "bytes": 4677
+    },
+    {
+      "path": "index.html",
+      "sha256": "19f0bbd1745010dfb3f5fad784d2ec5ce7f3d6718e346c7e9cc725e1d55f4493",
+      "git_blob_sha1_before_notice_link": "a115f779a8b6676fd0d75e046c2fb12561c93eeb",
+      "bytes": 1149
+    }
+  ],
+  "notice_files": [
+    {
+      "path": "licenses/jsquash-avif/LICENSE",
+      "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "original_package_path": "LICENSE",
+      "package": "@jsquash/avif",
+      "bytes": 11343
+    },
+    {
+      "path": "licenses/jsquash-jpeg/LICENSE",
+      "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "original_package_path": "LICENSE",
+      "package": "@jsquash/jpeg",
+      "bytes": 11343
+    },
+    {
+      "path": "licenses/jsquash-jpeg/codec/LICENSE.codec.md",
+      "sha256": "8213556ea36ce3a0f2883db06238463e2452fdad68e3d2e2e4ace2189477a37e",
+      "original_package_path": "codec/LICENSE.codec.md",
+      "package": "@jsquash/jpeg",
+      "bytes": 5208
+    },
+    {
+      "path": "licenses/jsquash-jxl/LICENSE",
+      "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "original_package_path": "LICENSE",
+      "package": "@jsquash/jxl",
+      "bytes": 11343
+    },
+    {
+      "path": "licenses/jsquash-oxipng/LICENSE",
+      "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "original_package_path": "LICENSE",
+      "package": "@jsquash/oxipng",
+      "bytes": 11343
+    },
+    {
+      "path": "licenses/jsquash-oxipng/codec/LICENSE.codec.md",
+      "sha256": "fbd251bd50b001db93e2cb942e71a85a3befe6ddef659709e09d762d4e2c2a5a",
+      "original_package_path": "codec/LICENSE.codec.md",
+      "package": "@jsquash/oxipng",
+      "bytes": 1078
+    },
+    {
+      "path": "licenses/jsquash-png/LICENSE",
+      "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "original_package_path": "LICENSE",
+      "package": "@jsquash/png",
+      "bytes": 11343
+    },
+    {
+      "path": "licenses/jsquash-png/codec/LICENSE.codec.md",
+      "sha256": "e293d1dddc9785200b1f58a4f5293543cf8566d9e0b8a3c02fad955035b19f42",
+      "original_package_path": "codec/LICENSE.codec.md",
+      "package": "@jsquash/png",
+      "bytes": 1495
+    },
+    {
+      "path": "licenses/jsquash-resize/LICENSE",
+      "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "original_package_path": "LICENSE",
+      "package": "@jsquash/resize",
+      "bytes": 11343
+    },
+    {
+      "path": "licenses/jsquash-resize/lib/hqx/LICENSE.codec.md",
+      "sha256": "43070e2d4e532684de521b885f385d0841030efa2b1a20bafb76133a5e1379c1",
+      "original_package_path": "lib/hqx/LICENSE.codec.md",
+      "package": "@jsquash/resize",
+      "bytes": 11356
+    },
+    {
+      "path": "licenses/jsquash-resize/lib/magic-kernel/LICENSE.codec.md",
+      "sha256": "21e492c2fb8be34abe00c1b5c4b15139e061ddfaa236adc4c0d4ff70ccd329b2",
+      "original_package_path": "lib/magic-kernel/LICENSE.codec.md",
+      "package": "@jsquash/resize",
+      "bytes": 1075
+    },
+    {
+      "path": "licenses/jsquash-resize/lib/resize/LICENSE.codec.md",
+      "sha256": "373fec335329f8e4c9c8839871606e6ed5bfaa513a4dea2ebee4b7a418853320",
+      "original_package_path": "lib/resize/LICENSE.codec.md",
+      "package": "@jsquash/resize",
+      "bytes": 1082
+    },
+    {
+      "path": "licenses/jsquash-webp/LICENSE",
+      "sha256": "8c3690b09c168f196446cf5904332023bbc15eb92b6a7cee470ac829e6a65d20",
+      "original_package_path": "LICENSE",
+      "package": "@jsquash/webp",
+      "bytes": 11343
+    },
+    {
+      "path": "licenses/jsquash-webp/codec/LICENSE.codec.md",
+      "sha256": "e293d1dddc9785200b1f58a4f5293543cf8566d9e0b8a3c02fad955035b19f42",
+      "original_package_path": "codec/LICENSE.codec.md",
+      "package": "@jsquash/webp",
+      "bytes": 1495
+    },
+    {
+      "path": "licenses/react/LICENSE",
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "original_package_path": "LICENSE",
+      "package": "react",
+      "bytes": 1088
+    },
+    {
+      "path": "licenses/react-dom/LICENSE",
+      "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+      "original_package_path": "LICENSE",
+      "package": "react-dom",
+      "bytes": 1088
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "sha256": "fd39afaa36ed07793450c659279e47e0f548d09fa6e39ececbb5730f9750e519",
+      "bytes": 4468,
+      "kind": "review-document"
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.html",
+      "sha256": "200bef64027799b49fb3ac0f8dc4fd3b054c2f4dc9c4d8d03e5b97041de43f1c",
+      "bytes": 3758,
+      "kind": "review-document"
+    },
+    {
+      "path": "DISTRIBUTION_REVIEW.md",
+      "sha256": "12f2501b637f61116b1423aa180a7b7a2d3c2ad9b07d27eb00767a3092baa463",
+      "bytes": 2059,
+      "kind": "review-document"
+    }
+  ]
+}
